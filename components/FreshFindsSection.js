@@ -15,7 +15,7 @@ export default function FreshFindsSection() {
   return (
     <section className={styles.section} aria-labelledby="fresh-finds">
       <div className={styles.container}>
-        <SectionTitle id="fresh-finds">Fresh Finds at Pepperfry</SectionTitle>
+        <SectionTitle id="fresh-finds">Fresh Finds at Spacecrafts</SectionTitle>
 
         <div className={styles.row}>
           {ITEMS.map((it) => (

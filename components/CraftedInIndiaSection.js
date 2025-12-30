@@ -6,12 +6,12 @@ import styles from "./CraftedInIndia.module.css"
 
 const BANNERS = [
   {
-    title: 'Mudramark by Pepperfry',
+    title: 'Mudramark by Spacecrafts',
     desc: 'Celebrating Indian Heritage With Timeless Carvings, Vibrant Motifs, And Masterful Craftsmanship.',
     img: '/crafted/mudramark.svg',
   },
   {
-    title: 'Amberville by Pepperfry',
+    title: 'Amberville by Spacecrafts',
     desc: 'Explore Handcrafted Pieces Inspired By Colonial Charm, Reimagined For Modern Living.',
     img: '/crafted/amberville.svg',
   },
