@@ -1,0 +1,163 @@
+import { createSupabaseServerClient } from '../../../lib/supabaseClient'
+import ProductDetailClient from '../../../components/ProductDetailClient'
+import { notFound } from 'next/navigation'
+
+export async function generateMetadata({ params }) {
+  const { slug } = params
+  try {
+    const supabase = createSupabaseServerClient()
+    const { data } = await supabase
+      .from('products')
+      .select('*, categories(name), brands(name)')
+      .eq('slug', slug)
+      .single()
+    
+    if (!data) return { title: 'Product not found' }
+    
+    // Get first image
+    const { data: images } = await supabase
+      .from('product_images')
+      .select('url')
+      .eq('product_id', data.id)
+      .order('position')
+      .limit(1)
+    
+    return {
+      title: `${data.name} - Spacecrafts Furniture`,
+      description: data.description || `Buy ${data.name} online. Premium quality furniture at best prices.`,
+      openGraph: {
+        title: data.name,
+        description: data.description,
+        images: images?.length ? [images[0].url] : []
+      }
+    }
+  } catch (e) {
+    return { title: 'Product' }
+  }
+}
+
+export default async function ProductPage({ params }) {
+  const { slug } = params
+  let product = null
+  let images = []
+  let category = null
+  let brand = null
+  let relatedProducts = []
+  let reviews = []
+  
+  try {
+    const supabase = createSupabaseServerClient()
+    
+    // Fetch product with category and brand
+    const { data } = await supabase
+      .from('products')
+      .select(`
+        *,
+        categories (id, name, slug),
+        brands (id, name, slug)
+      `)
+      .eq('slug', slug)
+      .single()
+    
+    if (!data) {
+      notFound()
+    }
+    
+    product = data
+    category = data.categories
+    brand = data.brands
+    
+    // Fetch product images
+    const { data: imagesData } = await supabase
+      .from('product_images')
+      .select('*')
+      .eq('product_id', product.id)
+      .order('position')
+    
+    images = imagesData || []
+    
+    // Fetch reviews
+    const { data: reviewsData } = await supabase
+      .from('reviews')
+      .select('*, profiles(full_name)')
+      .eq('product_id', product.id)
+      .order('created_at', { ascending: false })
+      .limit(10)
+    
+    reviews = reviewsData || []
+    
+    // Fetch related products from same category
+    if (product.category_id) {
+      const { data: relatedData } = await supabase
+        .from('products')
+        .select(`
+          *,
+          categories (name, slug),
+          brands (name, slug)
+        `)
+        .eq('category_id', product.category_id)
+        .neq('id', product.id)
+        .gte('stock', 1)
+        .order('rating', { ascending: false })
+        .limit(4)
+      
+      relatedProducts = relatedData || []
+      
+      // Fetch images for related products
+      if (relatedProducts.length > 0) {
+        const relatedIds = relatedProducts.map(p => p.id)
+        const { data: relatedImages } = await supabase
+          .from('product_images')
+          .select('*')
+          .in('product_id', relatedIds)
+          .order('position')
+        
+        relatedProducts = relatedProducts.map(p => ({
+          ...p,
+          images: relatedImages?.filter(img => img.product_id === p.id) || []
+        }))
+      }
+    }
+    
+  } catch (e) {
+    console.error('Error fetching product:', e)
+    notFound()
+  }
+
+  // JSON-LD schema
+  const schema = {
+    '@context': 'https://schema.org/',
+    '@type': 'Product',
+    name: product.name,
+    image: images?.map(i => i.url),
+    description: product.description,
+    sku: product.id?.toString(),
+    brand: brand ? { '@type': 'Brand', name: brand.name } : undefined,
+    aggregateRating: product.review_count > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: product.rating,
+      reviewCount: product.review_count
+    } : undefined,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'INR',
+      price: product.discount_price || product.price,
+      availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      url: `https://yourdomain.com/products/${product.slug}`
+    }
+  }
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <ProductDetailClient 
+        product={product}
+        images={images}
+        category={category}
+        brand={brand}
+        relatedProducts={relatedProducts}
+        reviews={reviews}
+      />
+    </>
+  )
+}
