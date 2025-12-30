@@ -86,9 +86,10 @@ export default async function ProductPage({ params }) {
     
     reviews = reviewsData || []
     
-    // Fetch related products from same category
+    // Fetch related products: same category first, then same brand if needed
     if (product.category_id) {
-      const { data: relatedData } = await supabase
+      // Try to get 4+ from same category
+      const { data: categoryProducts } = await supabase
         .from('products')
         .select(`
           *,
@@ -99,9 +100,32 @@ export default async function ProductPage({ params }) {
         .neq('id', product.id)
         .gte('stock', 1)
         .order('rating', { ascending: false })
-        .limit(4)
+        .limit(8)
       
-      relatedProducts = relatedData || []
+      relatedProducts = categoryProducts || []
+
+      // If less than 4, supplement with same brand products
+      if (relatedProducts.length < 4 && product.brand_id) {
+        const categoryIds = relatedProducts.map(p => p.id)
+        const { data: brandProducts } = await supabase
+          .from('products')
+          .select(`
+            *,
+            categories (name, slug),
+            brands (name, slug)
+          `)
+          .eq('brand_id', product.brand_id)
+          .neq('id', product.id)
+          .not('id', 'in', `(${categoryIds.join(',')})`)
+          .gte('stock', 1)
+          .order('rating', { ascending: false })
+          .limit(4 - relatedProducts.length)
+        
+        relatedProducts = [...relatedProducts, ...(brandProducts || [])]
+      }
+
+      // Ensure we have at least 4
+      relatedProducts = relatedProducts.slice(0, Math.max(4, relatedProducts.length))
       
       // Fetch images for related products
       if (relatedProducts.length > 0) {

@@ -18,13 +18,16 @@ export default function ProductDetailClient({ product, images, category, brand, 
     count: product.review_count || 0
   })
   const [reviewsRefresh, setReviewsRefresh] = useState(0)
+  const [imageError, setImageError] = useState(false)
 
   const displayPrice = product.discount_price || product.price
   const discountPercentage = product.discount_price 
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
     : 0
 
-  const mainImage = images[selectedImage]?.url || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&q=80'
+  const mainImage = imageError 
+    ? '/placeholder-product.svg'
+    : (images[selectedImage]?.url || '/placeholder-product.svg')
 
   const handleAddToCart = async () => {
     try {
@@ -94,6 +97,7 @@ export default function ProductDetailClient({ product, images, category, brand, 
                 height={700}
                 style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
                 priority
+                onError={() => setImageError(true)}
               />
               {discountPercentage > 0 && (
                 <span className="discount-badge">-{discountPercentage}%</span>
@@ -105,7 +109,10 @@ export default function ProductDetailClient({ product, images, category, brand, 
                   <button
                     key={img.id}
                     className={`thumbnail ${index === selectedImage ? 'active' : ''}`}
-                    onClick={() => setSelectedImage(index)}
+                    onClick={() => {
+                      setSelectedImage(index)
+                      setImageError(false)
+                    }}
                   >
                     <Image 
                       src={img.url}
@@ -113,6 +120,7 @@ export default function ProductDetailClient({ product, images, category, brand, 
                       width={100}
                       height={100}
                       style={{ objectFit: 'cover' }}
+                      onError={() => setImageError(true)}
                     />
                   </button>
                 ))}
