@@ -10,8 +10,8 @@ export default function ProductsClient({ initialProducts, categories, brands, se
   const searchParamsHook = useSearchParams()
   const [products, setProducts] = useState(initialProducts)
   const [filters, setFilters] = useState({
-    category: searchParams?.category || '',
-    brand: searchParams?.brand || '',
+    categories: searchParams?.categories ? searchParams.categories.split(',') : [],
+    brands: searchParams?.brands ? searchParams.brands.split(',') : [],
     minPrice: searchParams?.minPrice || '',
     maxPrice: searchParams?.maxPrice || '',
     sort: searchParams?.sort || 'rating-desc',
@@ -27,11 +27,28 @@ export default function ProductsClient({ initialProducts, categories, brands, se
   const updateFilters = (newFilters) => {
     const params = new URLSearchParams()
     Object.keys(newFilters).forEach(key => {
-      if (newFilters[key]) {
+      if (key === 'categories' || key === 'brands') {
+        if (newFilters[key] && newFilters[key].length > 0) {
+          params.set(key, newFilters[key].join(','))
+        }
+      } else if (newFilters[key]) {
         params.set(key, newFilters[key])
       }
     })
     router.push(`/products?${params.toString()}`)
+  }
+
+  const handleMultiSelect = (key, value) => {
+    const currentArray = filters[key] || []
+    let newArray
+    if (currentArray.includes(value)) {
+      newArray = currentArray.filter(item => item !== value)
+    } else {
+      newArray = [...currentArray, value]
+    }
+    const newFilters = { ...filters, [key]: newArray }
+    setFilters(newFilters)
+    updateFilters(newFilters)
   }
 
   const handleFilterChange = (key, value) => {
@@ -42,8 +59,8 @@ export default function ProductsClient({ initialProducts, categories, brands, se
 
   const clearFilters = () => {
     setFilters({
-      category: '',
-      brand: '',
+      categories: [],
+      brands: [],
       minPrice: '',
       maxPrice: '',
       sort: 'rating-desc',
@@ -82,10 +99,15 @@ export default function ProductsClient({ initialProducts, categories, brands, se
 
             {/* Search */}
             <div className="filter-section">
-              <h4>Search Products</h4>
+              <h4>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                Search
+              </h4>
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search products..."
                 value={filters.q}
                 onChange={(e) => handleFilterChange('q', e.target.value)}
                 className="search-input"
@@ -94,69 +116,54 @@ export default function ProductsClient({ initialProducts, categories, brands, se
 
             {/* Categories */}
             <div className="filter-section">
-              <h4>Categories</h4>
-              <ul className="filter-list">
-                <li>
-                  <label>
-                    <input
-                      type="radio"
-                      name="category"
-                      checked={filters.category === ''}
-                      onChange={() => handleFilterChange('category', '')}
-                    />
-                    <span>All Categories</span>
-                  </label>
-                </li>
+              <h4>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 2H2v7h10V2zm10 0h-8v7h8V2zM4 11v11h8V11H4zm10 0v11h8V11h-8z"/>
+                </svg>
+                Categories
+              </h4>
+              <div className="filter-chips">
                 {categories.map(cat => (
-                  <li key={cat.id}>
-                    <label>
-                      <input
-                        type="radio"
-                        name="category"
-                        checked={filters.category === cat.slug}
-                        onChange={() => handleFilterChange('category', cat.slug)}
-                      />
-                      <span>{cat.name}</span>
-                    </label>
-                  </li>
+                  <button
+                    key={cat.id}
+                    className={`chip ${filters.categories.includes(cat.slug) ? 'active' : ''}`}
+                    onClick={() => handleMultiSelect('categories', cat.slug)}
+                  >
+                    {cat.name}
+                  </button>
                 ))}
-              </ul>
+              </div>
             </div>
 
             {/* Brands */}
             <div className="filter-section">
-              <h4>Brands</h4>
-              <ul className="filter-list">
-                <li>
-                  <label>
-                    <input
-                      type="radio"
-                      name="brand"
-                      checked={filters.brand === ''}
-                      onChange={() => handleFilterChange('brand', '')}
-                    />
-                    <span>All Brands</span>
-                  </label>
-                </li>
+              <h4>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/>
+                </svg>
+                Brands
+              </h4>
+              <div className="filter-chips">
                 {brands.map(brand => (
-                  <li key={brand.id}>
-                    <label>
-                      <input
-                        type="radio"
-                        name="brand"
-                        checked={filters.brand === brand.slug}
-                        onChange={() => handleFilterChange('brand', brand.slug)}
-                      />
-                      <span>{brand.name}</span>
-                    </label>
-                  </li>
+                  <button
+                    key={brand.id}
+                    className={`chip ${filters.brands.includes(brand.slug) ? 'active' : ''}`}
+                    onClick={() => handleMultiSelect('brands', brand.slug)}
+                  >
+                    {brand.name}
+                  </button>
                 ))}
-              </ul>
+              </div>
             </div>
 
             {/* Price Range */}
             <div className="filter-section">
-              <h4>Price Range</h4>
+              <h4>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 2v20M8 6h8M6 10h12M8 14h8M6 18h12"/>
+                </svg>
+                Price Range
+              </h4>
               <div className="price-inputs">
                 <input
                   type="number"
@@ -165,7 +172,7 @@ export default function ProductsClient({ initialProducts, categories, brands, se
                   onChange={(e) => handleFilterChange('minPrice', e.target.value)}
                   className="price-input"
                 />
-                <span>to</span>
+                <span className="price-separator">—</span>
                 <input
                   type="number"
                   placeholder="Max"
@@ -177,7 +184,10 @@ export default function ProductsClient({ initialProducts, categories, brands, se
             </div>
 
             <button className="clear-filters-btn" onClick={clearFilters}>
-              Clear All Filters
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M3 3v5h5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16m0 0v-5h-5"/>
+              </svg>
+              Reset Filters
             </button>
           </aside>
 
@@ -267,10 +277,10 @@ export default function ProductsClient({ initialProducts, categories, brands, se
         }
 
         .breadcrumb-section {
-          background: white;
-          padding: 20px 0;
+          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+          padding: 24px 0;
           border-bottom: 1px solid #e9ecef;
-          margin-bottom: 30px;
+          margin-bottom: 32px;
         }
 
         .breadcrumb {
@@ -278,24 +288,84 @@ export default function ProductsClient({ initialProducts, categories, brands, se
           list-style: none;
           padding: 0;
           margin: 0;
-          gap: 8px;
+          gap: 4px;
+          align-items: center;
+          flex-wrap: wrap;
         }
 
         .breadcrumb-item {
           color: #6c757d;
+          font-size: 14px;
+          font-weight: 500;
+          position: relative;
+          animation: slideInBreadcrumb 0.4s ease-out backwards;
         }
+
+        @keyframes slideInBreadcrumb {
+          from {
+            opacity: 0;
+            transform: translateX(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .breadcrumb-item:nth-child(1) { animation-delay: 0.05s; }
+        .breadcrumb-item:nth-child(2) { animation-delay: 0.1s; }
+        .breadcrumb-item:nth-child(3) { animation-delay: 0.15s; }
+        .breadcrumb-item:nth-child(4) { animation-delay: 0.2s; }
+        .breadcrumb-item:nth-child(5) { animation-delay: 0.25s; }
 
         .breadcrumb-item a {
           color: #007bff;
           text-decoration: none;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          padding: 6px 10px;
+          border-radius: 6px;
+          position: relative;
+        }
+
+        .breadcrumb-item a::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(0, 123, 255, 0) 0%, rgba(0, 123, 255, 0.1) 100%);
+          border-radius: 6px;
+          opacity: 0;
+          transition: opacity 0.3s ease;
         }
 
         .breadcrumb-item a:hover {
-          text-decoration: underline;
+          color: #0056b3;
+          background: rgba(0, 123, 255, 0.08);
+          transform: translateX(2px);
+        }
+
+        .breadcrumb-item a:hover::before {
+          opacity: 1;
         }
 
         .breadcrumb-item.active {
           color: #333;
+          font-weight: 600;
+        }
+
+        .breadcrumb-item:not(:last-child)::after {
+          content: '›';
+          margin-left: 8px;
+          color: #dee2e6;
+          font-weight: 300;
+          transition: all 0.3s ease;
+        }
+
+        .breadcrumb-item:hover:not(:last-child)::after {
+          color: #007bff;
+          transform: scaleX(1.2);
         }
 
         .products-container {
@@ -319,6 +389,15 @@ export default function ProductsClient({ initialProducts, categories, brands, se
           top: 20px;
           max-height: calc(100vh - 40px);
           overflow-y: auto;
+          overflow-x: hidden;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          border: 1px solid #f0f0f0;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+
+        .products-sidebar::-webkit-scrollbar {
+          display: none;
         }
 
         .sidebar-header {
@@ -326,12 +405,17 @@ export default function ProductsClient({ initialProducts, categories, brands, se
           justify-content: space-between;
           align-items: center;
           margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 2px solid #f0f4f9;
         }
 
         .sidebar-header h3 {
-          font-size: 20px;
-          font-weight: 600;
+          font-size: 18px;
+          font-weight: 700;
           margin: 0;
+          color: #1a1a1a;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         .close-sidebar {
@@ -340,7 +424,12 @@ export default function ProductsClient({ initialProducts, categories, brands, se
           border: none;
           font-size: 28px;
           cursor: pointer;
-          color: #666;
+          color: #999;
+          transition: color 0.2s;
+        }
+
+        .close-sidebar:hover {
+          color: #333;
         }
 
         .filter-section {
@@ -354,23 +443,73 @@ export default function ProductsClient({ initialProducts, categories, brands, se
         }
 
         .filter-section h4 {
-          font-size: 16px;
-          font-weight: 600;
-          margin-bottom: 16px;
-          color: #333;
-        }
-
-        .search-input {
-          width: 100%;
-          padding: 10px 14px;
-          border: 1px solid #ddd;
-          border-radius: 6px;
           font-size: 14px;
+          font-weight: 700;
+          margin-bottom: 16px;
+          color: #1a1a1a;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
 
-        .search-input:focus {
-          outline: none;
+        .filter-section h4 svg {
+          color: #007bff;
+        }
+
+        .filter-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .chip {
+          padding: 8px 14px;
+          background: #f0f4f9;
+          border: 1.5px solid transparent;
+          border-radius: 20px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          color: #555;
+          white-space: nowrap;
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .chip:hover {
+          background: #e6eef7;
           border-color: #007bff;
+          color: #007bff;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 6px rgba(0, 123, 255, 0.15);
+        }
+
+        .chip.active {
+          background: #007bff;
+          color: white;
+          border-color: #007bff;
+          font-weight: 600;
+        }
+
+        .chip.active::before {
+          content: '✓';
+          display: inline-block;
+          width: 16px;
+          height: 16px;
+          background: white;
+          color: #007bff;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 700;
+          margin-right: 2px;
         }
 
         .filter-list {
@@ -406,33 +545,75 @@ export default function ProductsClient({ initialProducts, categories, brands, se
           gap: 10px;
         }
 
+        .price-separator {
+          color: #aaa;
+          font-weight: 600;
+          flex-shrink: 0;
+        }
+
         .price-input {
           flex: 1;
-          padding: 8px 12px;
-          border: 1px solid #ddd;
-          border-radius: 6px;
-          font-size: 14px;
+          padding: 10px 12px;
+          border: 1.5px solid #ddd;
+          border-radius: 8px;
+          font-size: 13px;
+          background: white;
+          transition: all 0.2s;
         }
 
         .price-input:focus {
           outline: none;
           border-color: #007bff;
+          background: #f8fbff;
+        }
+
+        .price-input::placeholder {
+          color: #aaa;
         }
 
         .clear-filters-btn {
           width: 100%;
-          padding: 12px;
-          background: #f8f9fa;
-          border: 1px solid #dee2e6;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 500;
+          padding: 12px 16px;
+          background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+          border: 1.5px solid #dee2e6;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #555;
           cursor: pointer;
           transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         .clear-filters-btn:hover {
-          background: #e9ecef;
+          background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+          border-color: #bdc3c7;
+          color: #333;
+        }
+
+        .search-input {
+          width: 100%;
+          padding: 10px 14px;
+          border: 1.5px solid #ddd;
+          border-radius: 8px;
+          font-size: 14px;
+          background: white;
+          transition: all 0.2s;
+        }
+
+        .search-input:focus {
+          outline: none;
+          border-color: #007bff;
+          background: #f8fbff;
+        }
+
+        .search-input::placeholder {
+          color: #aaa;
         }
 
         .products-main {
@@ -445,11 +626,13 @@ export default function ProductsClient({ initialProducts, categories, brands, se
           justify-content: space-between;
           align-items: center;
           background: white;
-          padding: 16px 20px;
+          padding: 18px 20px;
           border-radius: 12px;
-          margin-bottom: 24px;
+          margin-bottom: 28px;
           gap: 16px;
           flex-wrap: wrap;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+          border: 1px solid #f0f0f0;
         }
 
         .toolbar-left,
@@ -463,56 +646,99 @@ export default function ProductsClient({ initialProducts, categories, brands, se
           display: none;
           align-items: center;
           gap: 8px;
-          padding: 8px 16px;
-          background: #f8f9fa;
-          border: 1px solid #dee2e6;
-          border-radius: 6px;
-          font-size: 14px;
+          padding: 10px 16px;
+          background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+          border: 1.5px solid #dee2e6;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 600;
           cursor: pointer;
+          transition: all 0.2s;
+          color: #555;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
+
+        .filter-toggle-btn:hover {
+          background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+          border-color: #bdc3c7;
         }
 
         .results-count {
           font-size: 14px;
           color: #666;
+          font-weight: 500;
         }
 
         .sort-select {
-          padding: 8px 32px 8px 12px;
-          border: 1px solid #dee2e6;
-          border-radius: 6px;
-          font-size: 14px;
+          padding: 10px 32px 10px 12px;
+          border: 1.5px solid #dee2e6;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 500;
           cursor: pointer;
           background: white;
+          transition: all 0.2s;
+          color: #555;
+        }
+
+        .sort-select:hover {
+          border-color: #007bff;
+        }
+
+        .sort-select:focus {
+          outline: none;
+          border-color: #007bff;
+          background: #f8fbff;
         }
 
         .view-toggle {
           display: flex;
           gap: 4px;
+          background: #f8f9fa;
+          padding: 4px;
+          border-radius: 8px;
+          border: 1px solid #dee2e6;
         }
 
         .view-toggle button {
-          padding: 8px;
+          padding: 8px 12px;
           background: white;
-          border: 1px solid #dee2e6;
+          border: none;
           border-radius: 6px;
           cursor: pointer;
           transition: all 0.2s;
+          color: #999;
+          display: flex;
+          align-items: center;
         }
 
         .view-toggle button.active {
-          background: #007bff;
-          border-color: #007bff;
-          color: white;
+          background: white;
+          color: #007bff;
+          box-shadow: 0 2px 6px rgba(0, 123, 255, 0.15);
         }
 
         .view-toggle button:hover:not(.active) {
-          background: #f8f9fa;
+          color: #555;
         }
 
         .products-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 24px;
+          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+          gap: 28px;
+          animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .products-grid.list-view {
@@ -521,30 +747,42 @@ export default function ProductsClient({ initialProducts, categories, brands, se
 
         .no-products {
           background: white;
-          padding: 60px 20px;
+          padding: 80px 20px;
           text-align: center;
           border-radius: 12px;
+          border: 1px solid #f0f0f0;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
 
         .no-products p {
           font-size: 18px;
           color: #666;
-          margin-bottom: 20px;
+          margin-bottom: 28px;
+          line-height: 1.6;
         }
 
         .btn-primary {
-          padding: 12px 24px;
-          background: #007bff;
+          padding: 12px 32px;
+          background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
           color: white;
           border: none;
-          border-radius: 6px;
-          font-size: 16px;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
           cursor: pointer;
-          transition: background 0.2s;
+          transition: all 0.3s ease;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         .btn-primary:hover {
-          background: #0056b3;
+          background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-primary:active {
+          transform: translateY(0);
         }
 
         @media (max-width: 1024px) {
@@ -593,6 +831,7 @@ export default function ProductsClient({ initialProducts, categories, brands, se
 }
 
 function ProductCard({ product, view }) {
+  const [isHovering, setIsHovering] = useState(false)
   const discountPercentage = product.discount_price 
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
     : 0
@@ -601,40 +840,64 @@ function ProductCard({ product, view }) {
   const mainImage = product.images?.[0]?.url || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80'
 
   return (
-    <Link href={`/products/${product.slug}`} className={`product-card ${view === 'list' ? 'list-card' : ''}`}>
-      <div className="product-image">
-        <Image 
-          src={mainImage}
-          alt={product.name}
-          width={view === 'list' ? 200 : 300}
-          height={view === 'list' ? 200 : 300}
-          style={{ objectFit: 'cover' }}
-        />
+    <Link 
+      href={`/products/${product.slug}`} 
+      className={`product-card ${view === 'list' ? 'list-card' : ''}`}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
+      <div className="product-image-wrapper">
+        <div className="product-image">
+          <div className={`image-container ${isHovering ? 'hovering' : ''}`}>
+            <Image 
+              src={mainImage}
+              alt={product.name}
+              width={view === 'list' ? 200 : 300}
+              height={view === 'list' ? 200 : 300}
+              style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+            />
+          </div>
+          <div className={`image-overlay ${isHovering ? 'visible' : ''}`}></div>
+        </div>
         {discountPercentage > 0 && (
-          <span className="discount-badge">-{discountPercentage}%</span>
+          <span className="discount-badge">
+            <span className="discount-value">-{discountPercentage}%</span>
+          </span>
         )}
         {product.stock < 5 && product.stock > 0 && (
           <span className="stock-badge">Only {product.stock} left</span>
+        )}
+        {product.stock === 0 && (
+          <span className="out-of-stock-badge">Out of Stock</span>
         )}
       </div>
       <div className="product-info">
         <div className="product-category">{product.categories?.name || 'Furniture'}</div>
         <h3 className="product-name">{product.name}</h3>
         <div className="product-rating">
-          <span className="stars">{'★'.repeat(Math.round(product.rating))}{'☆'.repeat(5 - Math.round(product.rating))}</span>
-          <span className="rating-text">({product.review_count} reviews)</span>
+          <span className="stars">{'★'.repeat(Math.round(product.rating || 0))}{'☆'.repeat(5 - Math.round(product.rating || 0))}</span>
+          <span className="rating-text">({product.review_count || 0})</span>
         </div>
-        <div className="product-price">
-          <span className="current-price">₹{displayPrice.toLocaleString('en-IN')}</span>
-          {product.discount_price && (
-            <span className="original-price">₹{product.price.toLocaleString('en-IN')}</span>
-          )}
+        <div className="product-price-section">
+          <div className="product-price">
+            <span className="current-price">₹{displayPrice.toLocaleString('en-IN')}</span>
+            {product.discount_price && (
+              <span className="original-price">₹{product.price.toLocaleString('en-IN')}</span>
+            )}
+          </div>
+          <div className="price-badge">Save ₹{(product.price - displayPrice).toLocaleString('en-IN')}</div>
         </div>
         {view === 'list' && product.description && (
           <p className="product-description">
             {product.description.substring(0, 150)}...
           </p>
         )}
+        <button className="product-action-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          Add to Cart
+        </button>
       </div>
 
       <style jsx>{`
@@ -642,16 +905,19 @@ function ProductCard({ product, view }) {
           background: white;
           border-radius: 12px;
           overflow: hidden;
-          transition: all 0.3s;
+          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
           cursor: pointer;
           text-decoration: none;
           color: inherit;
           display: block;
+          border: 1px solid #f0f0f0;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
 
         .product-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+          transform: translateY(-8px);
+          box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+          border-color: #e0e0e0;
         }
 
         .product-card.list-card {
@@ -659,9 +925,15 @@ function ProductCard({ product, view }) {
           flex-direction: row;
         }
 
-        .product-card.list-card .product-image {
-          width: 200px;
+        .product-card.list-card .product-image-wrapper {
+          width: 220px;
           flex-shrink: 0;
+        }
+
+        .product-image-wrapper {
+          position: relative;
+          width: 100%;
+          overflow: hidden;
         }
 
         .product-image {
@@ -669,66 +941,163 @@ function ProductCard({ product, view }) {
           width: 100%;
           height: 300px;
           overflow: hidden;
-          background: #f8f9fa;
+          background: linear-gradient(135deg, #f8f9fa 0%, #f0f1f3 100%);
         }
 
         .product-card.list-card .product-image {
-          height: 200px;
+          height: 220px;
+        }
+
+        .image-container {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          position: relative;
+        }
+
+        .image-container img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          display: block;
+          transform: scale(1);
+        }
+
+        .image-container.hovering img {
+          transform: scale(1.08);
+        }
+
+        .image-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(0, 123, 255, 0) 0%, rgba(0, 123, 255, 0.1) 100%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+        }
+
+        .image-overlay.visible {
+          opacity: 1;
         }
 
         .discount-badge {
           position: absolute;
           top: 12px;
           right: 12px;
-          background: #dc3545;
+          background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
           color: white;
-          padding: 6px 12px;
-          border-radius: 6px;
+          padding: 0;
+          border-radius: 50%;
+          width: 56px;
+          height: 56px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           font-size: 14px;
-          font-weight: 600;
+          font-weight: 700;
+          box-shadow: 0 4px 12px rgba(255, 82, 82, 0.3);
+          animation: badgePulse 0.6s ease-out;
+        }
+
+        .discount-value {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+
+        @keyframes badgePulse {
+          0% {
+            transform: scale(0.8);
+            opacity: 0;
+          }
+          50% {
+            transform: scale(1.1);
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
         }
 
         .stock-badge {
           position: absolute;
           bottom: 12px;
           left: 12px;
-          background: #ffc107;
+          background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
           color: #333;
           padding: 6px 12px;
-          border-radius: 6px;
-          font-size: 12px;
-          font-weight: 600;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+          animation: slideIn 0.4s ease-out;
+        }
+
+        .out-of-stock-badge {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.5);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 14px;
+          backdrop-filter: blur(2px);
+        }
+
+        @keyframes slideIn {
+          from {
+            transform: translateX(-20px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
         }
 
         .product-info {
-          padding: 16px;
+          padding: 18px 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
         }
 
         .product-card.list-card .product-info {
           flex: 1;
-          display: flex;
-          flex-direction: column;
           justify-content: center;
+          padding: 18px 24px;
         }
 
         .product-category {
-          font-size: 12px;
+          font-size: 11px;
           color: #007bff;
           text-transform: uppercase;
-          font-weight: 600;
-          margin-bottom: 8px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+          margin: 0;
         }
 
         .product-name {
-          font-size: 16px;
+          font-size: 15px;
           font-weight: 600;
-          margin: 0 0 12px 0;
-          color: #333;
+          margin: 0;
+          color: #1a1a1a;
           line-height: 1.4;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+          transition: color 0.2s;
+        }
+
+        .product-card:hover .product-name {
+          color: #007bff;
         }
 
         .product-card.list-card .product-name {
@@ -740,42 +1109,101 @@ function ProductCard({ product, view }) {
           display: flex;
           align-items: center;
           gap: 8px;
-          margin-bottom: 12px;
+          margin: 0;
         }
 
         .stars {
           color: #ffc107;
-          font-size: 16px;
+          font-size: 14px;
+          letter-spacing: 1px;
         }
 
         .rating-text {
-          font-size: 13px;
-          color: #666;
+          font-size: 12px;
+          color: #999;
+          font-weight: 500;
+        }
+
+        .product-price-section {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-top: 4px;
         }
 
         .product-price {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 10px;
         }
 
         .current-price {
-          font-size: 20px;
+          font-size: 18px;
           font-weight: 700;
           color: #28a745;
         }
 
         .original-price {
-          font-size: 16px;
+          font-size: 14px;
           color: #999;
           text-decoration: line-through;
+          font-weight: 500;
+        }
+
+        .price-badge {
+          font-size: 11px;
+          color: #ff6b6b;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
         }
 
         .product-description {
-          font-size: 14px;
+          font-size: 13px;
           color: #666;
           line-height: 1.6;
-          margin-top: 12px;
+          margin: 8px 0 0 0;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .product-action-btn {
+          margin-top: 8px;
+          padding: 10px 14px;
+          background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+          opacity: 0;
+          transform: translateY(10px);
+        }
+
+        .product-card:hover .product-action-btn {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .product-action-btn:hover {
+          background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+          transform: translateY(-2px);
+        }
+
+        .product-card.list-card .product-action-btn {
+          opacity: 1;
+          transform: translateY(0);
         }
 
         @media (max-width: 768px) {
@@ -783,9 +1211,21 @@ function ProductCard({ product, view }) {
             flex-direction: column;
           }
 
-          .product-card.list-card .product-image {
+          .product-card.list-card .product-image-wrapper {
             width: 100%;
+          }
+
+          .product-image {
             height: 250px;
+          }
+
+          .product-card.list-card .product-image {
+            height: 250px;
+          }
+
+          .product-action-btn {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
       `}</style>

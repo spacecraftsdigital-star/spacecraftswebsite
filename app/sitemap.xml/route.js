@@ -10,12 +10,14 @@ export async function GET() {
     const { data: products } = await supabase
       .from('products')
       .select('slug, created_at')
+      .eq('is_active', true)
       .order('created_at', { ascending: false })
     
     // Fetch all categories
     const { data: categories } = await supabase
       .from('categories')
       .select('slug')
+      .eq('is_active', true)
 
     // Generate sitemap XML
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>

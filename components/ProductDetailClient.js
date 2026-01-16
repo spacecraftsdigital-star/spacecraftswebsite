@@ -20,6 +20,8 @@ export default function ProductDetailClient({ product, images, category, brand, 
   const [reviewsRefresh, setReviewsRefresh] = useState(0)
   const [imageError, setImageError] = useState(false)
 
+  console.log('ProductDetailClient Debug:', { product: product.name, productId: product.id, imagesCount: images?.length, images })
+
   const displayPrice = product.discount_price || product.price
   const discountPercentage = product.discount_price 
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
@@ -28,6 +30,14 @@ export default function ProductDetailClient({ product, images, category, brand, 
   const mainImage = imageError 
     ? '/placeholder-product.svg'
     : (images[selectedImage]?.url || '/placeholder-product.svg')
+
+  console.log('Main Image Debug:', { 
+    imageError, 
+    selectedImage, 
+    mainImage,
+    imageObject: images[selectedImage],
+    imagesArray: images 
+  })
 
   const handleAddToCart = async () => {
     try {
@@ -97,7 +107,10 @@ export default function ProductDetailClient({ product, images, category, brand, 
                 height={700}
                 style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
                 priority
-                onError={() => setImageError(true)}
+                onError={() => {
+                  console.error('Main image failed to load:', { url: mainImage })
+                  setImageError(true)
+                }}
               />
               {discountPercentage > 0 && (
                 <span className="discount-badge">-{discountPercentage}%</span>
@@ -306,7 +319,17 @@ export default function ProductDetailClient({ product, images, category, brand, 
             {activeTab === 'description' && (
               <div className="tab-pane">
                 <h3>Product Description</h3>
-                <p>{product.description}</p>
+                {product.description && (
+                  <ul className="description-list">
+                    {product.description
+                      .split(/[.!?]+/)
+                      .filter(sentence => sentence.trim().length > 10)
+                      .map((sentence, index) => (
+                        <li key={index}>{sentence.trim()}</li>
+                      ))
+                    }
+                  </ul>
+                )}
                 {product.material && (
                   <>
                     <h4>Material & Build Quality</h4>
@@ -394,10 +417,10 @@ export default function ProductDetailClient({ product, images, category, brand, 
         }
 
         .breadcrumb-section {
-          background: white;
-          padding: 20px 0;
+          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+          padding: 24px 0;
           border-bottom: 1px solid #e9ecef;
-          margin-bottom: 30px;
+          margin-bottom: 32px;
         }
 
         .breadcrumb {
@@ -405,26 +428,84 @@ export default function ProductDetailClient({ product, images, category, brand, 
           list-style: none;
           padding: 0;
           margin: 0;
-          gap: 8px;
+          gap: 4px;
           flex-wrap: wrap;
+          align-items: center;
         }
 
         .breadcrumb-item {
           color: #6c757d;
           font-size: 14px;
+          font-weight: 500;
+          position: relative;
+          animation: slideInBreadcrumb 0.4s ease-out backwards;
         }
+
+        @keyframes slideInBreadcrumb {
+          from {
+            opacity: 0;
+            transform: translateX(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .breadcrumb-item:nth-child(1) { animation-delay: 0.05s; }
+        .breadcrumb-item:nth-child(2) { animation-delay: 0.1s; }
+        .breadcrumb-item:nth-child(3) { animation-delay: 0.15s; }
+        .breadcrumb-item:nth-child(4) { animation-delay: 0.2s; }
+        .breadcrumb-item:nth-child(5) { animation-delay: 0.25s; }
 
         .breadcrumb-item a {
           color: #007bff;
           text-decoration: none;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          padding: 6px 10px;
+          border-radius: 6px;
+          position: relative;
+        }
+
+        .breadcrumb-item a::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(0, 123, 255, 0) 0%, rgba(0, 123, 255, 0.1) 100%);
+          border-radius: 6px;
+          opacity: 0;
+          transition: opacity 0.3s ease;
         }
 
         .breadcrumb-item a:hover {
-          text-decoration: underline;
+          color: #0056b3;
+          background: rgba(0, 123, 255, 0.08);
+          transform: translateX(2px);
+        }
+
+        .breadcrumb-item a:hover::before {
+          opacity: 1;
         }
 
         .breadcrumb-item.active {
           color: #333;
+          font-weight: 600;
+        }
+
+        .breadcrumb-item:not(:last-child)::after {
+          content: '›';
+          margin-left: 8px;
+          color: #dee2e6;
+          font-weight: 300;
+          transition: all 0.3s ease;
+        }
+
+        .breadcrumb-item:hover:not(:last-child)::after {
+          color: #007bff;
+          transform: scaleX(1.2);
         }
 
         .container {
@@ -494,20 +575,39 @@ export default function ProductDetailClient({ product, images, category, brand, 
           display: flex;
           flex-direction: column;
           gap: 20px;
+          animation: slideInRight 0.5s ease-out;
+        }
+
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
         }
 
         .product-brand a {
           color: #007bff;
           text-decoration: none;
-          font-size: 14px;
-          font-weight: 600;
+          font-size: 13px;
+          font-weight: 700;
           text-transform: uppercase;
+          letter-spacing: 0.5px;
+          transition: all 0.2s ease;
+          display: inline-block;
+        }
+
+        .product-brand a:hover {
+          color: #0056b3;
         }
 
         .product-title {
           font-size: 32px;
           font-weight: 700;
-          color: #333;
+          color: #1a1a1a;
           line-height: 1.3;
           margin: 0;
         }
@@ -516,23 +616,29 @@ export default function ProductDetailClient({ product, images, category, brand, 
           display: flex;
           align-items: center;
           gap: 12px;
+          padding: 12px 0;
+          border-bottom: 1px solid #e9ecef;
+          border-top: 1px solid #e9ecef;
         }
 
         .stars {
           color: #ffc107;
           font-size: 20px;
+          letter-spacing: 2px;
         }
 
         .rating-text {
           font-size: 14px;
-          color: #666;
+          color: #6c757d;
+          font-weight: 500;
         }
 
         .product-price {
           display: flex;
-          align-items: center;
-          gap: 16px;
+          align-items: baseline;
+          gap: 12px;
           flex-wrap: wrap;
+          padding: 16px 0;
         }
 
         .current-price {
@@ -542,15 +648,21 @@ export default function ProductDetailClient({ product, images, category, brand, 
         }
 
         .original-price {
-          font-size: 24px;
+          font-size: 20px;
           color: #999;
           text-decoration: line-through;
+          font-weight: 500;
         }
 
         .save-text {
-          font-size: 16px;
+          font-size: 14px;
           color: #dc3545;
-          font-weight: 600;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          background: rgba(220, 53, 69, 0.1);
+          padding: 4px 10px;
+          border-radius: 4px;
         }
 
         .stock-status {
@@ -560,40 +672,88 @@ export default function ProductDetailClient({ product, images, category, brand, 
         }
 
         .in-stock {
-          background: #d4edda;
+          background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
           color: #155724;
           display: flex;
           align-items: center;
           gap: 8px;
-          font-weight: 600;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
         }
 
         .out-of-stock {
-          background: #f8d7da;
+          background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
           color: #721c24;
-          font-weight: 600;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
         }
 
         .short-description {
-          font-size: 16px;
-          line-height: 1.8;
+          padding: 0 0 20px 0;
+          animation: slideInUp 0.5s ease-out;
+          font-size: 15px;
+          line-height: 1.9;
           color: #666;
+          border-bottom: 1px solid #e9ecef;
+        }
+
+        .short-description p {
+          font-size: 15px;
+          line-height: 1.9;
+          color: #666;
+          margin: 0;
+        }
+
+        @keyframes slideInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .key-features {
-          background: #f8f9fa;
-          padding: 20px;
-          border-radius: 8px;
+          background: white;
+          border: none;
+          border-radius: 0;
+          margin: 0;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 16px;
         }
 
         .feature {
-          padding: 8px 0;
+          padding: 16px 0;
+          border-radius: 0;
+          background: white;
+          border: none;
+          border-bottom: 2px solid #e9ecef;
+          transition: border-color 0.3s ease;
           font-size: 14px;
-          color: #333;
+          line-height: 1.6;
+          color: #666;
+        }
+
+        .feature:hover {
+          transform: none;
+          box-shadow: none;
+          border-bottom-color: #007bff;
+          background: white;
         }
 
         .feature strong {
-          margin-right: 8px;
+          display: block;
+          color: #1a1a1a;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 6px;
+          font-weight: 700;
         }
 
         .quantity-selector {
@@ -646,41 +806,50 @@ export default function ProductDetailClient({ product, images, category, brand, 
           display: flex;
           gap: 12px;
           flex-wrap: wrap;
+          margin-top: 28px;
         }
 
         .btn-large {
           padding: 16px 32px;
-          font-size: 16px;
-          font-weight: 600;
+          font-size: 15px;
+          font-weight: 700;
           border-radius: 8px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
-          transition: all 0.2s;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           flex: 1;
           min-width: 150px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         .btn-primary {
-          background: #007bff;
+          background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
           color: white;
           border: none;
+          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
         }
 
         .btn-primary:hover {
-          background: #0056b3;
+          background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0, 123, 255, 0.4);
         }
 
         .btn-secondary {
-          background: #28a745;
+          background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
           color: white;
           border: none;
+          box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
         }
 
         .btn-secondary:hover {
-          background: #218838;
+          background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
         }
 
         .btn-outline {
@@ -741,54 +910,119 @@ export default function ProductDetailClient({ product, images, category, brand, 
           border-radius: 12px;
           overflow: hidden;
           margin-bottom: 40px;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+          border: 1px solid #f0f0f0;
         }
 
         .tabs-header {
           display: flex;
-          border-bottom: 1px solid #dee2e6;
+          border-bottom: 2px solid #e9ecef;
+          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
         }
 
         .tabs-header button {
           flex: 1;
-          padding: 20px;
+          padding: 18px 20px;
           background: none;
           border: none;
-          font-size: 16px;
+          font-size: 15px;
           font-weight: 600;
           cursor: pointer;
-          color: #666;
-          transition: all 0.2s;
+          color: #6c757d;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           border-bottom: 3px solid transparent;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          position: relative;
         }
 
         .tabs-header button:hover {
           color: #007bff;
+          background: rgba(0, 123, 255, 0.03);
         }
 
         .tabs-header button.active {
           color: #007bff;
           border-bottom-color: #007bff;
+          background: rgba(0, 123, 255, 0.05);
         }
 
         .tabs-content {
-          padding: 40px;
+          padding: 48px;
+          animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
         }
 
         .tab-pane h3 {
-          font-size: 24px;
-          margin-bottom: 20px;
+          font-size: 26px;
+          font-weight: 700;
+          margin-bottom: 28px;
+          color: #1a1a1a;
+          border-bottom: 2px solid #f0f0f0;
+          padding-bottom: 16px;
         }
 
         .tab-pane h4 {
-          font-size: 18px;
-          margin-top: 24px;
-          margin-bottom: 12px;
+          font-size: 16px;
+          font-weight: 700;
+          margin-top: 32px;
+          margin-bottom: 20px;
+          color: #1a1a1a;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          padding-bottom: 12px;
+          border-bottom: 2px solid #007bff;
+          display: inline-block;
         }
 
         .tab-pane p {
-          font-size: 16px;
-          line-height: 1.8;
+          font-size: 15px;
+          line-height: 2;
           color: #666;
+          margin-bottom: 24px;
+          text-align: left;
+          background: #f8f9fa;
+          padding: 20px 24px;
+          border-radius: 8px;
+          border-left: 4px solid #007bff;
+        }
+
+        .description-list {
+          list-style: none;
+          padding: 0;
+          margin: 0 0 32px 0;
+        }
+
+        .description-list li {
+          font-size: 15px;
+          line-height: 2;
+          color: #666;
+          padding-left: 28px;
+          position: relative;
+          margin-bottom: 16px;
+          transition: color 0.3s ease;
+        }
+
+        .description-list li:before {
+          content: '•';
+          position: absolute;
+          left: 6px;
+          top: 1px;
+          color: #007bff;
+          font-weight: 700;
+          font-size: 18px;
+        }
+
+        .description-list li:hover {
+          color: #007bff;
         }
 
         .specs-table {

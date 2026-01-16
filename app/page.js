@@ -58,6 +58,7 @@ export default async function Home() {
         *,
         product_images (url, alt, position)
       `)
+      .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(20)
     
@@ -68,6 +69,7 @@ export default async function Home() {
         *,
         product_images (url, alt, position)
       `)
+      .eq('is_active', true)
       .order('rating', { ascending: false })
       .order('review_count', { ascending: false })
       .limit(16)

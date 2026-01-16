@@ -10,6 +10,7 @@ export async function generateMetadata({ params }) {
       .from('products')
       .select('*, categories(name), brands(name)')
       .eq('slug', slug)
+      .eq('is_active', true)
       .single()
     
     if (!data) return { title: 'Product not found' }
@@ -57,6 +58,7 @@ export default async function ProductPage({ params }) {
         brands (id, name, slug)
       `)
       .eq('slug', slug)
+      .eq('is_active', true)
       .single()
     
     if (!data) {
@@ -75,6 +77,7 @@ export default async function ProductPage({ params }) {
       .order('position')
     
     images = imagesData || []
+    console.log('Server-side Images Debug:', { productId: product.id, productSlug: product.slug, imagesCount: images.length, images })
     
     // Fetch reviews
     const { data: reviewsData } = await supabase
@@ -97,6 +100,7 @@ export default async function ProductPage({ params }) {
           brands (name, slug)
         `)
         .eq('category_id', product.category_id)
+        .eq('is_active', true)
         .neq('id', product.id)
         .gte('stock', 1)
         .order('rating', { ascending: false })
@@ -115,6 +119,7 @@ export default async function ProductPage({ params }) {
             brands (name, slug)
           `)
           .eq('brand_id', product.brand_id)
+          .eq('is_active', true)
           .neq('id', product.id)
           .not('id', 'in', `(${categoryIds.join(',')})`)
           .gte('stock', 1)

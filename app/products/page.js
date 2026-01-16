@@ -22,6 +22,7 @@ export default async function ProductsPage({ searchParams }) {
     const { data: categoriesData } = await supabase
       .from('categories')
       .select('id, name, slug')
+      .eq('is_active', true)
       .order('name')
     categories = categoriesData || []
     
@@ -29,6 +30,7 @@ export default async function ProductsPage({ searchParams }) {
     const { data: brandsData } = await supabase
       .from('brands')
       .select('id, name, slug')
+      .eq('is_active', true)
       .order('name')
     brands = brandsData || []
     
@@ -40,21 +42,28 @@ export default async function ProductsPage({ searchParams }) {
         categories (id, name, slug),
         brands (id, name, slug)
       `)
+      .eq('is_active', true)
       .gte('stock', 1) // Only show in-stock products
     
-    // Filter by category
-    if (searchParams?.category) {
-      const category = categories.find(c => c.slug === searchParams.category)
-      if (category) {
-        query = query.eq('category_id', category.id)
+    // Filter by multiple categories
+    if (searchParams?.categories) {
+      const categoryArray = searchParams.categories.split(',')
+      const categoryIds = categories
+        .filter(c => categoryArray.includes(c.slug))
+        .map(c => c.id)
+      if (categoryIds.length > 0) {
+        query = query.in('category_id', categoryIds)
       }
     }
     
-    // Filter by brand
-    if (searchParams?.brand) {
-      const brand = brands.find(b => b.slug === searchParams.brand)
-      if (brand) {
-        query = query.eq('brand_id', brand.id)
+    // Filter by multiple brands
+    if (searchParams?.brands) {
+      const brandArray = searchParams.brands.split(',')
+      const brandIds = brands
+        .filter(b => brandArray.includes(b.slug))
+        .map(b => b.id)
+      if (brandIds.length > 0) {
+        query = query.in('brand_id', brandIds)
       }
     }
     
