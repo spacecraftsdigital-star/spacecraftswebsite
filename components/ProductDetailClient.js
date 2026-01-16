@@ -35,6 +35,11 @@ export default function ProductDetailClient({
   })
   const [reviewsRefresh, setReviewsRefresh] = useState(0)
   const [imageError, setImageError] = useState(false)
+  const [pincode, setPincode] = useState('')
+  const [deliveryInfo, setDeliveryInfo] = useState(null)
+  const [deliveryChecking, setDeliveryChecking] = useState(false)
+  const [showRequestForm, setShowRequestForm] = useState(false)
+  const [deliveryRequest, setDeliveryRequest] = useState({ pincode: '', contact: '', email: '' })
 
   console.log('ProductDetailClient Debug:', { product: product.name, productId: product.id, imagesCount: images?.length, images })
 
@@ -88,6 +93,118 @@ export default function ProductDetailClient({
   const handleBuyNow = () => {
     handleAddToCart()
     setTimeout(() => router.push('/cart'), 500)
+  }
+
+  // Pincode Delivery Checker
+  const checkDelivery = async (pinCode) => {
+    if (!pinCode || pinCode.length !== 6) {
+      alert('Please enter a valid 6-digit pincode')
+      return
+    }
+    
+    setDeliveryChecking(true)
+    
+    try {
+      const response = await fetch('/api/check-delivery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pincode: pinCode })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data.error || 'Error checking delivery')
+        setDeliveryChecking(false)
+        return
+      }
+
+      if (data.available) {
+        setDeliveryInfo({
+          available: true,
+          place: data.place,
+          freeShipping: data.freeShipping,
+          shippingCost: data.shippingCost,
+          deliveryDays: data.deliveryDays,
+          estimatedDate: data.estimatedDate,
+          city: data.city,
+          state: data.state,
+          codAvailable: data.codAvailable
+        })
+        setShowRequestForm(false)
+      } else {
+        setDeliveryInfo({
+          available: false,
+          place: 'Delivery area not available',
+          message: data.message || 'We don\'t deliver to this pincode yet'
+        })
+        setShowRequestForm(true)
+      }
+    } catch (error) {
+      console.error('Error checking delivery:', error)
+      alert('Failed to check delivery. Please try again.')
+    } finally {
+      setDeliveryChecking(false)
+    }
+  }
+
+  const getGeolocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser')
+      return
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords
+        // In real app, reverse geocode to get pincode
+        alert(`Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}\n\nEnter your pincode for delivery check`)
+      },
+      (error) => {
+        alert('Unable to access location. Please enable location services.')
+        console.error('Geolocation error:', error)
+      }
+    )
+  }
+
+  const submitDeliveryRequest = async () => {
+    if (!deliveryRequest.pincode || !deliveryRequest.contact || !deliveryRequest.email) {
+      alert('Please fill all required fields')
+      return
+    }
+
+    if (deliveryRequest.pincode.length !== 6) {
+      alert('Please enter a valid 6-digit pincode')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/delivery-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: product.id,
+          pincode: deliveryRequest.pincode,
+          contact: deliveryRequest.contact,
+          email: deliveryRequest.email
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        alert(result.error || 'Failed to submit request. Please try again.')
+        return
+      }
+
+      alert('Thank you! We\'ll notify you when delivery is available in your area.')
+      setDeliveryRequest({ pincode: '', contact: '', email: '' })
+      setShowRequestForm(false)
+      setDeliveryInfo(null)
+    } catch (error) {
+      console.error('Error submitting delivery request:', error)
+      alert('Failed to submit request. Please try again.')
+    }
   }
 
   return (
@@ -355,7 +472,23 @@ export default function ProductDetailClient({
                   ))}
                 </div>
                 {selectedWarranty && (
-                  <p className="warranty-description">{selectedWarranty.description}</p>
+                  <div className="warranty-summary">
+                    <p className="warranty-description">{selectedWarranty.description}</p>
+                    <div className="warranty-cost-breakdown">
+                      <div className="cost-row">
+                        <span className="cost-label">Product Price:</span>
+                        <span className="cost-value">₹{(product.discount_price || product.price)?.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="cost-row">
+                        <span className="cost-label">Protection Plan:</span>
+                        <span className="cost-value">₹{selectedWarranty.price?.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="cost-row total">
+                        <span className="cost-label">Total Cost:</span>
+                        <span className="cost-value total-price">₹{((product.discount_price || product.price) + selectedWarranty.price)?.toLocaleString('en-IN')}</span>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             ) : (
@@ -363,6 +496,146 @@ export default function ProductDetailClient({
                 ℹ️ Protection plans available on premium models. Standard warranty included.
               </div>
             )}
+
+            {/* Delivery Checker Section */}
+            <div className="delivery-checker-section">
+              <h4>📦 Check Delivery Availability</h4>
+              
+              <div className="pincode-input-group">
+                <div className="input-wrapper">
+                  <input
+                    type="text"
+                    placeholder="Enter 6-digit pincode"
+                    value={pincode}
+                    onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength="6"
+                    className="pincode-input"
+                  />
+                  <button
+                    onClick={() => checkDelivery(pincode)}
+                    disabled={deliveryChecking || pincode.length !== 6}
+                    className="check-delivery-btn"
+                  >
+                    {deliveryChecking ? 'Checking...' : 'Check'}
+                  </button>
+                </div>
+                
+                <button
+                  onClick={getGeolocation}
+                  className="locate-btn"
+                  title="Use your device location"
+                >
+                  📍 Use My Location
+                </button>
+              </div>
+
+              {/* Delivery Available */}
+              {deliveryInfo?.available && (
+                <div className="delivery-result success">
+                  <div className="result-header">
+                    <span className="status-icon">✓</span>
+                    <h5>Delivery Available!</h5>
+                  </div>
+                  <div className="delivery-details">
+                    <div className="detail-row">
+                      <span className="detail-label">📍 Location:</span>
+                      <span className="detail-value">{deliveryInfo.place}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">🚚 Shipping:</span>
+                      <span className="detail-value">
+                        {deliveryInfo.freeShipping ? (
+                          <span className="free-shipping">FREE</span>
+                        ) : (
+                          `₹${deliveryInfo.shippingCost}`
+                        )}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">📅 Delivery:</span>
+                      <span className="detail-value">{deliveryInfo.deliveryDays} days ({deliveryInfo.estimatedDate})</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Delivery Not Available */}
+              {deliveryInfo?.available === false && !showRequestForm && (
+                <div className="delivery-result unavailable">
+                  <div className="result-header">
+                    <span className="status-icon">⚠</span>
+                    <h5>Not Available in Your Area</h5>
+                  </div>
+                  <p className="unavailable-message">{deliveryInfo.message}</p>
+                  <button
+                    onClick={() => setShowRequestForm(true)}
+                    className="request-delivery-btn"
+                  >
+                    Request Delivery to This Area
+                  </button>
+                </div>
+              )}
+
+              {/* Delivery Request Form */}
+              {showRequestForm && (
+                <div className="delivery-request-form">
+                  <h5>Schedule Delivery Request</h5>
+                  <p className="form-subtitle">We'll notify you when delivery becomes available in your area</p>
+                  
+                  <div className="form-group">
+                    <label>Pincode</label>
+                    <input
+                      type="text"
+                      value={deliveryRequest.pincode}
+                      onChange={(e) => setDeliveryRequest({ ...deliveryRequest, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                      placeholder="Enter 6-digit pincode"
+                      maxLength="6"
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Phone Number</label>
+                    <input
+                      type="tel"
+                      value={deliveryRequest.contact}
+                      onChange={(e) => setDeliveryRequest({ ...deliveryRequest, contact: e.target.value })}
+                      placeholder="Your contact number"
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Email Address</label>
+                    <input
+                      type="email"
+                      value={deliveryRequest.email}
+                      onChange={(e) => setDeliveryRequest({ ...deliveryRequest, email: e.target.value })}
+                      placeholder="your@email.com"
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-actions">
+                    <button
+                      onClick={submitDeliveryRequest}
+                      className="submit-request-btn"
+                    >
+                      Submit Request
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowRequestForm(false)
+                        setDeliveryInfo(null)
+                      }}
+                      className="cancel-request-btn"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Quantity Selector */}
             {product.stock > 0 && (
@@ -815,8 +1088,16 @@ export default function ProductDetailClient({
                             <p className="store-delivery-detail">
                               <strong>Delivery:</strong> {store.delivery_days} days
                             </p>
-                            <button className="store-directions-btn">
-                              Get Directions
+                            <button 
+                              className="store-directions-btn"
+                              onClick={() => {
+                                // Open Google Maps with store location
+                                const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(store.address)}`;
+                                window.open(mapsUrl, '_blank');
+                              }}
+                              title="Open directions in Google Maps"
+                            >
+                              📍 Get Directions
                             </button>
                           </div>
                         </div>
@@ -1367,9 +1648,9 @@ export default function ProductDetailClient({
 
         .product-tabs {
           background: white;
-          border-radius: 12px;
+          border-radius: 8px;
           overflow: hidden;
-          margin-bottom: 40px;
+          margin-bottom: 24px;
           box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
           border: 1px solid #f0f0f0;
         }
@@ -1378,22 +1659,26 @@ export default function ProductDetailClient({
           display: flex;
           border-bottom: 2px solid #e9ecef;
           background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+          overflow-x: auto;
+          overflow-y: hidden;
         }
 
         .tabs-header button {
-          flex: 1;
-          padding: 18px 20px;
+          flex: 0 0 auto;
+          min-width: 140px;
+          padding: 14px 16px;
           background: none;
           border: none;
-          font-size: 15px;
-          font-weight: 600;
+          font-size: 14px;
+          font-weight: 700;
           cursor: pointer;
           color: #6c757d;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          border-bottom: 3px solid transparent;
+          border-bottom: 2px solid transparent;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.4px;
           position: relative;
+          white-space: nowrap;
         }
 
         .tabs-header button:hover {
@@ -1408,7 +1693,7 @@ export default function ProductDetailClient({
         }
 
         .tabs-content {
-          padding: 48px;
+          padding: 28px;
           animation: fadeIn 0.4s ease-out;
         }
 
@@ -1422,59 +1707,58 @@ export default function ProductDetailClient({
         }
 
         .tab-pane h3 {
-          font-size: 26px;
+          font-size: 20px;
           font-weight: 700;
-          margin-bottom: 28px;
+          margin-bottom: 16px;
           color: #1a1a1a;
-          border-bottom: 2px solid #f0f0f0;
-          padding-bottom: 16px;
+          border-bottom: 1px solid #f0f0f0;
+          padding-bottom: 12px;
         }
 
         .tab-pane h4 {
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 700;
-          margin-top: 32px;
-          margin-bottom: 20px;
+          margin-top: 18px;
+          margin-bottom: 12px;
           color: #1a1a1a;
           text-transform: uppercase;
-          letter-spacing: 1px;
-          padding-bottom: 12px;
+          letter-spacing: 0.5px;
+          padding-bottom: 8px;
           border-bottom: 2px solid #007bff;
           display: inline-block;
         }
-
         .tab-pane p {
-          font-size: 15px;
-          line-height: 2;
+          font-size: 14px;
+          line-height: 1.6;
           color: #666;
-          margin-bottom: 24px;
+          margin-bottom: 16px;
           text-align: left;
           background: #f8f9fa;
-          padding: 20px 24px;
-          border-radius: 8px;
-          border-left: 4px solid #007bff;
+          padding: 14px 16px;
+          border-radius: 6px;
+          border-left: 3px solid #007bff;
         }
 
         .description-list {
           list-style: none;
           padding: 0;
-          margin: 0 0 32px 0;
+          margin: 0 0 18px 0;
         }
 
         .description-list li {
-          font-size: 15px;
-          line-height: 2;
+          font-size: 14px;
+          line-height: 1.6;
           color: #666;
-          padding-left: 28px;
+          padding: 8px 0 8px 10px;
           position: relative;
-          margin-bottom: 16px;
+          margin-bottom: 10px;
           transition: color 0.3s ease;
         }
 
         .description-list li:before {
           content: '•';
           position: absolute;
-          left: 6px;
+          left: -10px;
           top: 1px;
           color: #007bff;
           font-weight: 700;
@@ -1491,19 +1775,19 @@ export default function ProductDetailClient({
         }
 
         .specs-table td {
-          padding: 16px;
+          padding: 10px 12px;
           border-bottom: 1px solid #e9ecef;
         }
 
         .specs-table td:first-child {
-          width: 200px;
+          width: 160px;
           background: #f8f9fa;
         }
 
         .reviews-list {
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 16px;
         }
 
         .review-item {
@@ -1530,8 +1814,8 @@ export default function ProductDetailClient({
         }
 
         .review-item h4 {
-          font-size: 16px;
-          margin-bottom: 8px;
+          font-size: 14px;
+          margin-bottom: 6px;
         }
 
         .review-item p {
@@ -1540,12 +1824,12 @@ export default function ProductDetailClient({
         }
 
         .related-products {
-          margin-bottom: 60px;
+          margin-bottom: 40px;
         }
 
         .related-products h2 {
-          font-size: 28px;
-          margin-bottom: 30px;
+          font-size: 22px;
+          margin-bottom: 20px;
         }
 
         .products-grid {
@@ -1860,6 +2144,56 @@ export default function ProductDetailClient({
           border-radius: 6px;
         }
 
+        .warranty-summary {
+          margin-top: 16px;
+        }
+
+        .warranty-cost-breakdown {
+          background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+          border: 1px solid #e3f2fd;
+          border-radius: 8px;
+          padding: 16px;
+          margin-top: 12px;
+        }
+
+        .cost-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 10px 0;
+          border-bottom: 1px solid #e9ecef;
+          font-size: 14px;
+        }
+
+        .cost-row.total {
+          border-bottom: none;
+          padding: 12px 0;
+          margin-top: 4px;
+          padding-top: 12px;
+          border-top: 2px solid #007bff;
+        }
+
+        .cost-label {
+          color: #555;
+          font-weight: 600;
+        }
+
+        .cost-value {
+          color: #1a1a1a;
+          font-weight: 600;
+        }
+
+        .cost-row.total .cost-label {
+          color: #007bff;
+          font-size: 16px;
+        }
+
+        .total-price {
+          color: #28a745;
+          font-size: 18px;
+          font-weight: 700;
+        }
+
         .delivery-stores-section {
           margin: 12px 0;
           padding: 0;
@@ -1981,6 +2315,322 @@ export default function ProductDetailClient({
           letter-spacing: 0.5px;
         }
 
+        /* DELIVERY CHECKER SECTION */
+        .delivery-checker-section {
+          background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
+          border: 1px solid #e3f2fd;
+          border-radius: 10px;
+          padding: 24px;
+          margin-bottom: 20px;
+        }
+
+        .delivery-checker-section h4 {
+          font-size: 16px;
+          font-weight: 700;
+          color: #1a1a1a;
+          margin-bottom: 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .pincode-input-group {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 18px;
+          flex-wrap: wrap;
+        }
+
+        .input-wrapper {
+          display: flex;
+          gap: 8px;
+          flex: 1;
+          min-width: 280px;
+        }
+
+        .pincode-input {
+          flex: 1;
+          padding: 12px 16px;
+          border: 1.5px solid #e9ecef;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 600;
+          letter-spacing: 1px;
+          transition: all 0.3s ease;
+        }
+
+        .pincode-input:focus {
+          outline: none;
+          border-color: #007bff;
+          box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .pincode-input::placeholder {
+          color: #999;
+        }
+
+        .check-delivery-btn {
+          padding: 12px 24px;
+          background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          white-space: nowrap;
+        }
+
+        .check-delivery-btn:hover:not(:disabled) {
+          background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+          box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .check-delivery-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .locate-btn {
+          padding: 12px 20px;
+          background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          white-space: nowrap;
+        }
+
+        .locate-btn:hover {
+          background: linear-gradient(135deg, #1e7e34 0%, #155c2e 100%);
+          box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+          transform: translateY(-1px);
+        }
+
+        /* Delivery Results */
+        .delivery-result {
+          margin-top: 16px;
+          padding: 16px;
+          border-radius: 8px;
+          animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .delivery-result.success {
+          background: #f0fdf4;
+          border: 1px solid #dcfce7;
+        }
+
+        .delivery-result.unavailable {
+          background: #fef2f2;
+          border: 1px solid #fee2e2;
+        }
+
+        .result-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+
+        .status-icon {
+          font-size: 24px;
+          font-weight: bold;
+        }
+
+        .delivery-result.success .status-icon {
+          color: #22c55e;
+        }
+
+        .delivery-result.unavailable .status-icon {
+          color: #ef4444;
+        }
+
+        .result-header h5 {
+          margin: 0;
+          font-size: 16px;
+          font-weight: 700;
+          color: #1a1a1a;
+        }
+
+        .delivery-result.success .result-header h5 {
+          color: #15803d;
+        }
+
+        .delivery-result.unavailable .result-header h5 {
+          color: #991b1b;
+        }
+
+        .delivery-details {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .detail-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 0;
+          font-size: 14px;
+        }
+
+        .detail-label {
+          color: #666;
+          font-weight: 600;
+        }
+
+        .detail-value {
+          color: #1a1a1a;
+          font-weight: 700;
+        }
+
+        .free-shipping {
+          color: #22c55e;
+          font-weight: 700;
+          background: #f0fdf4;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 13px;
+        }
+
+        .unavailable-message {
+          margin: 0 0 12px 0;
+          color: #991b1b;
+          font-size: 14px;
+          line-height: 1.6;
+        }
+
+        .request-delivery-btn {
+          width: 100%;
+          padding: 12px 16px;
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .request-delivery-btn:hover {
+          background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+          box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+          transform: translateY(-1px);
+        }
+
+        /* Delivery Request Form */
+        .delivery-request-form {
+          background: white;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          padding: 20px;
+          margin-top: 16px;
+        }
+
+        .delivery-request-form h5 {
+          margin: 0 0 4px 0;
+          font-size: 16px;
+          font-weight: 700;
+          color: #1a1a1a;
+        }
+
+        .form-subtitle {
+          margin: 0 0 16px 0;
+          font-size: 13px;
+          color: #666;
+        }
+
+        .form-group {
+          margin-bottom: 16px;
+        }
+
+        .form-group label {
+          display: block;
+          font-size: 13px;
+          font-weight: 700;
+          color: #555;
+          margin-bottom: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
+
+        .form-input {
+          width: 100%;
+          padding: 12px 14px;
+          border: 1.5px solid #e9ecef;
+          border-radius: 6px;
+          font-size: 14px;
+          font-family: inherit;
+          transition: all 0.3s ease;
+          box-sizing: border-box;
+        }
+
+        .form-input:focus {
+          outline: none;
+          border-color: #007bff;
+          box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .form-actions {
+          display: flex;
+          gap: 12px;
+          margin-top: 20px;
+        }
+
+        .submit-request-btn {
+          flex: 1;
+          padding: 12px 16px;
+          background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .submit-request-btn:hover {
+          background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+          box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .cancel-request-btn {
+          flex: 1;
+          padding: 12px 16px;
+          background: #f3f4f6;
+          color: #555;
+          border: 1px solid #e9ecef;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .cancel-request-btn:hover {
+          background: #e5e7eb;
+          border-color: #d1d5db;
+        }
+
         @media (max-width: 768px) {
           .product-main {
             padding: 24px;
@@ -2011,7 +2661,7 @@ export default function ProductDetailClient({
           }
 
           .tabs-content {
-            padding: 24px;
+            padding: 18px;
           }
 
           .variants-grid {
@@ -2035,6 +2685,38 @@ export default function ProductDetailClient({
 
           .store-delivery {
             width: 100%;
+          }
+
+          .pincode-input-group {
+            flex-direction: column;
+          }
+
+          .input-wrapper {
+            min-width: auto;
+          }
+
+          .check-delivery-btn,
+          .locate-btn {
+            width: 100%;
+          }
+
+          .delivery-checker-section {
+            padding: 16px;
+          }
+
+          .form-actions {
+            flex-direction: column;
+          }
+
+          .submit-request-btn,
+          .cancel-request-btn {
+            width: 100%;
+          }
+
+          .detail-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
           }
         }
       `}</style>
@@ -2165,14 +2847,23 @@ function RelatedProductCard({ product }) {
         .warranty-list {
           list-style: none;
           padding: 0;
-          margin: 0;
+          margin: 12px 0 0 0;
         }
 
         .warranty-list li {
-          padding: 8px 0;
-          color: #333;
-          font-size: 14px;
+          padding: 10px 0 10px 10px;
+          color: #555;
+          font-size: 13px;
           line-height: 1.6;
+          position: relative;
+        }
+
+        .warranty-list li:before {
+          content: "✓";
+          position: absolute;
+          left: -10px;
+          color: #28a745;
+          font-weight: bold;
         }
 
         .warranty-plans {
@@ -2224,21 +2915,27 @@ function RelatedProductCard({ product }) {
 
         /* CARE TAB STYLES */
         .care-tab {
-          padding: 20px 0;
+          padding: 0;
         }
 
         .care-content {
-          background: #f9f9f9;
-          padding: 20px;
+          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+          padding: 24px;
           border-radius: 8px;
+          border: 1px solid #e9ecef;
         }
 
         .care-content h4 {
-          margin-top: 16px;
-          margin-bottom: 10px;
-          color: #1a1a1a;
-          font-size: 15px;
-          font-weight: 600;
+          margin-top: 20px;
+          margin-bottom: 12px;
+          color: #007bff;
+          font-size: 14px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding-bottom: 8px;
+          border-bottom: 2px solid #007bff;
+          display: inline-block;
         }
 
         .care-content h4:first-child {
@@ -2248,24 +2945,24 @@ function RelatedProductCard({ product }) {
         .care-list {
           list-style: none;
           padding: 0;
-          margin: 0 0 16px 0;
+          margin: 12px 0 18px 0;
         }
 
         .care-list li {
-          padding: 10px 0;
-          padding-left: 24px;
+          padding: 10px 0 10px 10px;
           position: relative;
-          color: #333;
-          font-size: 14px;
+          color: #555;
+          font-size: 13px;
           line-height: 1.6;
         }
 
         .care-list li:before {
           content: "•";
           position: absolute;
-          left: 0;
+          left: -10px;
           color: #28a745;
           font-weight: bold;
+          font-size: 14px;
         }
 
         .care-list li strong {
@@ -2274,13 +2971,14 @@ function RelatedProductCard({ product }) {
 
         /* BRAND TAB STYLES */
         .brand-tab {
-          padding: 20px 0;
+          padding: 0;
         }
 
         .brand-content {
-          background: #f9f9f9;
-          padding: 20px;
+          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+          padding: 24px;
           border-radius: 8px;
+          border: 1px solid #e9ecef;
         }
 
         .brand-section {
@@ -2290,23 +2988,28 @@ function RelatedProductCard({ product }) {
         .brand-section h4 {
           margin-top: 0;
           margin-bottom: 10px;
-          color: #1a1a1a;
-          font-size: 15px;
-          font-weight: 600;
+          color: #007bff;
+          font-size: 14px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding-bottom: 8px;
+          border-bottom: 2px solid #007bff;
+          display: inline-block;
         }
 
         .brand-section p {
-          color: #666;
-          font-size: 14px;
+          color: #555;
+          font-size: 13px;
           line-height: 1.6;
-          margin-bottom: 12px;
+          margin-bottom: 14px;
         }
 
         .brand-highlights {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
           gap: 12px;
-          margin-top: 12px;
+          margin-top: 14px;
           margin-bottom: 20px;
         }
 
@@ -2317,7 +3020,14 @@ function RelatedProductCard({ product }) {
           padding: 12px;
           background: white;
           border-radius: 6px;
+          border: 1px solid #e9ecef;
           border-left: 3px solid #28a745;
+          transition: all 0.3s ease;
+        }
+
+        .highlight-item:hover {
+          box-shadow: 0 2px 8px rgba(40, 167, 69, 0.1);
+          border-left-color: #007bff;
         }
 
         .highlight-icon {
@@ -2326,6 +3036,10 @@ function RelatedProductCard({ product }) {
         }
 
         .highlight-text {
+          font-size: 13px;
+          font-weight: 600;
+          color: #1a1a1a;
+        }
           font-size: 13px;
           font-weight: 600;
           color: #1a1a1a;
@@ -2386,8 +3100,7 @@ function RelatedProductCard({ product }) {
         }
 
         .collection-benefits li {
-          padding: 8px 0;
-          padding-left: 24px;
+          padding: 8px 0 8px 10px;
           position: relative;
           color: #666;
           font-size: 14px;
@@ -2397,7 +3110,7 @@ function RelatedProductCard({ product }) {
         .collection-benefits li:before {
           content: "✓";
           position: absolute;
-          left: 0;
+          left: -10px;
           color: #28a745;
           font-weight: bold;
         }
@@ -2491,19 +3204,29 @@ function RelatedProductCard({ product }) {
 
         .store-directions-btn {
           width: 100%;
-          padding: 10px;
-          background: #007bff;
+          padding: 12px 16px;
+          background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
           color: white;
           border: none;
-          border-radius: 4px;
+          border-radius: 6px;
           font-size: 13px;
-          font-weight: 600;
+          font-weight: 700;
           cursor: pointer;
-          transition: background 0.2s;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
         }
 
         .store-directions-btn:hover {
-          background: #0056b3;
+          background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+          box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .store-directions-btn:active {
+          transform: translateY(0);
         }
 
         .no-stores {
