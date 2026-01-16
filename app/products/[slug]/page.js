@@ -45,6 +45,12 @@ export default async function ProductPage({ params }) {
   let brand = null
   let relatedProducts = []
   let reviews = []
+  let variants = []
+  let offers = []
+  let warranties = []
+  let emiOptions = []
+  let stores = []
+  let specifications = []
   
   try {
     const supabase = createSupabaseServerClient()
@@ -78,6 +84,65 @@ export default async function ProductPage({ params }) {
     
     images = imagesData || []
     console.log('Server-side Images Debug:', { productId: product.id, productSlug: product.slug, imagesCount: images.length, images })
+    
+    // Fetch variants
+    const { data: variantsData } = await supabase
+      .from('product_variants')
+      .select('*')
+      .eq('product_id', product.id)
+      .eq('is_active', true)
+      .order('position')
+    
+    variants = variantsData || []
+    
+    // Fetch offers
+    const { data: offersData } = await supabase
+      .from('product_offers')
+      .select('*')
+      .eq('product_id', product.id)
+      .eq('is_active', true)
+      .order('position')
+    
+    offers = offersData || []
+    
+    // Fetch warranty options
+    const { data: warrantiesData } = await supabase
+      .from('warranty_options')
+      .select('*')
+      .eq('product_id', product.id)
+      .eq('is_active', true)
+    
+    warranties = warrantiesData || []
+    
+    // Fetch EMI options
+    const { data: emiData } = await supabase
+      .from('emi_options')
+      .select('*')
+      .eq('product_id', product.id)
+      .eq('is_active', true)
+      .order('position')
+    
+    emiOptions = emiData || []
+    
+    // Fetch stores
+    const { data: storesData } = await supabase
+      .from('product_stores')
+      .select('*')
+      .eq('product_id', product.id)
+      .eq('is_active', true)
+      .order('distance_km')
+    
+    stores = storesData || []
+    
+    // Fetch specifications
+    const { data: specsData } = await supabase
+      .from('product_specifications')
+      .select('*')
+      .eq('product_id', product.id)
+      .eq('is_active', true)
+      .order('spec_category, position')
+    
+    specifications = specsData || []
     
     // Fetch reviews
     const { data: reviewsData } = await supabase
@@ -184,6 +249,12 @@ export default async function ProductPage({ params }) {
         images={images}
         category={category}
         brand={brand}
+        variants={variants}
+        offers={offers}
+        warranties={warranties}
+        emiOptions={emiOptions}
+        stores={stores}
+        specifications={specifications}
         relatedProducts={relatedProducts}
         reviews={reviews}
       />
