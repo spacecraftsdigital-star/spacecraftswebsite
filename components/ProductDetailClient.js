@@ -40,6 +40,8 @@ export default function ProductDetailClient({
   const [deliveryChecking, setDeliveryChecking] = useState(false)
   const [showRequestForm, setShowRequestForm] = useState(false)
   const [deliveryRequest, setDeliveryRequest] = useState({ pincode: '', contact: '', email: '' })
+  const [isZoomed, setIsZoomed] = useState(false)
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
 
   console.log('ProductDetailClient Debug:', { product: product.name, productId: product.id, imagesCount: images?.length, images })
 
@@ -93,6 +95,26 @@ export default function ProductDetailClient({
   const handleBuyNow = () => {
     handleAddToCart()
     setTimeout(() => router.push('/cart'), 500)
+  }
+
+  // Navigation handlers for image gallery
+  const handlePrevImage = () => {
+    setSelectedImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))
+    setImageError(false)
+  }
+
+  const handleNextImage = () => {
+    setSelectedImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+    setImageError(false)
+  }
+
+  // Zoom handlers
+  const handleMouseMove = (e) => {
+    if (!isZoomed) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width) * 100
+    const y = ((e.clientY - rect.top) / rect.height) * 100
+    setZoomPosition({ x, y })
   }
 
   // Pincode Delivery Checker
@@ -232,21 +254,60 @@ export default function ProductDetailClient({
         <div className="product-main">
           {/* Image Gallery */}
           <div className="product-gallery">
-            <div className="main-image">
-              <Image 
-                src={mainImage}
-                alt={product.name}
-                width={700}
-                height={700}
-                style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
-                priority
-                onError={() => {
-                  console.error('Main image failed to load:', { url: mainImage })
-                  setImageError(true)
-                }}
-              />
-              {discountPercentage > 0 && (
-                <span className="discount-badge">-{discountPercentage}%</span>
+            <div className="main-image-container">
+              <div 
+                className={`main-image ${isZoomed ? 'zoomed' : ''}`}
+                onMouseMove={handleMouseMove}
+                onMouseEnter={() => setIsZoomed(true)}
+                onMouseLeave={() => setIsZoomed(false)}
+              >
+                <Image 
+                  src={mainImage}
+                  alt={product.name}
+                  width={700}
+                  height={700}
+                  style={{ 
+                    objectFit: 'cover', 
+                    width: '100%', 
+                    height: 'auto',
+                    transformOrigin: isZoomed ? `${zoomPosition.x}% ${zoomPosition.y}%` : 'center',
+                    transform: isZoomed ? 'scale(2)' : 'scale(1)',
+                    transition: isZoomed ? 'none' : 'transform 0.3s ease'
+                  }}
+                  priority
+                  onError={() => {
+                    console.error('Main image failed to load:', { url: mainImage })
+                    setImageError(true)
+                  }}
+                />
+                {discountPercentage > 0 && (
+                  <span className="discount-badge">-{discountPercentage}%</span>
+                )}
+                {!isZoomed && (
+                  <div className="zoom-hint">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <path d="m21 21-4.35-4.35"></path>
+                      <line x1="11" y1="8" x2="11" y2="14"></line>
+                      <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                    Hover to zoom
+                  </div>
+                )}
+              </div>
+              {images.length > 1 && (
+                <>
+                  <button className="nav-arrow prev-arrow" onClick={handlePrevImage} aria-label="Previous image">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                  </button>
+                  <button className="nav-arrow next-arrow" onClick={handleNextImage} aria-label="Next image">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </button>
+                </>
               )}
             </div>
             {images.length > 1 && (
@@ -1270,12 +1331,141 @@ export default function ProductDetailClient({
           height: fit-content;
         }
 
+        .main-image-container {
+          position: relative;
+          margin-bottom: 16px;
+        }
+
         .main-image {
           position: relative;
           border-radius: 12px;
           overflow: hidden;
           background: #f8f9fa;
-          margin-bottom: 16px;
+          cursor: zoom-in;
+        }
+
+        .main-image.zoomed {
+          cursor: zoom-out;
+        }
+
+        .nav-arrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.95);
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+          transition: all 0.3s ease;
+          z-index: 10;
+          color: #333;
+        }
+
+        .nav-arrow:hover {
+          background: white;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+          transform: translateY(-50%) scale(1.1);
+        }
+
+        .nav-arrow:active {
+          transform: translateY(-50%) scale(0.95);
+        }
+
+        .prev-arrow {
+          left: 16px;
+        }
+
+        .next-arrow {
+          right: 16px;
+        }
+
+        .zoom-hint {
+          position: absolute;
+          bottom: 16px;
+          right: 16px;
+          background: rgba(0, 0, 0, 0.75);
+          color: white;
+          padding: 8px 12px;
+          border-radius: 8px;
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .main-image:hover .zoom-hint {
+          opacity: 1;
+        }
+
+        .main-image.zoomed {
+          cursor: zoom-out;
+        }
+
+        .nav-arrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.95);
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+          transition: all 0.3s ease;
+          z-index: 10;
+          color: #333;
+        }
+
+        .nav-arrow:hover {
+          background: white;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+          transform: translateY(-50%) scale(1.1);
+        }
+
+        .nav-arrow:active {
+          transform: translateY(-50%) scale(0.95);
+        }
+
+        .prev-arrow {
+          left: 16px;
+        }
+
+        .next-arrow {
+          right: 16px;
+        }
+
+        .zoom-hint {
+          position: absolute;
+          bottom: 16px;
+          right: 16px;
+          background: rgba(0, 0, 0, 0.75);
+          color: white;
+          padding: 8px 12px;
+          border-radius: 8px;
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .main-image:hover .zoom-hint {
+          opacity: 1;
         }
 
         .discount-badge {
@@ -2634,6 +2824,28 @@ export default function ProductDetailClient({
         @media (max-width: 768px) {
           .product-main {
             padding: 24px;
+            grid-template-columns: 1fr;
+          }
+
+          .product-gallery {
+            margin-bottom: 24px;
+          }
+
+          .nav-arrow {
+            width: 40px;
+            height: 40px;
+          }
+
+          .prev-arrow {
+            left: 8px;
+          }
+
+          .next-arrow {
+            right: 8px;
+          }
+
+          .zoom-hint {
+            display: none;
           }
 
           .product-title {
