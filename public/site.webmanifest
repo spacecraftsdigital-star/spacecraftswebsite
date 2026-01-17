@@ -9,9 +9,9 @@
   "description": "Premium furniture shopping at Spacecrafts Furniture",
   "icons": [
     {
-      "src": "/logo.svg",
+      "src": "/logo.webp",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/webp",
       "purpose": "any"
     }
   ]

@@ -18,6 +18,22 @@ export default function CartClient() {
   const [applyingCoupon, setApplyingCoupon] = useState(false)
   const [relatedProducts, setRelatedProducts] = useState([])
   const [relatedLoading, setRelatedLoading] = useState(false)
+  
+  // Address states
+  const [addresses, setAddresses] = useState([])
+  const [selectedAddress, setSelectedAddress] = useState(null)
+  const [showAddressForm, setShowAddressForm] = useState(false)
+  const [pincodeValidation, setPincodeValidation] = useState(null)
+  const [validatingPincode, setValidatingPincode] = useState(false)
+  const [showDeliveryRequest, setShowDeliveryRequest] = useState(false)
+  const [deliveryRequestData, setDeliveryRequestData] = useState({
+    full_name: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    postal_code: ''
+  })
 
   const fetchCart = async () => {
     setLoading(true)
@@ -99,6 +115,107 @@ export default function CartClient() {
   useEffect(() => {
     fetchCart()
   }, [])
+
+  useEffect(() => {
+    if (sessionToken) {
+      fetchAddresses()
+    }
+  }, [sessionToken])
+
+  const fetchAddresses = async () => {
+    try {
+      const res = await fetch('/api/addresses', {
+        headers: { Authorization: `Bearer ${sessionToken}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setAddresses(data.addresses || [])
+        // Auto-select default address
+        const defaultAddr = data.addresses?.find(a => a.is_default)
+        if (defaultAddr) {
+          setSelectedAddress(defaultAddr)
+          validatePincode(defaultAddr.postal_code)
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching addresses:', err)
+    }
+  }
+
+  const validatePincode = async (postal_code) => {
+    if (!postal_code || postal_code.length !== 6) return
+    
+    setValidatingPincode(true)
+    try {
+      const res = await fetch(`/api/validate-pincode?postal_code=${postal_code}`)
+      const data = await res.json()
+      
+      if (res.ok) {
+        setPincodeValidation(data)
+        
+        // Update shipping cost based on validation
+        if (data.available && data.deliveryInfo?.shippingCharge !== undefined) {
+          setSummary(prev => ({
+            ...prev,
+            shipping: data.deliveryInfo.shippingCharge,
+            total: prev.subtotal - prev.discount + prev.tax + data.deliveryInfo.shippingCharge
+          }))
+        } else if (!data.available) {
+          // No delivery available - set shipping to 0
+          setSummary(prev => ({
+            ...prev,
+            shipping: 0,
+            total: prev.subtotal - prev.discount + prev.tax
+          }))
+        }
+      }
+    } catch (err) {
+      console.error('Pincode validation error:', err)
+    } finally {
+      setValidatingPincode(false)
+    }
+  }
+
+  const handleAddressSelect = (address) => {
+    setSelectedAddress(address)
+    validatePincode(address.postal_code)
+    setShowAddressForm(false)
+  }
+
+  const handleDeliveryRequest = async (e) => {
+    e.preventDefault()
+    
+    try {
+      const res = await fetch('/api/validate-pincode', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionToken}`
+        },
+        body: JSON.stringify(deliveryRequestData)
+      })
+      
+      const data = await res.json()
+      
+      if (res.ok) {
+        alert(data.message)
+        setShowDeliveryRequest(false)
+        setDeliveryRequestData({
+          full_name: '',
+          phone: '',
+          address: '',
+          city: '',
+          state: '',
+          postal_code: ''
+        })
+      } else {
+        alert(data.error || 'Failed to submit request')
+      }
+    } catch (err) {
+      console.error('Delivery request error:', err)
+      alert('Failed to submit delivery request')
+    }
+  }
 
   const persistGuestCart = (nextItems) => {
     if (sessionToken) return
@@ -328,8 +445,176 @@ export default function CartClient() {
             {couponError && <div className="coupon-error">{couponError}</div>}
           </div>
 
-          <button className="checkout-btn">Checkout</button>
-          <p className="summary-note">Free shipping on orders above ₹500.</p>
+          {/* Address Selection Section */}
+          {sessionToken && (
+            <div className="address-section">
+              <div className="address-header">
+                <h4>Delivery Address</h4>
+                {addresses.length > 0 && !showAddressForm && (
+                  <button className="change-address-btn" onClick={() => setShowAddressForm(!showAddressForm)}>
+                    {showAddressForm ? 'Cancel' : 'Change'}
+                  </button>
+                )}
+              </div>
+
+              {!showAddressForm && selectedAddress ? (
+                <div className="selected-address">
+                  <div className="address-name">{selectedAddress.full_name}</div>
+                  <div className="address-details">
+                    {selectedAddress.address_line1}, {selectedAddress.address_line2}
+                    <br />
+                    {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.postal_code}
+                  </div>
+                  <div className="address-phone">Phone: {selectedAddress.phone}</div>
+                  
+                  {validatingPincode && <div className="validating">Validating pincode...</div>}
+                  
+                  {pincodeValidation && !validatingPincode && (
+                    <div className={`pincode-status ${pincodeValidation.available ? 'available' : 'unavailable'}`}>
+                      {pincodeValidation.available ? (
+                        <>
+                          ✓ Delivery available
+                          {pincodeValidation.deliveryInfo && (
+                            <span className="delivery-info">
+                              ({pincodeValidation.deliveryInfo.deliveryDays} days, 
+                              ₹{pincodeValidation.deliveryInfo.shippingCharge} shipping)
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          ⚠ Delivery not available
+                          {!showDeliveryRequest && (
+                            <button 
+                              className="request-delivery-btn"
+                              onClick={() => {
+                                setShowDeliveryRequest(true)
+                                setDeliveryRequestData({
+                                  full_name: selectedAddress.full_name,
+                                  phone: selectedAddress.phone,
+                                  address: `${selectedAddress.address_line1}, ${selectedAddress.address_line2 || ''}`,
+                                  city: selectedAddress.city,
+                                  state: selectedAddress.state,
+                                  postal_code: selectedAddress.postal_code
+                                })
+                              }}
+                            >
+                              Request Delivery
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : showAddressForm && addresses.length > 0 ? (
+                <div className="address-list">
+                  {addresses.map(addr => (
+                    <div 
+                      key={addr.id} 
+                      className={`address-option ${selectedAddress?.id === addr.id ? 'selected' : ''}`}
+                      onClick={() => handleAddressSelect(addr)}
+                    >
+                      <input 
+                        type="radio" 
+                        name="address" 
+                        checked={selectedAddress?.id === addr.id}
+                        onChange={() => {}}
+                      />
+                      <div className="address-option-content">
+                        <div className="address-option-name">{addr.full_name}</div>
+                        <div className="address-option-details">
+                          {addr.address_line1}, {addr.city} - {addr.postal_code}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <a href="/account" className="add-new-address-link">+ Add New Address</a>
+                </div>
+              ) : (
+                <div className="no-address">
+                  <p>No delivery address found</p>
+                  <a href="/account" className="add-address-link">Add Address</a>
+                </div>
+              )}
+
+              {/* Delivery Request Form */}
+              {showDeliveryRequest && (
+                <div className="delivery-request-form">
+                  <h4>Request Delivery to Your Area</h4>
+                  <p className="request-note">We'll contact you with shipping details</p>
+                  <form onSubmit={handleDeliveryRequest}>
+                    <input
+                      type="text"
+                      placeholder="Full Name"
+                      value={deliveryRequestData.full_name}
+                      onChange={e => setDeliveryRequestData({...deliveryRequestData, full_name: e.target.value})}
+                      required
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone Number"
+                      value={deliveryRequestData.phone}
+                      onChange={e => setDeliveryRequestData({...deliveryRequestData, phone: e.target.value})}
+                      pattern="[0-9]{10}"
+                      required
+                    />
+                    <textarea
+                      placeholder="Complete Address"
+                      value={deliveryRequestData.address}
+                      onChange={e => setDeliveryRequestData({...deliveryRequestData, address: e.target.value})}
+                      required
+                      rows={3}
+                    />
+                    <div className="form-row">
+                      <input
+                        type="text"
+                        placeholder="City"
+                        value={deliveryRequestData.city}
+                        onChange={e => setDeliveryRequestData({...deliveryRequestData, city: e.target.value})}
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="State"
+                        value={deliveryRequestData.state}
+                        onChange={e => setDeliveryRequestData({...deliveryRequestData, state: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Postal Code"
+                      value={deliveryRequestData.postal_code}
+                      onChange={e => setDeliveryRequestData({...deliveryRequestData, postal_code: e.target.value})}
+                      pattern="[0-9]{6}"
+                      required
+                    />
+                    <div className="form-actions">
+                      <button type="button" className="cancel-btn" onClick={() => setShowDeliveryRequest(false)}>
+                        Cancel
+                      </button>
+                      <button type="submit" className="submit-request-btn">
+                        Submit Request
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          )}
+
+          <button 
+            className="checkout-btn"
+            disabled={sessionToken && (!selectedAddress || (pincodeValidation && !pincodeValidation.available && !showDeliveryRequest))}
+          >
+            {sessionToken && !selectedAddress ? 'Select Address to Checkout' : 'Proceed to Checkout'}
+          </button>
+          <p className="summary-note">
+            {pincodeValidation && !pincodeValidation.available 
+              ? 'Delivery unavailable. Request delivery or contact us.' 
+              : 'Free shipping on orders above ₹500.'}
+          </p>
         </div>
       </div>
       {error && <div className="cart-error">{error}</div>}

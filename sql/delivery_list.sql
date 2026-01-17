@@ -23,12 +23,15 @@ CREATE INDEX IF NOT EXISTS idx_delivery_zones_is_available ON delivery_zones(is_
 -- Create delivery_requests table
 CREATE TABLE IF NOT EXISTS delivery_requests (
   id SERIAL PRIMARY KEY,
-  product_id INT REFERENCES products(id) ON DELETE CASCADE,
+  profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  product_id INT REFERENCES products(id) ON DELETE SET NULL,
   pincode VARCHAR(6) NOT NULL,
-  contact_phone VARCHAR(20) NOT NULL,
+  full_name VARCHAR(255) NOT NULL,
+  phone VARCHAR(20) NOT NULL,
   email VARCHAR(255) NOT NULL,
-  city VARCHAR(100),
-  state VARCHAR(100),
+  address TEXT NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  state VARCHAR(100) NOT NULL,
   status VARCHAR(50) DEFAULT 'pending', -- pending, contacted, scheduled, delivered
   notes TEXT,
   request_date TIMESTAMPTZ DEFAULT NOW(),
@@ -38,6 +41,7 @@ CREATE TABLE IF NOT EXISTS delivery_requests (
 
 CREATE INDEX IF NOT EXISTS idx_delivery_requests_pincode ON delivery_requests(pincode);
 CREATE INDEX IF NOT EXISTS idx_delivery_requests_product_id ON delivery_requests(product_id);
+CREATE INDEX IF NOT EXISTS idx_delivery_requests_profile_id ON delivery_requests(profile_id);
 CREATE INDEX IF NOT EXISTS idx_delivery_requests_email ON delivery_requests(email);
 CREATE INDEX IF NOT EXISTS idx_delivery_requests_status ON delivery_requests(status);
 
