@@ -116,7 +116,7 @@ export async function POST(request) {
         full_name,
         phone,
         address,
-        product_id: null, -- No specific product for address-based request
+        product_id: null, // No specific product for address-based request
         status: 'pending'
       })
       .select()
