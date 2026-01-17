@@ -622,8 +622,10 @@ export default function Header() {
           border: none;
           border-left: 3px solid transparent;
           width: 100%;
+          box-sizing: border-box;
           text-align: left;
           font-size: 0.95rem;
+          font-weight: 500;
           cursor: pointer;
           transition: all 0.15s ease;
         }
@@ -636,6 +638,7 @@ export default function Header() {
           background: #f8f8f8;
           color: #000;
           border-left-color: #333;
+          padding-left: 1.35rem;
         }
 
         .dropdown-item svg {
