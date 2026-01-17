@@ -41,7 +41,8 @@ export async function GET(request) {
           discount_price,
           description,
           slug,
-          stock
+          stock,
+          category_id
         )
       `)
       .eq('profile_id', profile.id)
@@ -93,6 +94,7 @@ export async function GET(request) {
         image_url: imageMap[item.product_id] || '/placeholder-product.svg',
         slug: item.products.slug,
         stock: item.products.stock,
+        category_id: item.products.category_id,
         itemTotal: itemTotal,
         itemDiscount: itemDiscount
       }

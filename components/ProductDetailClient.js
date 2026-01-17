@@ -145,16 +145,32 @@ export default function ProductDetailClient({
 
   const handleAddToWishlist = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.access_token) {
+        alert('Please login to add items to wishlist')
+        return
+      }
+
       const response = await fetch('/api/wishlist/add', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({ product_id: product.id })
       })
+      
+      const data = await response.json()
+      
       if (response.ok) {
-        alert('Added to wishlist!')
+        alert(data.message || 'Added to wishlist!')
+      } else {
+        alert(data.error || 'Failed to add to wishlist')
       }
     } catch (error) {
       console.error('Error adding to wishlist:', error)
+      alert('An error occurred. Please try again.')
     }
   }
 
