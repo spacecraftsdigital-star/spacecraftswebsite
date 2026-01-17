@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import ReviewForm from './ReviewForm'
 import ReviewsList from './ReviewsList'
 import ProductQA from './ProductQA'
+import { supabase } from '../lib/supabaseClient'
 
 export default function ProductDetailClient({ 
   product, 
@@ -42,6 +43,9 @@ export default function ProductDetailClient({
   const [deliveryRequest, setDeliveryRequest] = useState({ pincode: '', contact: '', email: '' })
   const [isZoomed, setIsZoomed] = useState(false)
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
+  const [cartLoading, setCartLoading] = useState(false)
+  const [cartError, setCartError] = useState(null)
+  const [cartSuccess, setCartSuccess] = useState(null)
 
   console.log('ProductDetailClient Debug:', { product: product.name, productId: product.id, imagesCount: images?.length, images })
 
@@ -63,17 +67,79 @@ export default function ProductDetailClient({
   })
 
   const handleAddToCart = async () => {
+    setCartError(null)
+    setCartSuccess(null)
+    setCartLoading(true)
+
     try {
+      // Validate quantity
+      if (!quantity || quantity < 1) {
+        setCartError('Please select a valid quantity')
+        setCartLoading(false)
+        return
+      }
+
+      // Check stock availability
+      if (product.stock && quantity > product.stock) {
+        setCartError(`Only ${product.stock} items available in stock`)
+        setCartLoading(false)
+        return
+      }
+
+      console.log('Getting session...')
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError)
+        setCartError('Session error. Please try logging in again.')
+        setCartLoading(false)
+        return
+      }
+
+      if (!session?.access_token) {
+        console.log('No session found')
+        setCartError('Please login to add items to cart')
+        setCartLoading(false)
+        return
+      }
+
+      console.log('Making API call with token:', session.access_token.substring(0, 20) + '...')
       const response = await fetch('/api/cart/add', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product_id: product.id, quantity })
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          product_id: product.id, 
+          quantity: parseInt(quantity) 
+        })
       })
-      if (response.ok) {
-        alert('Added to cart successfully!')
+
+      console.log('Response status:', response.status)
+      const data = await response.json()
+      console.log('Response data:', data)
+
+      if (!response.ok) {
+        setCartError(data.error || 'Failed to add item to cart')
+        setCartLoading(false)
+        return
       }
+
+      setCartSuccess(`${data.cartItem.product_name} added to cart! (${data.cartItem.quantity} ${data.cartItem.quantity > 1 ? 'items' : 'item'})`)
+      
+      // Reset quantity to 1 after successful add
+      setTimeout(() => {
+        setQuantity(1)
+        setCartSuccess(null)
+      }, 3000)
+
     } catch (error) {
       console.error('Error adding to cart:', error)
+      setCartError('An error occurred while adding to cart. Please try again.')
+      setCartLoading(false)
+    } finally {
+      setCartLoading(false)
     }
   }
 
@@ -767,21 +833,59 @@ export default function ProductDetailClient({
               </div>
             )}
 
+            {/* Status Messages */}
+            {cartError && (
+              <div className="cart-message error-message">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {cartError}
+              </div>
+            )}
+            {cartSuccess && (
+              <div className="cart-message success-message">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                {cartSuccess}
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="action-buttons">
               {product.stock > 0 ? (
                 <>
-                  <button className="btn-primary btn-large" onClick={handleBuyNow}>
+                  <button 
+                    className="btn-primary btn-large" 
+                    onClick={handleBuyNow}
+                    disabled={cartLoading}
+                  >
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M3 1h14l2 13H1L3 1zm0 0l1 6m11-6l-1 6"/>
                     </svg>
                     Buy Now
                   </button>
-                  <button className="btn-secondary btn-large" onClick={handleAddToCart}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M3 1h14l2 13H1L3 1z"/>
-                    </svg>
-                    Add to Cart
+                  <button 
+                    className="btn-secondary btn-large" 
+                    onClick={handleAddToCart}
+                    disabled={cartLoading || quantity < 1}
+                  >
+                    {cartLoading ? (
+                      <>
+                        <svg className="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <circle cx="12" cy="12" r="10" opacity="0.3"/>
+                          <path d="M12 2C6.48 2 2 6.48 2 12" strokeLinecap="round"/>
+                        </svg>
+                        Adding...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M3 1h14l2 13H1L3 1z"/>
+                        </svg>
+                        Add to Cart
+                      </>
+                    )}
                   </button>
                 </>
               ) : (
@@ -1733,6 +1837,41 @@ export default function ProductDetailClient({
           font-weight: 600;
         }
 
+        .cart-message {
+          padding: 14px 16px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 14px;
+          font-weight: 500;
+          margin-bottom: 16px;
+          animation: slideDown 0.3s ease-out;
+        }
+
+        .error-message {
+          background: #fee;
+          color: #c33;
+          border: 1px solid #fcc;
+        }
+
+        .success-message {
+          background: #efe;
+          color: #3c3;
+          border: 1px solid #cfc;
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
         .action-buttons {
           display: flex;
           gap: 12px;
@@ -1781,6 +1920,28 @@ export default function ProductDetailClient({
           background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
           transform: translateY(-2px);
           box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-secondary:disabled,
+        .btn-primary:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
+        }
+
+        .btn-large:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .spinner {
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         .btn-outline {
