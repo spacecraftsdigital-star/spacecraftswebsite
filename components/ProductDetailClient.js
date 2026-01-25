@@ -142,19 +142,20 @@ export default function ProductDetailClient({
 
   const handleAddToWishlist = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       
+      if (sessionError) {
+        alert('Session error. Please try logging in again.')
+        return
+      }
+
       if (!session?.access_token) {
         alert('Please login to add items to wishlist')
         return
       }
 
-      const response = await fetch('/api/wishlist/add', {
+      const response = await authenticatedFetch('/api/wishlist/add', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`
-        },
         body: JSON.stringify({ product_id: product.id })
       })
       
@@ -171,9 +172,9 @@ export default function ProductDetailClient({
     }
   }
 
-  const handleBuyNow = () => {
-    handleAddToCart()
-    setTimeout(() => router.push('/cart'), 500)
+  const handleBuyNow = async () => {
+    await handleAddToCart()
+    setTimeout(() => router.push('/cart'), 1000)
   }
 
   // Navigation handlers for image gallery
