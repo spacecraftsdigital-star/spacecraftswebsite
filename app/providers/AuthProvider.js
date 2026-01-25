@@ -10,13 +10,18 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check active session
+    // Check active session on mount
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user) {
+          console.log('Session found, user:', session.user.email)
           setUser(session.user)
           await fetchProfile(session.user.id)
+        } else {
+          console.log('No session found')
+          setUser(null)
+          setProfile(null)
         }
       } catch (error) {
         console.error('Auth check failed:', error)
@@ -27,9 +32,10 @@ export function AuthProvider({ children }) {
 
     checkAuth()
 
-    // Listen for auth changes
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email)
         if (session?.user) {
           setUser(session.user)
           await fetchProfile(session.user.id)
@@ -58,27 +64,33 @@ export function AuthProvider({ children }) {
 
       if (data) {
         setProfile(data)
-      } else if (!error) {
-        // Create profile if it doesn't exist
-        const { data: user } = await supabase.auth.getUser()
-        if (user?.user) {
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
+      } else if (error?.code === 'PGRST116') {
+        // Create profile if it doesn't exist (PGRST116 = no rows returned)
+        try {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const profileData = {
               id: userId,
-              email: user.user.email,
-              full_name: user.user.user_metadata?.full_name || '',
-              avatar_url: user.user.user_metadata?.avatar_url || ''
-            })
-          
-          if (!insertError) {
-            const { data: newProfile } = await supabase
+              email: user.email,
+              full_name: user.user_metadata?.full_name || '',
+              avatar_url: user.user_metadata?.avatar_url || ''
+            }
+            
+            const { data: newProfile, error: insertError } = await supabase
               .from('profiles')
-              .select('*')
-              .eq('id', userId)
+              .insert([profileData])
+              .select()
               .single()
-            setProfile(newProfile)
+            
+            if (!insertError && newProfile) {
+              setProfile(newProfile)
+              console.log('Profile created successfully for user:', userId)
+            } else if (insertError) {
+              console.error('Error creating profile:', insertError)
+            }
           }
+        } catch (createError) {
+          console.error('Profile creation error:', createError)
         }
       }
     } catch (error) {

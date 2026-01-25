@@ -30,7 +30,7 @@ export async function PUT(request) {
       )
     }
 
-    // Get user profile
+    // Get user profile to get profile_id
     const { data: profile } = await supabase
       .from('profiles')
       .select('id')

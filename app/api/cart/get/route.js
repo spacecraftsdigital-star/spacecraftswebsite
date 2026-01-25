@@ -13,7 +13,7 @@ export async function GET(request) {
       )
     }
 
-    // Get user profile
+    // Get profile to access cart
     const { data: profile } = await supabase
       .from('profiles')
       .select('id')
@@ -22,7 +22,7 @@ export async function GET(request) {
 
     if (!profile) {
       return NextResponse.json(
-        { error: 'User profile not found' },
+        { error: 'Profile not found' },
         { status: 404 }
       )
     }

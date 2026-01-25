@@ -7,24 +7,36 @@ import styles from './login.module.css'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { signInWithGoogle, isAuthenticated } = useAuth()
-  const [loading, setLoading] = useState(false)
+  const { signInWithGoogle, isAuthenticated, loading } = useAuth()
+  const [signingIn, setSigningIn] = useState(false)
   const [error, setError] = useState('')
 
-  // Redirect if already logged in
-  if (isAuthenticated) {
+  // Redirect if already logged in (but wait for loading to finish)
+  if (!loading && isAuthenticated) {
     router.push('/account')
     return null
   }
 
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Loading...</h2>
+          <p className="text-gray-600">Please wait while we check your session.</p>
+        </div>
+      </div>
+    )
+  }
+
   const handleGoogleLogin = async () => {
     try {
-      setLoading(true)
+      setSigningIn(true)
       setError('')
       await signInWithGoogle()
     } catch (err) {
       setError(err.message || 'Failed to sign in with Google')
-      setLoading(false)
+      setSigningIn(false)
     }
   }
 
@@ -38,10 +50,10 @@ export default function LoginPage() {
 
         <button 
           onClick={handleGoogleLogin}
-          disabled={loading}
+          disabled={signingIn}
           className={styles.googleButton}
         >
-          {loading ? 'Signing in...' : (
+          {signingIn ? 'Signing in...' : (
             <>
               <svg className={styles.googleIcon} viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

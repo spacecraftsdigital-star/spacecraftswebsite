@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '../lib/supabaseClient'
+import { authenticatedFetch } from '../lib/authenticatedFetch'
 
 export default function CartClient() {
   const [items, setItems] = useState([])
@@ -40,12 +41,11 @@ export default function CartClient() {
     setError(null)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token || null
       const user = session?.user || null
-      setSessionToken(token)
+      setSessionToken(session?.access_token || null)
       setUserId(user?.id || null)
 
-      if (!token) {
+      if (!session) {
         // guest cart from localStorage
         const ls = typeof window !== 'undefined' ? localStorage.getItem('cart') : null
         const guestItems = ls ? JSON.parse(ls) : []
@@ -53,11 +53,7 @@ export default function CartClient() {
         const guestSubtotal = guestItems.reduce((s, it) => s + (it.price || 0) * (it.quantity || 1), 0)
         setSummary({ subtotal: guestSubtotal, discount: 0, tax: 0, shipping: 0, total: guestSubtotal })
       } else {
-        const res = await fetch('/api/cart/get', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        })
+        const res = await authenticatedFetch('/api/cart/get')
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load cart')
         setItems(data.items || [])
@@ -124,9 +120,7 @@ export default function CartClient() {
 
   const fetchAddresses = async () => {
     try {
-      const res = await fetch('/api/addresses', {
-        headers: { Authorization: `Bearer ${sessionToken}` }
-      })
+      const res = await authenticatedFetch('/api/addresses')
       if (res.ok) {
         const data = await res.json()
         setAddresses(data.addresses || [])
@@ -237,12 +231,8 @@ export default function CartClient() {
     }
 
     try {
-      const res = await fetch('/api/cart/update', {
+      const res = await authenticatedFetch('/api/cart/update', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`
-        },
         body: JSON.stringify({ product_id, quantity })
       })
       const data = await res.json()
@@ -268,9 +258,8 @@ export default function CartClient() {
     }
 
     try {
-      const res = await fetch(`/api/cart/remove?product_id=${product_id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${sessionToken}` }
+      const res = await authenticatedFetch(`/api/cart/remove?product_id=${product_id}`, {
+        method: 'DELETE'
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to remove item')
@@ -297,11 +286,8 @@ export default function CartClient() {
     setCouponError(null)
 
     try {
-      const res = await fetch('/api/cart/apply-coupon', {
+      const res = await authenticatedFetch('/api/cart/apply-coupon', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           coupon_code: couponCode,
           user_id: userId

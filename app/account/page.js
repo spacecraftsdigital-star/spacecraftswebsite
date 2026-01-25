@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../providers/AuthProvider'
 import { useRouter } from 'next/navigation'
+import { authenticatedFetch } from '../../lib/authenticatedFetch'
 
 export default function AccountPage() {
   const { user, profile, isAuthenticated, loading: authLoading } = useAuth()
@@ -26,7 +27,9 @@ export default function AccountPage() {
   })
 
   useEffect(() => {
+    console.log('Account page auth state:', { user: user?.email, isAuthenticated, authLoading })
     if (!authLoading && !isAuthenticated) {
+      console.log('Not authenticated, redirecting to /login')
       router.push('/login')
     }
   }, [authLoading, isAuthenticated, router])
@@ -45,7 +48,7 @@ export default function AccountPage() {
   const fetchAddresses = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/addresses')
+      const res = await authenticatedFetch('/api/addresses')
       if (res.ok) {
         const data = await res.json()
         setAddresses(data.addresses || [])
@@ -78,9 +81,8 @@ export default function AccountPage() {
         ? { ...formData, id: editingAddress.id }
         : formData
 
-      const res = await fetch('/api/addresses', {
+      const res = await authenticatedFetch('/api/addresses', {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       })
 
@@ -121,7 +123,7 @@ export default function AccountPage() {
 
     setLoading(true)
     try {
-      const res = await fetch(`/api/addresses?id=${addressId}`, {
+      const res = await authenticatedFetch(`/api/addresses?id=${addressId}`, {
         method: 'DELETE'
       })
 

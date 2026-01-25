@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '../lib/supabaseClient'
+import { authenticatedFetch } from '../lib/authenticatedFetch'
 
 export default function WishlistClient() {
   const [items, setItems] = useState([])
@@ -90,12 +91,8 @@ export default function WishlistClient() {
     setAddingId(product_id)
 
     try {
-      const res = await fetch('/api/cart/add', {
+      const res = await authenticatedFetch('/api/cart/add', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`
-        },
         body: JSON.stringify({ product_id, quantity: 1 })
       })
 

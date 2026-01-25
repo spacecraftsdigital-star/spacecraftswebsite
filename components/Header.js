@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../app/providers/AuthProvider'
 import { useRouter } from 'next/navigation'
+import { authenticatedFetch } from '../lib/authenticatedFetch'
 
 export default function Header() {
   const [query, setQuery] = useState('')
@@ -32,7 +33,7 @@ export default function Header() {
 
   const fetchCartCount = async () => {
     try {
-      const res = await fetch('/api/cart/get')
+      const res = await authenticatedFetch('/api/cart/get')
       if (res.ok) {
         const data = await res.json()
         setCartCount(data.items?.length || 0)

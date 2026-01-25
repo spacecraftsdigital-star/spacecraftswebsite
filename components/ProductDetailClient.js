@@ -8,6 +8,7 @@ import ReviewForm from './ReviewForm'
 import ReviewsList from './ReviewsList'
 import ProductQA from './ProductQA'
 import { supabase } from '../lib/supabaseClient'
+import { authenticatedFetch } from '../lib/authenticatedFetch'
 
 export default function ProductDetailClient({ 
   product, 
@@ -104,12 +105,8 @@ export default function ProductDetailClient({
       }
 
       console.log('Making API call with token:', session.access_token.substring(0, 20) + '...')
-      const response = await fetch('/api/cart/add', {
+      const response = await authenticatedFetch('/api/cart/add', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`
-        },
         body: JSON.stringify({ 
           product_id: product.id, 
           quantity: parseInt(quantity) 

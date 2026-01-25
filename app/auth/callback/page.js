@@ -9,10 +9,17 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        console.log('Auth callback started')
+        
         // Exchange code for session (PKCE) if present
         const code = new URL(window.location.href).searchParams.get('code')
+        console.log('Auth code present:', !!code)
+        
         if (code) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+          console.log('Exchanging code for session...')
+          const { error: exchangeError, data } = await supabase.auth.exchangeCodeForSession(code)
+          console.log('Exchange result:', { error: exchangeError, data })
+          
           if (exchangeError) {
             console.error('Auth code exchange error:', exchangeError)
             router.push('/login?error=auth_failed')
@@ -20,15 +27,30 @@ export default function AuthCallback() {
           }
         }
 
-        // Now get the session
+        // Wait a moment for the session to be persisted
+        console.log('Waiting for session to persist...')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        // Check the session
+        console.log('Getting current session...')
         const { data: { session }, error } = await supabase.auth.getSession()
-        if (error || !session?.user) {
+        console.log('Session check result:', { session: !!session, user: session?.user?.email, error })
+        
+        if (error) {
           console.error('Auth callback error:', error)
           router.push('/login?error=auth_failed')
           return
         }
 
-        // User authenticated successfully; profile bootstrap happens in AuthProvider
+        if (!session?.user) {
+          console.error('No user found after exchange')
+          router.push('/login?error=no_user')
+          return
+        }
+
+        console.log('Authentication successful, redirecting to account:', session.user.email)
+        
+        // Redirect to account
         router.push('/account')
       } catch (error) {
         console.error('Callback error:', error)

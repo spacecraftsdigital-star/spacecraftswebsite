@@ -1,19 +1,19 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+import { createSupabaseRouteHandlerClient } from '../../../../lib/supabaseClient'
 
 export async function POST(request) {
   try {
-    const { coupon_code, user_id } = await request.json()
+    const supabase = createSupabaseRouteHandlerClient(request)
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
+    const { coupon_code } = await request.json()
 
     if (!coupon_code) {
       return NextResponse.json({ error: 'Coupon code is required' }, { status: 400 })
-    }
-
-    if (!user_id) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
     // Validate coupon code (only HOLIDAY20 is valid)
@@ -24,29 +24,11 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    // Create Supabase admin client
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-    // First, get the profile_id from user_id
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', user_id)
-      .single()
-
-    if (profileError || !profile) {
-      console.error('Error fetching profile:', profileError)
-      return NextResponse.json({ 
-        error: 'User not found',
-        success: false 
-      }, { status: 404 })
-    }
-
     // Check if user has any completed orders (first-time order check)
     const { data: orders, error: ordersError } = await supabase
       .from('orders')
       .select('id')
-      .eq('profile_id', profile.id)
+      .eq('user_id', user.id)
       .eq('status', 'completed')
 
     if (ordersError) {
