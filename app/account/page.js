@@ -16,13 +16,14 @@ export default function AccountPage() {
   const [toast, setToast] = useState(null)
   
   const [formData, setFormData] = useState({
-    full_name: '',
+    label: '',
     phone: '',
-    address_line1: '',
-    address_line2: '',
+    line1: '',
+    line2: '',
     city: '',
     state: '',
     postal_code: '',
+    country: 'India',
     is_default: false
   })
 
@@ -106,13 +107,14 @@ export default function AccountPage() {
   const handleEditAddress = (address) => {
     setEditingAddress(address)
     setFormData({
-      full_name: address.full_name,
+      label: address.label,
       phone: address.phone,
-      address_line1: address.address_line1,
-      address_line2: address.address_line2 || '',
+      line1: address.line1,
+      line2: address.line2 || '',
       city: address.city,
       state: address.state,
       postal_code: address.postal_code,
+      country: address.country || 'India',
       is_default: address.is_default
     })
     setShowAddressForm(true)
@@ -145,13 +147,14 @@ export default function AccountPage() {
 
   const resetForm = () => {
     setFormData({
-      full_name: '',
+      label: '',
       phone: '',
-      address_line1: '',
-      address_line2: '',
+      line1: '',
+      line2: '',
       city: '',
       state: '',
       postal_code: '',
+      country: 'India',
       is_default: false
     })
     setEditingAddress(null)
@@ -305,12 +308,13 @@ export default function AccountPage() {
                   <form onSubmit={handleSubmitAddress}>
                     <div className="form-row">
                       <div className="form-group">
-                        <label>Full Name *</label>
+                        <label>Address Label *</label>
                         <input
                           type="text"
-                          name="full_name"
-                          value={formData.full_name}
+                          name="label"
+                          value={formData.label}
                           onChange={handleInputChange}
+                          placeholder="e.g., Home, Office"
                           required
                         />
                       </div>
@@ -331,8 +335,8 @@ export default function AccountPage() {
                       <label>Address Line 1 *</label>
                       <input
                         type="text"
-                        name="address_line1"
-                        value={formData.address_line1}
+                        name="line1"
+                        value={formData.line1}
                         onChange={handleInputChange}
                         placeholder="House No., Building Name"
                         required
@@ -343,8 +347,8 @@ export default function AccountPage() {
                       <label>Address Line 2</label>
                       <input
                         type="text"
-                        name="address_line2"
-                        value={formData.address_line2}
+                        name="line2"
+                        value={formData.line2}
                         onChange={handleInputChange}
                         placeholder="Road Name, Area"
                       />
@@ -431,10 +435,10 @@ export default function AccountPage() {
                     <div key={address.id} className={`address-card ${address.is_default ? 'default' : ''}`}>
                       {address.is_default && <span className="default-badge">Default</span>}
                       
-                      <h4>{address.full_name}</h4>
+                      <h4>{address.label}</h4>
                       <p className="address-text">
-                        {address.address_line1}
-                        {address.address_line2 && `, ${address.address_line2}`}
+                        {address.line1}
+                        {address.line2 && `, ${address.line2}`}
                         <br />
                         {address.city}, {address.state} - {address.postal_code}
                       </p>
