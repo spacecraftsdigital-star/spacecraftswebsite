@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { authenticatedFetch } from '../../../lib/authenticatedFetch'
 import { supabase } from '../../../lib/supabaseClient'
 
-export default function OrderSuccessPage() {
+function OrderSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [order, setOrder] = useState(null)
@@ -345,3 +346,10 @@ export default function OrderSuccessPage() {
   )
 }
 
+export default function OrderSuccessPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading order details...</div>}>
+      <OrderSuccessContent />
+    </Suspense>
+  )
+}

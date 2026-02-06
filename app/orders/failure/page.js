@@ -2,8 +2,9 @@
 
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
-export default function PaymentFailurePage() {
+function FailureContent() {
   const searchParams = useSearchParams()
   const reason = searchParams.get('reason') || 'Your payment could not be processed'
 
@@ -188,5 +189,13 @@ export default function PaymentFailurePage() {
         }
       `}</style>
     </div>
+  )
+}
+
+export default function PaymentFailurePage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>}>
+      <FailureContent />
+    </Suspense>
   )
 }
