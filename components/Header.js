@@ -14,11 +14,224 @@ export default function Header() {
   const [cartCount, setCartCount] = useState(0)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [hoveredCategory, setHoveredCategory] = useState(null)
+  const [closeTimeout, setCloseTimeout] = useState(null)
   
   const { user, profile, isAuthenticated, signOut, loading } = useAuth()
   const router = useRouter()
   const searchRef = useRef(null)
   const userMenuRef = useRef(null)
+  const navBarRef = useRef(null)
+
+  // Category Navigation Data
+  const categoryData = {
+    ALL: {
+      sections: [
+        {
+          title: 'BEDS',
+          items: [
+            { name: 'Bunk Beds', slug: 'bunk-beds' },
+            { name: 'Diwan Cum Beds', slug: 'diwan-cum-beds' },
+            { name: 'Folding Beds', slug: 'folding-beds' },
+            { name: 'Metal Cots', slug: 'metal-cots' },
+            { name: 'Recliner Folding Beds', slug: 'recliner-folding-beds' },
+            { name: 'Sofa cum Beds', slug: 'sofa-cum-beds' },
+            { name: 'Wooden Beds', slug: 'wooden-beds' }
+          ]
+        },
+        {
+          title: 'CHAIRS',
+          items: [
+            { name: 'Foldable Chairs', slug: 'foldable-chairs' },
+            { name: 'Lazy Chairs', slug: 'lazy-chairs' },
+            { name: 'Office Chairs', slug: 'office-chairs' },
+            { name: 'Relax Chair', slug: 'relax-chair' },
+            { name: 'Rocking Chairs', slug: 'rocking-chairs' },
+            { name: 'Study Chair', slug: 'study-chair' }
+          ]
+        },
+        {
+          title: 'DINING SETS',
+          items: [
+            { name: 'Shoe Racks', slug: 'shoe-racks' }
+          ]
+        },
+        {
+          title: 'SOFA SETS',
+          items: [
+            { name: '2 Seater', slug: '2-seater' },
+            { name: '3+1+1 Sofas', slug: '3-1-1-sofas' },
+            { name: 'Corner Sofas', slug: 'corner-sofas' },
+            { name: 'Diwans', slug: 'diwans' },
+            { name: 'Recliner Sofas', slug: 'recliner-sofas' }
+          ]
+        },
+        {
+          title: 'SPACE SAVING',
+          items: [
+            { name: 'TV Racks', slug: 'tv-racks' }
+          ]
+        },
+        {
+          title: 'TABLES',
+          items: [
+            { name: 'Coffee Tables', slug: 'coffee-tables' },
+            { name: 'Dressing Tables', slug: 'dressing-tables' },
+            { name: 'Foldable Tables', slug: 'foldable-tables' },
+            { name: 'Study & Office Tables', slug: 'study-office-tables' }
+          ]
+        },
+        {
+          title: 'WARDROBES',
+          items: [
+            { name: 'Book Shelves', slug: 'book-shelves' }
+          ]
+        }
+      ],
+      images: [
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80',
+        'https://images.unsplash.com/photo-1567231511259-f5c86aab16b9?w=400&q=80',
+        'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&q=80'
+      ]
+    },
+    'SPACE SAVING FURNITURE': {
+      sections: [
+        {
+          title: 'SPACE SAVERS',
+          items: [
+            { name: 'Bunk Beds', slug: 'bunk-beds' },
+            { name: 'Diwan Cum Beds', slug: 'diwan-cum-beds' },
+            { name: 'Folding Beds', slug: 'folding-beds' },
+            { name: 'Recliner Folding Beds', slug: 'recliner-folding-beds' },
+            { name: 'Sofa cum Beds', slug: 'sofa-cum-beds' },
+            { name: 'Foldable Tables', slug: 'foldable-tables' },
+            { name: 'Study & Office Tables', slug: 'study-office-tables' },
+            { name: 'Foldable Chairs', slug: 'foldable-chairs' },
+            { name: 'Lazy Chairs', slug: 'lazy-chairs' },
+            { name: 'Relax Chair', slug: 'relax-chair' },
+            { name: 'Study Chair', slug: 'study-chair' },
+            { name: 'Folding Dinings', slug: 'folding-dinings' }
+          ]
+        }
+      ],
+      images: [
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80',
+        'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&q=80'
+      ]
+    },
+    'BEDS': {
+      sections: [
+        {
+          title: 'ALL BEDS',
+          items: [
+            { name: 'Bunk Beds', slug: 'bunk-beds' },
+            { name: 'Futon Beds', slug: 'futon-beds' },
+            { name: 'Diwan Cum Beds', slug: 'diwan-cum-beds' },
+            { name: 'Folding Beds', slug: 'folding-beds' },
+            { name: 'Metal Cots', slug: 'metal-cots' },
+            { name: 'Recliner Folding Beds', slug: 'recliner-folding-beds' },
+            { name: 'Sofa cum Beds', slug: 'sofa-cum-beds' },
+            { name: 'Wooden Beds', slug: 'wooden-beds' }
+          ]
+        }
+      ],
+      images: [
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80',
+        'https://images.unsplash.com/photo-1567231511259-f5c86aab16b9?w=400&q=80'
+      ]
+    },
+    'CHAIRS': {
+      sections: [
+        {
+          title: 'ALL CHAIRS',
+          items: [
+            { name: 'Foldable Chairs', slug: 'foldable-chairs' },
+            { name: 'Lazy Chairs', slug: 'lazy-chairs' },
+            { name: 'Office Chairs', slug: 'office-chairs' },
+            { name: 'Relax Chair', slug: 'relax-chair' },
+            { name: 'Rocking Chairs', slug: 'rocking-chairs' },
+            { name: 'Study Chair', slug: 'study-chair' }
+          ]
+        }
+      ],
+      images: [
+        'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&q=80',
+        'https://images.unsplash.com/photo-1592078615290-033ee584e267?w=400&q=80'
+      ]
+    },
+    'DINING SETS': {
+      sections: [
+        {
+          title: 'DINING',
+          items: [
+            { name: 'Shoe Racks', slug: 'shoe-racks' },
+            { name: 'Dining Tables', slug: 'dining-tables' },
+            { name: 'Dining Chairs', slug: 'dining-chairs' }
+          ]
+        }
+      ],
+      images: [
+        'https://images.unsplash.com/photo-1517457373614-b7152f800fd1?w=400&q=80',
+        'https://images.unsplash.com/photo-1551632440-e2b4dc881eaa?w=400&q=80'
+      ]
+    },
+    'SOFA SETS': {
+      sections: [
+        {
+          title: 'SOFAS',
+          items: [
+            { name: '2 Seater', slug: '2-seater' },
+            { name: '3+1+1 Sofas', slug: '3-1-1-sofas' },
+            { name: 'Corner Sofas', slug: 'corner-sofas' },
+            { name: 'Cushion Sofas', slug: 'cushion-sofas' },
+            { name: 'Diwans', slug: 'diwans' },
+            { name: 'Recliner Sofas', slug: 'recliner-sofas' },
+            { name: 'Sofa cum Beds', slug: 'sofa-cum-beds' }
+          ]
+        }
+      ],
+      images: [
+        'https://images.unsplash.com/photo-1540932239986-310128078ceb?w=400&q=80',
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80'
+      ]
+    },
+    'TABLES': {
+      sections: [
+        {
+          title: 'TABLES',
+          items: [
+            { name: 'Dressing Tables', slug: 'dressing-tables' },
+            { name: 'Foldable Tables', slug: 'foldable-tables' },
+            { name: 'Study & Office Tables', slug: 'study-office-tables' },
+            { name: 'Coffee Tables', slug: 'coffee-tables' }
+          ]
+        }
+      ],
+      images: [
+        'https://images.unsplash.com/photo-1516214104703-3e049afb6c46?w=400&q=80',
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80'
+      ]
+    },
+    'WARDROBE & RACKS': {
+      sections: [
+        {
+          title: 'STORAGE',
+          items: [
+            { name: 'Book Racks', slug: 'book-racks' },
+            { name: 'Shoe Racks', slug: 'shoe-racks' },
+            { name: 'TV Racks', slug: 'tv-racks' },
+            { name: 'Wardrobes', slug: 'wardrobes' }
+          ]
+        }
+      ],
+      images: [
+        'https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=400&q=80',
+        'https://images.unsplash.com/photo-1574909509595-c89e8a27bb0a?w=400&q=80'
+      ]
+    }
+  }
+
+  const categories = Object.keys(categoryData)
 
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Account'
 
@@ -83,6 +296,16 @@ export default function Header() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // Handle nav area hover - only close when leaving the entire nav section
+  const handleNavMouseLeave = () => {
+    const timeout = setTimeout(() => setHoveredCategory(null), 300)
+    setCloseTimeout(timeout)
+  }
+
+  const handleNavMouseEnter = () => {
+    if (closeTimeout) clearTimeout(closeTimeout)
+  }
 
   const handleSearchSubmit = (e) => {
     e.preventDefault()
@@ -277,6 +500,71 @@ export default function Header() {
             {isMobileMenuOpen ? '✕' : '☰'}
           </button>
         </div>
+
+        {/* Category Navigation Bar */}
+        <nav 
+          className="category-nav" 
+          ref={navBarRef}
+          onMouseEnter={handleNavMouseEnter}
+          onMouseLeave={handleNavMouseLeave}
+        >
+          {categories.map((category) => (
+            <div
+              key={category}
+              className="category-nav-item"
+              onMouseEnter={() => {
+                if (closeTimeout) clearTimeout(closeTimeout)
+                setHoveredCategory(category)
+              }}
+            >
+              <button className="category-nav-link">
+                {category}
+              </button>
+
+              {/* Dropdown Menu */}
+              {hoveredCategory === category && (
+                <div className="category-dropdown">
+                  <div className="dropdown-content">
+                    <div className="dropdown-left">
+                      {categoryData[category].sections.map((section, idx) => (
+                        <div key={idx} className="dropdown-section">
+                          <h4 className="section-title">{section.title}</h4>
+                          <ul className="section-items">
+                            {section.items.map((item, itemIdx) => (
+                              <li key={itemIdx}>
+                                <button
+                                  className="section-item-link"
+                                  onClick={() => router.push(`/products?category=${item.slug}`)}
+                                >
+                                  {item.name}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Dropdown Right - Images */}
+                    <div className="dropdown-right">
+                      <div className="category-images">
+                        <div className="category-image-wrapper">
+                          <Image
+                            src={categoryData[category].images[0]}
+                            alt={`${category} featured`}
+                            width={180}
+                            height={220}
+                            style={{ objectFit: 'cover' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
@@ -752,6 +1040,291 @@ export default function Header() {
 
           .mobile-menu-item:hover {
             background: #f0f0f0;
+          }
+        }
+
+        /* Category Navigation Bar */
+        .category-nav {
+          background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+          border-bottom: 2px solid #1a252f;
+          display: flex;
+          justify-content: center;
+          gap: 0;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          position: relative;
+        }
+
+        .category-nav-item {
+          position: relative;
+          display: flex;
+        }
+
+        .category-nav-link {
+          color: #ecf0f1;
+          background: transparent;
+          border: none;
+          padding: 0.95rem 1.8rem;
+          font-size: 0.95rem;
+          font-weight: 600;
+          cursor: pointer;
+          text-decoration: none;
+          white-space: nowrap;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          letter-spacing: 0.3px;
+          position: relative;
+          text-transform: uppercase;
+        }
+
+        .category-nav-link::before {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, #e74c3c, #e67e22);
+          transform: scaleX(0);
+          transform-origin: right;
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .category-nav-link:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: #ffffff;
+        }
+
+        .category-nav-link:hover::before {
+          transform: scaleX(1);
+          transform-origin: left;
+        }
+
+        /* Category Dropdown */
+        .category-dropdown {
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          background: white;
+          border: none;
+          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.25);
+          border-radius: 8px;
+          width: 1350px;
+          max-width: calc(100vw - 40px);
+          max-height: 650px;
+          overflow: hidden;
+          z-index: 1001;
+          animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          margin-top: 0;
+          white-space: normal;
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+
+        .dropdown-content {
+          display: flex;
+          gap: 0;
+          min-height: auto;
+        }
+
+        .dropdown-left {
+          flex: 1.3;
+          padding: 1.8rem 2rem;
+          border-right: 2px solid #f0f0f0;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.8rem;
+          background: #ffffff;
+          overflow-y: auto;
+          max-height: 650px;
+        }
+
+        .dropdown-left::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .dropdown-left::-webkit-scrollbar-track {
+          background: #f5f5f5;
+        }
+
+        .dropdown-left::-webkit-scrollbar-thumb {
+          background: #cbd5e0;
+          border-radius: 3px;
+        }
+
+        .dropdown-left::-webkit-scrollbar-thumb:hover {
+          background: #a0aec0;
+        }
+
+        .dropdown-section {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .section-title {
+          font-size: 0.75rem;
+          font-weight: 800;
+          color: #2c3e50;
+          margin: 0 0 0.8rem 0;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          padding-bottom: 0.6rem;
+          border-bottom: 3px solid #e74c3c;
+          display: inline-block;
+        }
+
+        .section-items {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .section-item-link {
+          background: none;
+          border: none;
+          padding: 0.4rem 0;
+          color: #666666;
+          font-size: 0.9rem;
+          cursor: pointer;
+          text-align: left;
+          transition: color 0.2s ease;
+          font-weight: 500;
+        }
+
+        .section-item-link:hover {
+          color: #e74c3c;
+        }
+
+        .dropdown-right {
+          flex: 0.6;
+          padding: 1.8rem 1.5rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 1rem;
+          background: linear-gradient(135deg, #f8f9fa 0%, #ecf0f1 100%);
+        }
+
+        .category-images {
+          display: flex;
+          width: 100%;
+          max-width: 300px;
+        }
+
+        .category-image-wrapper {
+          width: 180px;
+          height: 220px;
+          border-radius: 12px;
+          overflow: hidden;
+          background: white;
+          border: 2px solid #ddd;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-image-wrapper:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 14px 32px rgba(0, 0, 0, 0.15);
+          border-color: #e74c3c;
+        }
+
+        .category-image-wrapper img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .category-image-wrapper:hover img {
+          transform: scale(1.05);
+        }
+
+        /* Backdrop Overlay Effect */
+        .dropdown-backdrop {
+          display: none;
+        }
+
+        /* Hide category nav on mobile */
+        @media (max-width: 1400px) {
+          .category-dropdown {
+            width: 95vw;
+          }
+        }
+
+        @media (max-width: 1200px) {
+          .category-dropdown {
+            width: 90vw;
+            min-height: auto;
+          }
+
+          .dropdown-left {
+            grid-template-columns: 1fr;
+            padding: 2.5rem 2.5rem;
+          }
+
+          .dropdown-right {
+            padding: 2.5rem;
+          }
+
+          .category-images {
+            max-width: 100%;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+          }
+
+          .category-image-wrapper {
+            height: 200px;
+          }
+        }
+
+        @media (max-width: 1024px) {
+          .category-dropdown {
+            width: 90vw;
+            min-height: auto;
+            top: 160px;
+          }
+
+          .dropdown-content {
+            flex-direction: column;
+          }
+
+          .dropdown-left {
+            border-right: none;
+            border-bottom: 2px solid #f0f0f0;
+            padding: 2rem 2.5rem;
+          }
+
+          .dropdown-right {
+            padding: 2rem 2.5rem;
+            min-height: auto;
+          }
+
+          .category-images {
+            grid-template-columns: repeat(2, 1fr);
+            max-width: 100%;
+            gap: 1.2rem;
+          }
+
+          .category-image-wrapper {
+            height: 220px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .category-nav {
+            display: none;
           }
         }
       `}</style>
