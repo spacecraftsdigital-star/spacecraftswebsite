@@ -1100,8 +1100,8 @@ export default function Header() {
 
         /* Category Dropdown */
         .category-dropdown {
-          position: absolute;
-          top: 100%;
+          position: fixed;
+          top: 135px;
           left: 50%;
           transform: translateX(-50%);
           background: white;
@@ -1111,11 +1111,11 @@ export default function Header() {
           width: 1350px;
           max-width: calc(100vw - 40px);
           max-height: 650px;
-          overflow: hidden;
+          overflow: visible;
           z-index: 1001;
           animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          margin-top: 0;
           white-space: normal;
+          display: flex;
         }
 
         @keyframes slideDown {
@@ -1133,6 +1133,8 @@ export default function Header() {
           display: flex;
           gap: 0;
           min-height: auto;
+          width: 100%;
+          max-height: 650px;
         }
 
         .dropdown-left {
