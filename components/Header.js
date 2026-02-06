@@ -1110,7 +1110,7 @@ export default function Header() {
           border-radius: 8px;
           width: 1350px;
           max-width: calc(100vw - 40px);
-          max-height: 650px;
+          max-height: 580px;
           overflow: visible;
           z-index: 1001;
           animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1134,19 +1134,19 @@ export default function Header() {
           gap: 0;
           min-height: auto;
           width: 100%;
-          max-height: 650px;
+          max-height: 580px;
         }
 
         .dropdown-left {
           flex: 1.3;
-          padding: 1.8rem 2rem;
+          padding: 0.8rem 1rem;
           border-right: 2px solid #f0f0f0;
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 1.8rem;
+          gap: 0.8rem;
           background: #ffffff;
           overflow-y: auto;
-          max-height: 650px;
+          max-height: 580px;
         }
 
         .dropdown-left::-webkit-scrollbar {
@@ -1169,17 +1169,18 @@ export default function Header() {
         .dropdown-section {
           display: flex;
           flex-direction: column;
+          gap: 0.3rem;
         }
 
         .section-title {
-          font-size: 0.75rem;
+          font-size: 0.65rem;
           font-weight: 800;
           color: #2c3e50;
-          margin: 0 0 0.8rem 0;
-          letter-spacing: 1px;
+          margin: 0 0 0.35rem 0;
+          letter-spacing: 0.7px;
           text-transform: uppercase;
-          padding-bottom: 0.6rem;
-          border-bottom: 3px solid #e74c3c;
+          padding-bottom: 0.3rem;
+          border-bottom: 2px solid #e74c3c;
           display: inline-block;
         }
 
@@ -1189,19 +1190,20 @@ export default function Header() {
           margin: 0;
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.2rem;
         }
 
         .section-item-link {
           background: none;
           border: none;
-          padding: 0.4rem 0;
+          padding: 0.2rem 0;
           color: #666666;
-          font-size: 0.9rem;
+          font-size: 0.8rem;
           cursor: pointer;
           text-align: left;
           transition: color 0.2s ease;
           font-weight: 500;
+          line-height: 1.2;
         }
 
         .section-item-link:hover {
@@ -1210,12 +1212,12 @@ export default function Header() {
 
         .dropdown-right {
           flex: 0.6;
-          padding: 1.8rem 1.5rem;
+          padding: 1rem 1rem;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 1rem;
+          gap: 0.8rem;
           background: linear-gradient(135deg, #f8f9fa 0%, #ecf0f1 100%);
         }
 
