@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import ReviewForm from './ReviewForm'
 import ReviewsList from './ReviewsList'
 import ProductQA from './ProductQA'
+import RazorpayPayment from './RazorpayPayment'
 import { supabase } from '../lib/supabaseClient'
 import { authenticatedFetch } from '../lib/authenticatedFetch'
 
@@ -47,6 +48,7 @@ export default function ProductDetailClient({
   const [cartLoading, setCartLoading] = useState(false)
   const [cartError, setCartError] = useState(null)
   const [cartSuccess, setCartSuccess] = useState(null)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
 
   console.log('ProductDetailClient Debug:', { product: product.name, productId: product.id, imagesCount: images?.length, images })
 
@@ -173,8 +175,17 @@ export default function ProductDetailClient({
   }
 
   const handleBuyNow = async () => {
-    await handleAddToCart()
-    setTimeout(() => router.push('/cart'), 1000)
+    // Check authentication
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError || !session?.access_token) {
+      alert('Please login to proceed with payment')
+      router.push('/login')
+      return
+    }
+
+    // Open Razorpay payment modal for direct purchase
+    setIsPaymentModalOpen(true)
   }
 
   // Navigation handlers for image gallery
@@ -3107,6 +3118,22 @@ export default function ProductDetailClient({
           }
         }
       `}</style>
+
+      {/* Razorpay Payment Modal */}
+      <RazorpayPayment
+        paymentType="direct"
+        productId={product.id}
+        quantity={quantity}
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        onSuccess={(data) => {
+          setIsPaymentModalOpen(false)
+          alert('Payment successful! Redirecting to order confirmation...')
+        }}
+        onFailure={(error) => {
+          alert(`Payment failed: ${error}`)
+        }}
+      />
     </div>
   )
 }
