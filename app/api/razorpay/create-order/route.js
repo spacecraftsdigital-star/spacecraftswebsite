@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createRazorpayOrder, formatAmountToPaise } from '../../../lib/razorpay'
-import { createSupabaseRouteHandlerClient } from '../../../lib/supabaseClient'
+import { createRazorpayOrder, formatAmountToPaise } from '../../../../lib/razorpay'
+import { createSupabaseRouteHandlerClient } from '../../../../lib/supabaseClient'
 
 /**
  * Create a Razorpay order for checkout or direct payment

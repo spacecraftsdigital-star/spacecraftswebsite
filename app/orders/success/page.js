@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { authenticatedFetch } from '../../lib/authenticatedFetch'
-import { supabase } from '../../lib/supabaseClient'
+import { authenticatedFetch } from '../../../lib/authenticatedFetch'
+import { supabase } from '../../../lib/supabaseClient'
 
 export default function OrderSuccessPage() {
   const router = useRouter()

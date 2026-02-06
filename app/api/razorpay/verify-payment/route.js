@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { verifyPaymentSignature, fetchPaymentDetails, fetchOrderDetails } from '../../../lib/razorpay'
-import { createSupabaseRouteHandlerClient } from '../../../lib/supabaseClient'
+import { verifyPaymentSignature, fetchPaymentDetails, fetchOrderDetails } from '../../../../lib/razorpay'
+import { createSupabaseRouteHandlerClient } from '../../../../lib/supabaseClient'
 
 /**
  * Verify Razorpay payment signature and confirm payment
