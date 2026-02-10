@@ -49,7 +49,7 @@ export default function ModernFooter() {
               >
                 f
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer"
+              <a href="https://instagram.com/spacecraftsfurniture" target="_blank" rel="noopener noreferrer"
                 style={{ 
                   width: '40px', 
                   height: '40px', 
@@ -67,9 +67,9 @@ export default function ModernFooter() {
                 onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
                 aria-label="Instagram"
               >
-                📷
+                📸
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"
+              <a href="mailto:info@spacecraftsfurniture.com" target="_blank" rel="noopener noreferrer"
                 style={{ 
                   width: '40px', 
                   height: '40px', 
@@ -83,13 +83,13 @@ export default function ModernFooter() {
                   textDecoration: 'none',
                   transition: 'all 0.3s ease'
                 }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#1DA1F2'}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#D14836'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-                aria-label="Twitter"
+                aria-label="Gmail"
               >
-                🐦
+                ✉️
               </a>
-              <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer"
+              <a href="https://wa.me/918025123456" target="_blank" rel="noopener noreferrer"
                 style={{ 
                   width: '40px', 
                   height: '40px', 
@@ -103,11 +103,11 @@ export default function ModernFooter() {
                   textDecoration: 'none',
                   transition: 'all 0.3s ease'
                 }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#E60023'}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#25D366'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-                aria-label="Pinterest"
+                aria-label="WhatsApp"
               >
-                📌
+                💬
               </a>
             </div>
           </div>
