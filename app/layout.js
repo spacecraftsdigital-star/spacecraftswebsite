@@ -1,5 +1,6 @@
 import './globals.css'
 import AnnouncementBar from '../components/AnnouncementBar'
+import TopNavigationBar from '../components/TopNavigationBar'
 import Header from '../components/Header'
 import ModernFooter from '../components/ModernFooter'
 import { AuthProvider } from './providers/AuthProvider'
@@ -104,6 +105,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <GTMNoScript />
           <AnnouncementBar />
+          <TopNavigationBar />
           <Header />
           <main style={{ minHeight: '60vh' }}>
             {children}

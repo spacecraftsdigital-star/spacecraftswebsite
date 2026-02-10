@@ -624,37 +624,54 @@ export default function Header() {
 
         .header-logo {
           flex-shrink: 0;
+          flex: 1;
+          display: flex;
+          justify-content: center;
+          order: 2;
         }
 
         .header-logo a {
           display: block;
+          height: 50px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .header-logo img {
+          max-height: 50px;
+          width: auto;
+          object-fit: contain;
         }
 
         /* Search */
         .header-search {
           flex: 1;
-          max-width: 600px;
+          max-width: 400px;
           position: relative;
+          order: 1;
         }
 
         .search-form {
           display: flex;
-          background: #f5f5f5;
-          border-radius: 8px;
+          background: white;
+          border-radius: 12px;
           overflow: hidden;
-          border: 1px solid #e5e5e5;
-          transition: all 0.2s;
+          border: 2px solid #e0e0e0;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
 
         .search-form:focus-within {
-          border-color: #333;
+          border-color: #e74c3c;
           background: white;
+          box-shadow: 0 4px 16px rgba(231, 76, 60, 0.12);
         }
 
         .search-input {
           flex: 1;
           border: none;
-          padding: 0.75rem 1.25rem;
+          padding: 0.9rem 1.25rem;
           font-size: 0.95rem;
           outline: none;
           background: transparent;
@@ -662,7 +679,8 @@ export default function Header() {
         }
 
         .search-input::placeholder {
-          color: #999;
+          color: #aaa;
+          font-weight: 500;
         }
 
         .search-button {
@@ -670,14 +688,15 @@ export default function Header() {
           border: none;
           padding: 0 1.25rem;
           cursor: pointer;
-          color: #666;
+          color: #999;
           display: flex;
           align-items: center;
-          transition: color 0.2s;
+          justify-content: center;
+          transition: color 0.3s ease;
         }
 
         .search-button:hover {
-          color: #333;
+          color: #e74c3c;
         }
 
         /* Search Results Dropdown */
@@ -781,6 +800,7 @@ export default function Header() {
           display: flex;
           align-items: center;
           gap: 1.5rem;
+          order: 3;
         }
 
         .nav-link {
@@ -827,6 +847,7 @@ export default function Header() {
         .header-user {
           position: relative;
           flex-shrink: 0;
+          order: 3;
         }
 
         .user-loading {
@@ -969,6 +990,7 @@ export default function Header() {
           padding: 0.5rem 0.75rem;
           border-radius: 6px;
           cursor: pointer;
+          order: 3;
         }
 
         .mobile-menu {
@@ -987,6 +1009,10 @@ export default function Header() {
           .user-name {
             display: none;
           }
+
+          .header-search {
+            max-width: 350px;
+          }
         }
 
         @media (max-width: 768px) {
@@ -997,12 +1023,19 @@ export default function Header() {
           }
 
           .header-logo {
-            order: 1;
+            order: 2;
+            flex: none;
+            width: 100%;
+            justify-content: center;
+          }
+
+          .header-logo img {
+            max-height: 45px;
           }
 
           .mobile-menu-toggle {
             display: block;
-            order: 2;
+            order: 1;
             margin-left: auto;
           }
 
@@ -1010,6 +1043,7 @@ export default function Header() {
             order: 3;
             width: 100%;
             max-width: none;
+            flex: 1;
           }
 
           .header-nav, .header-user {
@@ -1055,7 +1089,6 @@ export default function Header() {
         }
 
         .category-nav-item {
-          position: relative;
           display: flex;
         }
 
@@ -1100,32 +1133,33 @@ export default function Header() {
 
         /* Category Dropdown */
         .category-dropdown {
-          position: fixed;
-          top: 135px;
-          left: 50%;
-          transform: translateX(-50%);
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          width: 100%;
           background: white;
           border: none;
           box-shadow: 0 20px 80px rgba(0, 0, 0, 0.25);
-          border-radius: 8px;
-          width: 1350px;
-          max-width: calc(100vw - 40px);
+          border-radius: 0;
+          max-width: none;
           max-height: 580px;
           overflow: visible;
           z-index: 1001;
           animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           white-space: normal;
           display: flex;
+          box-sizing: border-box;
         }
 
         @keyframes slideDown {
           from {
             opacity: 0;
-            transform: translateX(-50%) translateY(-20px);
+            transform: translateY(-20px);
           }
           to {
             opacity: 1;
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(0);
           }
         }
 
@@ -1134,7 +1168,10 @@ export default function Header() {
           gap: 0;
           min-height: auto;
           width: 100%;
+          max-width: 1400px;
           max-height: 580px;
+          box-sizing: border-box;
+          margin: 0 auto;
         }
 
         .dropdown-left {
@@ -1147,6 +1184,7 @@ export default function Header() {
           background: #ffffff;
           overflow-y: auto;
           max-height: 580px;
+          box-sizing: border-box;
         }
 
         .dropdown-left::-webkit-scrollbar {
@@ -1219,6 +1257,7 @@ export default function Header() {
           justify-content: center;
           gap: 0.8rem;
           background: linear-gradient(135deg, #f8f9fa 0%, #ecf0f1 100%);
+          box-sizing: border-box;
         }
 
         .category-images {
@@ -1262,15 +1301,14 @@ export default function Header() {
 
         /* Hide category nav on mobile */
         @media (max-width: 1400px) {
-          .category-dropdown {
-            width: 95vw;
+          .dropdown-content {
+            max-width: 95%;
           }
         }
 
         @media (max-width: 1200px) {
-          .category-dropdown {
-            width: 90vw;
-            min-height: auto;
+          .dropdown-content {
+            max-width: 90%;
           }
 
           .dropdown-left {
@@ -1294,10 +1332,8 @@ export default function Header() {
         }
 
         @media (max-width: 1024px) {
-          .category-dropdown {
-            width: 90vw;
-            min-height: auto;
-            top: 160px;
+          .dropdown-content {
+            max-width: 90%;
           }
 
           .dropdown-content {
