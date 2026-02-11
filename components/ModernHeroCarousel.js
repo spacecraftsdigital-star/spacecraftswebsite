@@ -1,182 +1,467 @@
-// Modern Hero Section with Image Carousel
+// Modern Hero Carousel — Fully Rewritten
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+
+const SLIDE_DURATION = 6000 // ms per slide
 
 const heroSlides = [
   {
     id: 1,
     title: 'Transform Your Space',
     subtitle: 'Premium Furniture for Modern Living',
-    description: 'Discover our curated collection of designer furniture',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1920&q=80',
+    description: 'Discover our curated collection of designer furniture that blends elegance with everyday comfort.',
+    // Old: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1920&q=80'
+    image: '/hero/11.jpg',
     cta: 'Shop Collection',
     ctaLink: '/products',
-    bgColor: '#f5f1e8'
+    gradient: 'linear-gradient(135deg, rgba(26,26,26,0.82) 0%, rgba(26,26,26,0.45) 50%, rgba(0,0,0,0.1) 100%)',
+    accent: '#e67e22'
   },
   {
     id: 2,
     title: 'Comfort Meets Style',
     subtitle: 'Luxury Sofas & Seating',
-    description: 'Up to 40% off on selected items',
-    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1920&q=80',
+    description: 'Up to 40% off on selected premium sofas — sink into luxury without the premium price tag.',
+    // Old: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1920&q=80'
+    image: '/hero/2.jpg',
     cta: 'View Deals',
     ctaLink: '/products?category=sofas-couches',
-    bgColor: '#e8f1f5'
+    gradient: 'linear-gradient(135deg, rgba(15,32,45,0.85) 0%, rgba(15,32,45,0.4) 50%, rgba(0,0,0,0.05) 100%)',
+    accent: '#3498db'
   },
   {
     id: 3,
     title: 'Dream Bedroom',
     subtitle: 'Create Your Perfect Sanctuary',
-    description: 'New arrivals in bedroom furniture',
-    image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1920&q=80',
+    description: 'New arrivals in bedroom furniture — crafted for restful nights and beautiful mornings.',
+    // Old: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1920&q=80'
+    image: '/hero/1.jpg',
     cta: 'Explore Bedroom',
     ctaLink: '/products?category=bedroom',
-    bgColor: '#f5e8f1'
+    gradient: 'linear-gradient(135deg, rgba(45,20,35,0.85) 0%, rgba(45,20,35,0.4) 50%, rgba(0,0,0,0.05) 100%)',
+    accent: '#e74c3c'
   }
 ]
 
 export default function ModernHeroCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [direction, setDirection] = useState(1)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const [progress, setProgress] = useState(0)
+  const progressRef = useRef(null)
+  const startTimeRef = useRef(Date.now())
 
+  // --- Auto-play with progress bar ---
   useEffect(() => {
-    if (!isAutoPlaying) return
+    if (!isAutoPlaying) {
+      setProgress(0)
+      if (progressRef.current) cancelAnimationFrame(progressRef.current)
+      return
+    }
+    startTimeRef.current = Date.now()
+    const tick = () => {
+      const elapsed = Date.now() - startTimeRef.current
+      const pct = Math.min((elapsed / SLIDE_DURATION) * 100, 100)
+      setProgress(pct)
+      if (pct >= 100) {
+        setDirection(1)
+        setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
+        startTimeRef.current = Date.now()
+      }
+      progressRef.current = requestAnimationFrame(tick)
+    }
+    progressRef.current = requestAnimationFrame(tick)
+    return () => { if (progressRef.current) cancelAnimationFrame(progressRef.current) }
+  }, [isAutoPlaying, currentSlide])
 
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [isAutoPlaying])
-
-  const goToSlide = (index) => {
+  const goToSlide = useCallback((index) => {
+    if (index === currentSlide) return
+    setDirection(index > currentSlide ? 1 : -1)
     setCurrentSlide(index)
     setIsAutoPlaying(false)
     setTimeout(() => setIsAutoPlaying(true), 10000)
-  }
+  }, [currentSlide])
+
+  const goNext = useCallback(() => {
+    setDirection(1)
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
+    setIsAutoPlaying(false)
+    setTimeout(() => setIsAutoPlaying(true), 10000)
+  }, [])
+
+  const goPrev = useCallback(() => {
+    setDirection(-1)
+    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)
+    setIsAutoPlaying(false)
+    setTimeout(() => setIsAutoPlaying(true), 10000)
+  }, [])
+
+  const slide = heroSlides[currentSlide]
 
   return (
-    <section className="hero-carousel" style={{ position: 'relative', overflow: 'hidden', minHeight: '500px' }}>
-      <AnimatePresence mode="wait">
+    <section
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        height: '92vh',
+        minHeight: '520px',
+        maxHeight: '820px',
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      }}
+    >
+      {/* Full-bleed slides */}
+      <AnimatePresence mode="wait" custom={direction}>
         <motion.div
-          key={currentSlide}
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -100 }}
-          transition={{ duration: 0.7, ease: 'easeInOut' }}
-          className="hero-slide"
+          key={slide.id}
+          custom={direction}
+          initial={{ opacity: 0, scale: 1.05, x: direction > 0 ? 60 : -60 }}
+          animate={{ opacity: 1, scale: 1, x: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }}
+          exit={{ opacity: 0, scale: 0.97, x: direction > 0 ? -60 : 60, transition: { duration: 0.5, ease: 'easeIn' } }}
           style={{
-            backgroundColor: heroSlides[currentSlide].bgColor,
-            padding: '80px 20px',
-            minHeight: '500px',
-            display: 'flex',
-            alignItems: 'center'
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
           }}
         >
-          <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-            <div className="hero-content" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', alignItems: 'center' }}>
-              
-              {/* Text Content */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="hero-text"
+          {/* Background Image with Ken Burns */}
+          <motion.div
+            key={`bg-${slide.id}`}
+            initial={{ scale: 1 }}
+            animate={{ scale: 1.08, transition: { duration: SLIDE_DURATION / 1000 + 1, ease: 'linear' } }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 0,
+              willChange: 'transform',
+            }}
+          >
+            <Image
+              src={slide.image}
+              alt={slide.title}
+              fill
+              priority
+              sizes="100vw"
+              quality={90}
+              style={{ objectFit: 'cover', objectPosition: 'center center' }}
+            />
+          </motion.div>
+
+          {/* Gradient overlay */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 1,
+              background: slide.gradient,
+            }}
+          />
+
+          {/* Decorative accent line */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '5px',
+              height: '100%',
+              zIndex: 3,
+              background: slide.accent,
+            }}
+          />
+
+          {/* Content */}
+          <div
+            style={{
+              position: 'relative',
+              zIndex: 2,
+              maxWidth: '1280px',
+              margin: '0 auto',
+              padding: '0 60px',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: {},
+                visible: { transition: { staggerChildren: 0.12, delayChildren: 0.35 } },
+              }}
+              style={{ maxWidth: '600px' }}
+            >
+              {/* Subtitle */}
+              <motion.p
+                variants={{
+                  hidden: { opacity: 0, y: 28, filter: 'blur(6px)' },
+                  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '3px',
+                  color: 'rgba(255,255,255,0.75)',
+                  margin: '0 0 18px',
+                }}
               >
-                <p style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '2px', color: '#888', marginBottom: '10px' }}>
-                  {heroSlides[currentSlide].subtitle}
-                </p>
-                <h1 style={{ fontSize: '48px', fontWeight: '700', marginBottom: '20px', lineHeight: '1.2', color: '#1a1a1a' }}>
-                  {heroSlides[currentSlide].title}
-                </h1>
-                <p style={{ fontSize: '18px', color: '#666', marginBottom: '30px', lineHeight: '1.6' }}>
-                  {heroSlides[currentSlide].description}
-                </p>
-                <Link 
-                  href={heroSlides[currentSlide].ctaLink}
+                <span
                   style={{
                     display: 'inline-block',
-                    padding: '16px 40px',
-                    backgroundColor: '#1a1a1a',
-                    color: '#fff',
+                    width: '28px',
+                    height: '2px',
+                    borderRadius: '1px',
+                    flexShrink: 0,
+                    backgroundColor: slide.accent,
+                  }}
+                />
+                {slide.subtitle}
+              </motion.p>
+
+              {/* Title */}
+              <motion.h1
+                variants={{
+                  hidden: { opacity: 0, y: 28, filter: 'blur(6px)' },
+                  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+                }}
+                style={{
+                  fontSize: '58px',
+                  fontWeight: 800,
+                  lineHeight: 1.08,
+                  color: '#fff',
+                  margin: '0 0 20px',
+                  letterSpacing: '-1px',
+                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {slide.title}
+              </motion.h1>
+
+              {/* Description */}
+              <motion.p
+                className="hero-desc-text"
+                variants={{
+                  hidden: { opacity: 0, y: 28, filter: 'blur(6px)' },
+                  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+                }}
+                style={{
+                  fontSize: '17px',
+                  lineHeight: 1.7,
+                  color: 'rgba(255,255,255,0.78)',
+                  margin: '0 0 36px',
+                  maxWidth: '480px',
+                }}
+              >
+                {slide.description}
+              </motion.p>
+
+              {/* CTA Button */}
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 28, filter: 'blur(6px)' },
+                  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+                }}
+              >
+                <Link
+                  href={slide.ctaLink}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '16px 38px',
+                    fontSize: '15px',
+                    fontWeight: 600,
                     textDecoration: 'none',
-                    borderRadius: '4px',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    transition: 'all 0.3s ease',
-                    border: '2px solid #1a1a1a'
+                    color: '#fff',
+                    background: slide.accent,
+                    borderRadius: '6px',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+                    letterSpacing: '0.3px',
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = 'transparent'
-                    e.target.style.color = '#1a1a1a'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.35)'
+                    e.currentTarget.style.filter = 'brightness(1.12)'
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#1a1a1a'
-                    e.target.style.color = '#fff'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.25)'
+                    e.currentTarget.style.filter = 'brightness(1)'
                   }}
                 >
-                  {heroSlides[currentSlide].cta}
+                  {slide.cta}
+                  <span style={{ display: 'inline-block', fontSize: '18px', transition: 'transform 0.3s ease' }}>&#8594;</span>
                 </Link>
               </motion.div>
-
-              {/* Image */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.5 }}
-                className="hero-image"
-                style={{ position: 'relative', height: '400px' }}
-              >
-                <Image
-                  src={heroSlides[currentSlide].image}
-                  alt={heroSlides[currentSlide].title}
-                  fill
-                  style={{ objectFit: 'contain' }}
-                  priority
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                />
-              </motion.div>
-
-            </div>
+            </motion.div>
           </div>
         </motion.div>
       </AnimatePresence>
 
-      {/* Slide Indicators */}
-      <div style={{ position: 'absolute', bottom: '30px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '12px', zIndex: 10 }}>
-        {heroSlides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            style={{
-              width: currentSlide === index ? '40px' : '12px',
-              height: '12px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: currentSlide === index ? '#1a1a1a' : 'rgba(0,0,0,0.2)',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
+      {/* Prev / Next arrows */}
+      <button
+        className="hero-nav-arrow"
+        onClick={goPrev}
+        aria-label="Previous slide"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '24px',
+          transform: 'translateY(-50%)',
+          zIndex: 10,
+          width: '48px',
+          height: '48px',
+          borderRadius: '50%',
+          border: '1.5px solid rgba(255,255,255,0.3)',
+          background: 'rgba(255,255,255,0.08)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          color: '#fff',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.18)'
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)'
+          e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'
+          e.currentTarget.style.transform = 'translateY(-50%)'
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button
+        className="hero-nav-arrow"
+        onClick={goNext}
+        aria-label="Next slide"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          right: '24px',
+          transform: 'translateY(-50%)',
+          zIndex: 10,
+          width: '48px',
+          height: '48px',
+          borderRadius: '50%',
+          border: '1.5px solid rgba(255,255,255,0.3)',
+          background: 'rgba(255,255,255,0.08)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          color: '#fff',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.18)'
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)'
+          e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'
+          e.currentTarget.style.transform = 'translateY(-50%)'
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+
+      {/* Bottom bar: indicators + progress */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '32px',
+          left: '60px',
+          right: '60px',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {heroSlides.map((s, i) => (
+            <button
+              key={s.id}
+              onClick={() => goToSlide(i)}
+              aria-label={`Go to slide ${i + 1}`}
+              style={{
+                position: 'relative',
+                width: currentSlide === i ? '64px' : '44px',
+                height: '4px',
+                borderRadius: '2px',
+                border: 'none',
+                background: currentSlide === i ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                transition: 'width 0.4s ease, background 0.3s ease',
+                padding: 0,
+              }}
+            >
+              {currentSlide === i && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    height: '100%',
+                    width: `${progress}%`,
+                    borderRadius: '2px',
+                    backgroundColor: slide.accent,
+                    transition: 'width 0.05s linear',
+                  }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+        <span
+          style={{
+            fontSize: '13px',
+            fontWeight: 500,
+            color: 'rgba(255,255,255,0.55)',
+            letterSpacing: '2px',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {String(currentSlide + 1).padStart(2, '0')} / {String(heroSlides.length).padStart(2, '0')}
+        </span>
       </div>
 
       <style jsx>{`
         @media (max-width: 768px) {
-          .hero-content {
-            grid-template-columns: 1fr !important;
-            text-align: center;
+          .hero-nav-arrow {
+            display: none !important;
           }
-          .hero-text h1 {
-            font-size: 32px !important;
-          }
-          .hero-image {
-            height: 300px !important;
+        }
+        @media (max-width: 480px) {
+          .hero-desc-text {
+            display: none !important;
           }
         }
       `}</style>
