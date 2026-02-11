@@ -88,11 +88,7 @@ export default function Header() {
           ]
         }
       ],
-      images: [
-        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80',
-        'https://images.unsplash.com/photo-1567231511259-f5c86aab16b9?w=400&q=80',
-        'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&q=80'
-      ]
+      images: ['/header/All.jpg']
     },
     'SPACE SAVING FURNITURE': {
       sections: [
@@ -114,10 +110,7 @@ export default function Header() {
           ]
         }
       ],
-      images: [
-        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80',
-        'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&q=80'
-      ]
+      images: ['/header/spacesavingfurniture.webp']
     },
     'BEDS': {
       sections: [
@@ -135,10 +128,7 @@ export default function Header() {
           ]
         }
       ],
-      images: [
-        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80',
-        'https://images.unsplash.com/photo-1567231511259-f5c86aab16b9?w=400&q=80'
-      ]
+      images: ['/header/beds.webp']
     },
     'CHAIRS': {
       sections: [
@@ -154,10 +144,7 @@ export default function Header() {
           ]
         }
       ],
-      images: [
-        'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&q=80',
-        'https://images.unsplash.com/photo-1592078615290-033ee584e267?w=400&q=80'
-      ]
+      images: ['/header/chairs.webp']
     },
     'DINING SETS': {
       sections: [
@@ -170,10 +157,7 @@ export default function Header() {
           ]
         }
       ],
-      images: [
-        'https://images.unsplash.com/photo-1517457373614-b7152f800fd1?w=400&q=80',
-        'https://images.unsplash.com/photo-1551632440-e2b4dc881eaa?w=400&q=80'
-      ]
+      images: ['/header/diningsets.webp']
     },
     'SOFA SETS': {
       sections: [
@@ -190,10 +174,7 @@ export default function Header() {
           ]
         }
       ],
-      images: [
-        'https://images.unsplash.com/photo-1540932239986-310128078ceb?w=400&q=80',
-        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80'
-      ]
+      images: ['/header/sofasets.webp']
     },
     'TABLES': {
       sections: [
@@ -207,10 +188,7 @@ export default function Header() {
           ]
         }
       ],
-      images: [
-        'https://images.unsplash.com/photo-1516214104703-3e049afb6c46?w=400&q=80',
-        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80'
-      ]
+      images: ['/header/tables.webp']
     },
     'WARDROBE & RACKS': {
       sections: [
@@ -224,10 +202,7 @@ export default function Header() {
           ]
         }
       ],
-      images: [
-        'https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=400&q=80',
-        'https://images.unsplash.com/photo-1574909509595-c89e8a27bb0a?w=400&q=80'
-      ]
+      images: ['/header/wardrobe.webp']
     }
   }
 
@@ -1270,7 +1245,7 @@ export default function Header() {
           align-items: center;
           justify-content: center;
           gap: 0.8rem;
-          background: linear-gradient(135deg, #f8f9fa 0%, #ecf0f1 100%);
+          background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 50%, #f5f5f5 100%);
           box-sizing: border-box;
         }
 
