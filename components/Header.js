@@ -525,7 +525,7 @@ export default function Header() {
               {hoveredCategory === category && (
                 <div className="category-dropdown">
                   <div className="dropdown-content">
-                    <div className="dropdown-left">
+                    <div className={`dropdown-left${category === 'ALL' ? ' dropdown-left-all' : ''}`}>
                       {categoryData[category].sections.map((section, idx) => (
                         <div key={idx} className="dropdown-section">
                           <h4 className="section-title">{section.title}</h4>
@@ -1181,11 +1181,24 @@ export default function Header() {
           border-right: 2px solid #f0f0f0;
           display: grid;
           grid-template-columns: repeat(2, 1fr);
+          grid-auto-rows: max-content;
           gap: 0.8rem;
           background: #ffffff;
           overflow-y: auto;
           max-height: 580px;
           box-sizing: border-box;
+        }
+
+        .dropdown-left-all {
+          columns: 2;
+          column-gap: 1.5rem;
+          grid: unset;
+          display: block;
+        }
+
+        .dropdown-left-all .dropdown-section {
+          break-inside: avoid;
+          margin-bottom: 1.2rem;
         }
 
         .dropdown-left::-webkit-scrollbar {
