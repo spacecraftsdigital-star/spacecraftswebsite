@@ -31,6 +31,7 @@ export default function Header() {
           title: 'BEDS',
           items: [
             { name: 'Bunk Beds', slug: 'bunk-beds' },
+            { name: 'Futon Beds', slug: 'futon-beds' },
             { name: 'Diwan Cum Beds', slug: 'diwan-cum-beds' },
             { name: 'Folding Beds', slug: 'folding-beds' },
             { name: 'Metal Cots', slug: 'metal-cots' },
@@ -53,6 +54,9 @@ export default function Header() {
         {
           title: 'DINING SETS',
           items: [
+            { name: 'Dining Tables', slug: 'dining-tables' },
+            { name: 'Dining Chairs', slug: 'dining-chairs' },
+            { name: 'Folding Dinings', slug: 'folding-dinings' },
             { name: 'Shoe Racks', slug: 'shoe-racks' }
           ]
         },
@@ -62,13 +66,18 @@ export default function Header() {
             { name: '2 Seater', slug: '2-seater' },
             { name: '3+1+1 Sofas', slug: '3-1-1-sofas' },
             { name: 'Corner Sofas', slug: 'corner-sofas' },
+            { name: 'Cushion Sofas', slug: 'cushion-sofas' },
             { name: 'Diwans', slug: 'diwans' },
-            { name: 'Recliner Sofas', slug: 'recliner-sofas' }
+            { name: 'Recliner Sofas', slug: 'recliner-sofas' },
+            { name: 'Sofa cum Beds', slug: 'sofa-cum-beds' }
           ]
         },
         {
           title: 'SPACE SAVING',
           items: [
+            { name: 'Foldable Tables', slug: 'foldable-tables' },
+            { name: 'Foldable Chairs', slug: 'foldable-chairs' },
+            { name: 'Folding Beds', slug: 'folding-beds' },
             { name: 'TV Racks', slug: 'tv-racks' }
           ]
         },
@@ -82,9 +91,12 @@ export default function Header() {
           ]
         },
         {
-          title: 'WARDROBES',
+          title: 'WARDROBES & RACKS',
           items: [
-            { name: 'Book Shelves', slug: 'book-shelves' }
+            { name: 'Wardrobes', slug: 'wardrobes' },
+            { name: 'Book Shelves', slug: 'book-shelves' },
+            { name: 'Shoe Racks', slug: 'shoe-racks' },
+            { name: 'TV Racks', slug: 'tv-racks' }
           ]
         }
       ],
@@ -499,42 +511,107 @@ export default function Header() {
               {/* Dropdown Menu */}
               {hoveredCategory === category && (
                 <div className="category-dropdown">
-                  <div className="dropdown-content">
-                    <div className={`dropdown-left${category === 'ALL' ? ' dropdown-left-all' : ''}`}>
-                      {categoryData[category].sections.map((section, idx) => (
-                        <div key={idx} className="dropdown-section">
-                          <h4 className="section-title">{section.title}</h4>
-                          <ul className="section-items">
-                            {section.items.map((item, itemIdx) => (
-                              <li key={itemIdx}>
-                                <button
-                                  className="section-item-link"
-                                  onClick={() => router.push(`/products?category=${item.slug}`)}
-                                >
-                                  {item.name}
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
+                  {category === 'ALL' ? (
+                    <div className="dropdown-content">
+                      <div className="dropdown-left dropdown-left-all">
+                        {categoryData[category].sections.map((section, idx) => (
+                          <div key={idx} className="dropdown-section">
+                            <h4 className="section-title">{section.title}</h4>
+                            <ul className="section-items">
+                              {section.items.map((item, itemIdx) => (
+                                <li key={itemIdx}>
+                                  <button
+                                    className="section-item-link"
+                                    onClick={() => router.push(`/products?category=${item.slug}`)}
+                                  >
+                                    {item.name}
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
 
-                    {/* Dropdown Right - Images */}
-                    <div className="dropdown-right">
-                      <div className="category-images">
-                        <div className="category-image-wrapper">
-                          <Image
-                            src={categoryData[category].images[0]}
-                            alt={`${category} featured`}
-                            width={180}
-                            height={220}
-                            style={{ objectFit: 'cover' }}
-                          />
+                      <div className="dropdown-right dropdown-right-all">
+                        <div className="category-images">
+                          <div className="category-image-wrapper">
+                            <Image
+                              src={categoryData[category].images[0]}
+                              alt={`${category} featured`}
+                              width={380}
+                              height={500}
+                              style={{ objectFit: 'cover', objectPosition: 'center center', width: '100%', height: '100%' }}
+                            />
+                            <div className="image-overlay-text image-overlay-all">
+                              <span className="overlay-label">Explore</span>
+                              <span className="overlay-category">ALL FURNITURE</span>
+                              <button className="overlay-cta" onClick={() => router.push('/products')}>
+                                Shop Now
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <path d="M5 12h14"/>
+                                  <path d="m12 5 7 7-7 7"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="dropdown-content">
+                      <div className="dropdown-accent-bar"></div>
+                      <div className="dropdown-inner">
+                        <div className="dropdown-left">
+                          {categoryData[category].sections.map((section, idx) => (
+                            <div key={idx} className="dropdown-section">
+                              <h4 className="section-title">{section.title}</h4>
+                              <ul className="section-items">
+                                {section.items.map((item, itemIdx) => (
+                                  <li key={itemIdx}>
+                                    <button
+                                      className="section-item-link"
+                                      onClick={() => router.push(`/products?category=${item.slug}`)}
+                                    >
+                                      {item.name}
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                              <button
+                                className="shop-all-link"
+                                onClick={() => router.push(`/products?category=${category.toLowerCase().replace(/\s+/g, '-')}`)}
+                              >
+                                Shop All {category}
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <path d="M5 12h14"/>
+                                  <path d="m12 5 7 7-7 7"/>
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="dropdown-right">
+                          <div className="category-images">
+                            <div className="category-image-wrapper">
+                              <Image
+                                src={categoryData[category].images[0]}
+                                alt={`${category} featured`}
+                                width={400}
+                                height={500}
+                                style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                              />
+                              <div className="image-overlay-text">
+                                <span className="overlay-label">Explore</span>
+                                <span className="overlay-category">{category}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -586,7 +663,7 @@ export default function Header() {
           z-index: 1000;
           padding: 0;
           border-bottom: 1px solid #f0f0f0;
-          font-family: Inter, sans-serif;
+          font-family: 'Inter', sans-serif;
         }
 
         .header-container {
@@ -1082,6 +1159,7 @@ export default function Header() {
           letter-spacing: 0.3px;
           position: relative;
           text-transform: uppercase;
+          font-family: 'Inter', sans-serif;
         }
 
         .category-nav-link::before {
@@ -1114,9 +1192,11 @@ export default function Header() {
           left: 0;
           right: 0;
           width: 100%;
-          background: white;
+          background: #ffffff;
           border: none;
-          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.25);
+          border-top: 3px solid transparent;
+          border-image: linear-gradient(90deg, #e74c3c, #e67e22, #f39c12) 1;
+          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.2), 0 8px 32px rgba(0, 0, 0, 0.08);
           border-radius: 0;
           max-width: none;
           max-height: 580px;
@@ -1125,7 +1205,10 @@ export default function Header() {
           animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           white-space: normal;
           display: flex;
+          justify-content: center;
           box-sizing: border-box;
+          padding: 0 2rem;
+          font-family: 'Inter', sans-serif;
         }
 
         @keyframes slideDown {
@@ -1141,39 +1224,115 @@ export default function Header() {
 
         .dropdown-content {
           display: flex;
-          gap: 0;
-          min-height: auto;
+          justify-content: center;
           width: 100%;
           max-width: 1400px;
+          min-height: 400px;
           max-height: 580px;
           box-sizing: border-box;
+          position: relative;
+        }
+
+        .dropdown-inner {
+          display: flex;
+          align-items: stretch;
+          justify-content: center;
+          gap: 0;
+          width: 100%;
+          max-width: 1000px;
           margin: 0 auto;
+          min-height: 400px;
         }
 
         .dropdown-left {
-          flex: 1.3;
-          padding: 0.8rem 1rem;
-          border-right: 2px solid #f0f0f0;
+          flex: 1 1 0;
+          padding: 2rem 2.5rem;
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          grid-auto-rows: max-content;
-          gap: 0.8rem;
-          background: #ffffff;
-          overflow-y: auto;
-          max-height: 580px;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 1.5rem;
+          background: linear-gradient(180deg, #ffffff 0%, #fafafa 50%, #f5f5f5 100%);
           box-sizing: border-box;
+          position: relative;
+          min-width: 280px;
+          border-right: 1px solid #eee;
         }
 
         .dropdown-left-all {
-          columns: 2;
+          flex: 1;
+          columns: 3;
           column-gap: 1.5rem;
           grid: unset;
           display: block;
+          border-right: 2px solid #f0f0f0;
+          padding: 1.25rem 1.5rem;
+          background: linear-gradient(180deg, #ffffff 0%, #fafafa 50%, #f5f5f5 100%);
+          overflow-y: auto;
+          max-height: 580px;
+          position: relative;
+        }
+
+        .dropdown-right-all {
+          flex: 0 0 380px;
+          padding: 0;
+          width: 380px;
+          min-width: 0;
+        }
+
+        .dropdown-right-all .category-images {
+          width: 100%;
+          height: 100%;
+        }
+
+        .dropdown-right-all .category-image-wrapper {
+          width: 100%;
+          height: 100%;
+          border-radius: 0;
+          box-shadow: none;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .dropdown-right-all .category-image-wrapper::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, transparent 40%, transparent 45%, rgba(0,0,0,0.45) 100%);
+          opacity: 1;
+          transition: opacity 0.5s ease;
+          z-index: 2;
+          pointer-events: none;
+        }
+
+        .dropdown-right-all .category-image-wrapper:hover::before {
+          opacity: 0.6;
+        }
+
+        .dropdown-right-all .category-image-wrapper:hover {
+          box-shadow: none;
+        }
+
+        .dropdown-right-all .category-image-wrapper :global(img) {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover;
+          object-position: center center;
+          transform: scale(1);
+          transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.5s ease;
+          filter: saturate(0.9) brightness(0.97);
+          will-change: transform;
+        }
+
+        .dropdown-right-all .category-image-wrapper:hover :global(img) {
+          transform: scale(1.08);
+          filter: saturate(1.15) brightness(1.03);
         }
 
         .dropdown-left-all .dropdown-section {
           break-inside: avoid;
-          margin-bottom: 1.2rem;
+          margin-bottom: 0.8rem;
         }
 
         .dropdown-left::-webkit-scrollbar {
@@ -1196,19 +1355,40 @@ export default function Header() {
         .dropdown-section {
           display: flex;
           flex-direction: column;
-          gap: 0.3rem;
+          gap: 0.25rem;
+          padding: 0.35rem 0;
         }
 
         .section-title {
-          font-size: 0.75rem;
+          font-size: 0.78rem;
           font-weight: 800;
-          color: #2c3e50;
-          margin: 0 0 0.35rem 0;
-          letter-spacing: 0.7px;
+          color: #1a1a1a;
+          margin: 0 0 0.4rem 0;
+          letter-spacing: 1.2px;
           text-transform: uppercase;
-          padding-bottom: 0.3rem;
-          border-bottom: 2px solid #e74c3c;
-          display: inline-block;
+          padding-bottom: 0.35rem;
+          border-bottom: none;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .section-title::before {
+          content: '';
+          width: 3px;
+          height: 14px;
+          background: linear-gradient(180deg, #e74c3c, #e67e22);
+          border-radius: 2px;
+          flex-shrink: 0;
+        }
+
+        .section-title::after {
+          content: '';
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(90deg, #e0e0e0, transparent);
+          margin-left: 0.5rem;
         }
 
         .section-items {
@@ -1217,70 +1397,250 @@ export default function Header() {
           margin: 0;
           display: flex;
           flex-direction: column;
-          gap: 0.2rem;
+          gap: 0.1rem;
         }
 
         .section-item-link {
           background: none;
           border: none;
-          padding: 0.2rem 0;
-          color: #666666;
-          font-size: 0.9rem;
+          padding: 0.35rem 0.75rem;
+          color: #555;
+          font-size: 0.85rem;
           cursor: pointer;
           text-align: left;
-          transition: color 0.2s ease;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
           font-weight: 500;
-          line-height: 1.2;
+          line-height: 1.3;
+          border-radius: 6px;
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          width: 100%;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .section-item-link::before {
+          content: '';
+          width: 0;
+          height: 0;
+          border-left: 4px solid #e74c3c;
+          border-top: 3px solid transparent;
+          border-bottom: 3px solid transparent;
+          opacity: 0;
+          transition: opacity 0.2s ease, transform 0.2s ease;
+          transform: translateX(-4px);
+          flex-shrink: 0;
         }
 
         .section-item-link:hover {
           color: #e74c3c;
+          background: rgba(231, 76, 60, 0.04);
+          padding-left: 0.75rem;
+        }
+
+        .section-item-link:hover::before {
+          opacity: 1;
+          transform: translateX(0);
         }
 
         .dropdown-right {
-          flex: 0.6;
-          padding: 1rem 1rem;
+          flex: 1 1 0;
           display: flex;
-          flex-direction: column;
-          align-items: center;
+          align-items: stretch;
           justify-content: center;
-          gap: 0.8rem;
-          background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 50%, #f5f5f5 100%);
-          box-sizing: border-box;
+          padding: 0;
+          position: relative;
+          min-width: 380px;
         }
 
         .category-images {
           display: flex;
           width: 100%;
-          max-width: 300px;
+          height: 100%;
         }
 
         .category-image-wrapper {
-          width: 180px;
-          height: 220px;
-          border-radius: 12px;
+          width: 100%;
+          height: 100%;
+          border-radius: 0;
           overflow: hidden;
-          background: white;
-          border: 2px solid #ddd;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+          background: #f0f0f0;
+          border: none;
+          box-shadow: none;
+          position: relative;
+        }
+
+        .category-image-wrapper::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, transparent 40%, transparent 50%, rgba(0,0,0,0.35) 100%);
+          opacity: 1;
+          transition: opacity 0.5s ease;
+          z-index: 2;
+          pointer-events: none;
+        }
+
+        .category-image-wrapper:hover::before {
+          opacity: 0;
         }
 
         .category-image-wrapper:hover {
-          transform: translateY(-6px);
-          box-shadow: 0 14px 32px rgba(0, 0, 0, 0.15);
-          border-color: #e74c3c;
+          box-shadow: none;
         }
 
-        .category-image-wrapper img {
-          width: 100%;
-          height: 100%;
+        .category-image-wrapper :global(img) {
+          width: 100% !important;
+          height: 100% !important;
           object-fit: cover;
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transform: scale(1);
+          transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.5s ease;
+          display: block;
+          filter: saturate(0.9) brightness(0.97);
+          will-change: transform;
         }
 
-        .category-image-wrapper:hover img {
-          transform: scale(1.05);
+        .category-image-wrapper:hover :global(img) {
+          transform: scale(1.08);
+          filter: saturate(1.15) brightness(1.03);
+        }
+
+        /* Dropdown Accent Bar */
+        .dropdown-accent-bar {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, #e74c3c 0%, #e67e22 50%, #f39c12 100%);
+          z-index: 10;
+        }
+
+        /* Shop All Link */
+        .shop-all-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          margin-top: 0.5rem;
+          padding: 0.4rem 0.85rem;
+          background: none;
+          border: 1.5px solid #e74c3c;
+          color: #e74c3c;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          font-family: 'Inter', sans-serif;
+        }
+
+        .shop-all-link:hover {
+          background: #e74c3c;
+          color: #ffffff;
+          transform: translateX(2px);
+          box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+
+        .shop-all-link svg {
+          transition: transform 0.3s ease;
+        }
+
+        .shop-all-link:hover svg {
+          transform: translateX(3px);
+        }
+
+        /* Image Overlay Text */
+        .image-overlay-text {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          padding: 2rem 1.5rem;
+          background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 100%);
+          z-index: 3;
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+          pointer-events: none;
+          transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .category-image-wrapper:hover .image-overlay-text {
+          transform: translateY(10px);
+          opacity: 0;
+        }
+
+        .dropdown-right-all .category-image-wrapper:hover .image-overlay-text {
+          transform: translateY(0);
+          opacity: 1;
+        }
+
+        .image-overlay-all {
+          padding: 2.5rem 2rem;
+          background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.65) 100%);
+        }
+
+        .overlay-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-top: 0.75rem;
+          padding: 0.6rem 1.5rem;
+          background: rgba(255,255,255,0.15);
+          backdrop-filter: blur(4px);
+          border: 1.5px solid rgba(255,255,255,0.5);
+          color: #ffffff;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          pointer-events: auto;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .overlay-cta:hover {
+          background: #ffffff;
+          color: #1a1a1a;
+          border-color: #ffffff;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+        .overlay-cta svg {
+          transition: transform 0.3s ease;
+        }
+
+        .overlay-cta:hover svg {
+          transform: translateX(3px);
+        }
+
+        .overlay-label {
+          color: rgba(255,255,255,0.8);
+          font-size: 0.7rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .overlay-category {
+          color: #ffffff;
+          font-size: 1.3rem;
+          font-weight: 800;
+          letter-spacing: 0.5px;
+          text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          font-family: 'Inter', sans-serif;
         }
 
         /* Backdrop Overlay Effect */
@@ -1296,64 +1656,56 @@ export default function Header() {
         }
 
         @media (max-width: 1200px) {
-          .dropdown-content {
-            max-width: 90%;
+          .dropdown-inner {
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: stretch;
           }
 
           .dropdown-left {
             grid-template-columns: 1fr;
-            padding: 2.5rem 2.5rem;
-          }
-
-          .dropdown-right {
-            padding: 2.5rem;
-          }
-
-          .category-images {
-            max-width: 100%;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
+            padding: 1rem;
           }
 
           .category-image-wrapper {
+            width: 100%;
             height: 200px;
           }
         }
 
         @media (max-width: 1024px) {
-          .dropdown-content {
-            max-width: 90%;
+          .category-dropdown {
+            padding: 1rem;
           }
 
-          .dropdown-content {
+          .dropdown-inner {
             flex-direction: column;
+            gap: 1.5rem;
+            align-items: stretch;
           }
 
           .dropdown-left {
-            border-right: none;
-            border-bottom: 2px solid #f0f0f0;
-            padding: 2rem 2.5rem;
-          }
-
-          .dropdown-right {
-            padding: 2rem 2.5rem;
-            min-height: auto;
-          }
-
-          .category-images {
-            grid-template-columns: repeat(2, 1fr);
-            max-width: 100%;
-            gap: 1.2rem;
+            padding: 1rem;
           }
 
           .category-image-wrapper {
-            height: 220px;
+            width: 100%;
+            height: 240px;
+            border-radius: 8px;
           }
         }
 
         @media (max-width: 768px) {
           .category-nav {
             display: none;
+          }
+
+          .category-dropdown {
+            padding: 0.5rem;
+          }
+
+          .dropdown-inner {
+            gap: 1rem;
           }
         }
       `}</style>
