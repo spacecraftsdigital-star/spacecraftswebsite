@@ -12,7 +12,7 @@
 .nav_container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: 0.25rem 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;

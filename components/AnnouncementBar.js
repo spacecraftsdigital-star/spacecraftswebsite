@@ -34,7 +34,10 @@ export default function AnnouncementBar(){
       <style jsx>{`
         .announcement-bar {
           background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-          padding: 0.4rem 1rem;
+          height: 42px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           text-align: center;
           box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
         }
