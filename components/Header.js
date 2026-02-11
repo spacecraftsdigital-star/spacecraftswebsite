@@ -611,6 +611,7 @@ export default function Header() {
           z-index: 1000;
           padding: 0;
           border-bottom: 1px solid #f0f0f0;
+          font-family: Inter, sans-serif;
         }
 
         .header-container {
@@ -1211,7 +1212,7 @@ export default function Header() {
         }
 
         .section-title {
-          font-size: 0.65rem;
+          font-size: 0.75rem;
           font-weight: 800;
           color: #2c3e50;
           margin: 0 0 0.35rem 0;
@@ -1236,7 +1237,7 @@ export default function Header() {
           border: none;
           padding: 0.2rem 0;
           color: #666666;
-          font-size: 0.8rem;
+          font-size: 0.9rem;
           cursor: pointer;
           text-align: left;
           transition: color 0.2s ease;
