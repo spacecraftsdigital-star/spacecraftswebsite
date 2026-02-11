@@ -335,7 +335,7 @@ export default function Header() {
           {/* Logo */}
           <div className="header-logo">
             <Link href="/">
-              <Image src="/logo.webp" alt="Spacecrafts Furniture" width={160} height={45} priority />
+              <Image src="/logo.webp" alt="Spacecrafts Furniture" width={160} height={60} priority style={{ height: 'auto', width: 'auto' }} />
             </Link>
           </div>
 

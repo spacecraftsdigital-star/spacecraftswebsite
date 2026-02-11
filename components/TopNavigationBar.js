@@ -1,35 +1,38 @@
 "use client"
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function TopNavigationBar() {
-  const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const menuItems = [
-    { label: 'SELL ON PEPPERRY', href: '/sell' },
-    { label: 'BECOME A FRANCHISEE', href: '/franchisee' },
-    { label: 'BUY IN BULK', href: '/bulk-orders' },
-    { label: 'GIFT CARDS', href: '/gift-cards' },
-    { label: 'TRACK YOUR ORDER', href: '/track-order' },
-    { label: 'CONTACT US', href: '/contact' }
+  const navLinks = [
+    { label: 'About Us', href: '/about' },
+    { label: 'Buy In Bulk', href: '/bulk-orders' },
+    { label: 'Contact Us', href: '/contact' }
   ]
-
-  const handleContactClick = (e) => {
-    e.preventDefault()
-    router.push('/contact')
-    setMobileMenuOpen(false)
-  }
 
   return (
     <nav className="top-nav-bar">
       <div className="nav-container">
+        {/* Left Section: Contact Info */}
+        <div className="nav-left">
+          <div className="contact-info">
+            <span className="info-icon">📞</span>
+            <a href="tel:+919003003733" className="phone-link" aria-label="Call Ambattur store">
+              AMBATTUR: 90030 03733
+            </a>
+          </div>
+          <div className="gstin-info">
+            <span className="info-label">GSTIN/UIN:</span>
+            <span className="gstin-value">33ACSFS7628C1ZV</span>
+          </div>
+        </div>
+
         {/* Mobile Menu Toggle */}
         <button
           className="mobile-menu-toggle"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
+          aria-label="Toggle navigation menu"
           aria-expanded={mobileMenuOpen}
         >
           <span></span>
@@ -37,33 +40,27 @@ export default function TopNavigationBar() {
           <span></span>
         </button>
 
-        {/* Center: Menu Items */}
+        {/* Right Section: Navigation Links */}
         <ul className={`nav-menu ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-          {menuItems.slice(0, -1).map((item) => (
+          {navLinks.map((item) => (
             <li key={item.href} className="nav-item">
-              <Link href={item.href} className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+              <Link 
+                href={item.href} 
+                className="nav-link"
+                onClick={() => setMobileMenuOpen(false)}
+              >
                 {item.label}
               </Link>
             </li>
           ))}
-          {/* Contact Us Button */}
-          <li className="nav-item contact-item">
-            <button
-              className="nav-link contact-link"
-              onClick={handleContactClick}
-              aria-label="Contact Us"
-            >
-              {menuItems[menuItems.length - 1].label}
-            </button>
-          </li>
         </ul>
       </div>
 
       <style jsx>{`
         .top-nav-bar {
-          background: #f5f5f5;
-          border-bottom: 1px solid #e8e8e8;
-          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+          background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+          border-bottom: 1px solid #1a252f;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           position: sticky;
           top: 0;
           z-index: 999;
@@ -72,20 +69,78 @@ export default function TopNavigationBar() {
         .nav-container {
           max-width: 1400px;
           margin: 0 auto;
-          padding: 0 2rem;
+          padding: 1rem 2rem;
           display: flex;
           align-items: center;
-          justify-content: center;
-          height: 50px;
+          justify-content: space-between;
+          gap: 2rem;
         }
 
+        /* Left Section */
+        .nav-left {
+          display: flex;
+          align-items: center;
+          gap: 2rem;
+          flex: 0 1 auto;
+        }
+
+        .contact-info {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+        }
+
+        .info-icon {
+          font-size: 1rem;
+          line-height: 1;
+        }
+
+        .phone-link {
+          color: #ecf0f1;
+          text-decoration: none;
+          font-size: 0.9rem;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+          transition: all 0.3s ease;
+          padding: 0.4rem 0.8rem;
+          border-radius: 4px;
+          display: inline-block;
+        }
+
+        .phone-link:hover {
+          color: #fff;
+          background: rgba(231, 76, 60, 0.2);
+          text-decoration: underline;
+        }
+
+        .gstin-info {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.85rem;
+          color: #bdc3c7;
+        }
+
+        .info-label {
+          font-weight: 600;
+          color: #ecf0f1;
+        }
+
+        .gstin-value {
+          font-family: 'Courier New', monospace;
+          color: #ecf0f1;
+          letter-spacing: 0.2px;
+        }
+
+        /* Right Section - Navigation Menu */
         .nav-menu {
           display: flex;
           list-style: none;
           margin: 0;
           padding: 0;
-          gap: 1.5rem;
+          gap: 2.5rem;
           align-items: center;
+          flex: 0 1 auto;
         }
 
         .nav-item {
@@ -95,12 +150,12 @@ export default function TopNavigationBar() {
         .nav-link {
           background: none;
           border: none;
-          color: #2c3e50;
+          color: #fff;
           font-size: 0.9rem;
           font-weight: 600;
           text-decoration: none;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           padding: 0.5rem 0;
           letter-spacing: 0.4px;
           position: relative;
@@ -110,38 +165,20 @@ export default function TopNavigationBar() {
         .nav-link::after {
           content: '';
           position: absolute;
-          bottom: 0;
+          bottom: -3px;
           left: 0;
           width: 0;
           height: 2px;
-          background: #e74c3c;
+          background: linear-gradient(90deg, #e74c3c, #e67e22);
           transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .nav-link:hover {
-          color: #e74c3c;
+          color: #fff;
         }
 
         .nav-link:hover::after {
           width: 100%;
-        }
-
-        .contact-item .nav-link {
-          background: #e74c3c;
-          color: white;
-          padding: 0.65rem 1.5rem;
-          border-radius: 6px;
-          font-weight: 600;
-        }
-
-        .contact-item .nav-link::after {
-          display: none;
-        }
-
-        .contact-item .nav-link:hover {
-          background: #c0392b;
-          box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
-          transform: translateY(-2px);
         }
 
         /* Mobile Menu Toggle */
@@ -153,25 +190,43 @@ export default function TopNavigationBar() {
           cursor: pointer;
           padding: 0.5rem;
           gap: 6px;
+          margin-left: auto;
         }
 
         .mobile-menu-toggle span {
           width: 25px;
           height: 3px;
-          background: #2c3e50;
+          background: #ecf0f1;
           border-radius: 2px;
           transition: all 0.3s ease;
         }
 
-        /* Responsive */
+        /* Responsive - Tablet */
         @media (max-width: 1024px) {
           .nav-container {
-            padding: 0 1.5rem;
-            height: 50px;
+            padding: 0.85rem 1.5rem;
+            gap: 1.5rem;
+          }
+
+          .nav-left {
+            gap: 1.5rem;
+          }
+
+          .contact-info {
+            gap: 0.5rem;
+          }
+
+          .phone-link {
+            font-size: 0.85rem;
+            padding: 0.3rem 0.6rem;
+          }
+
+          .gstin-info {
+            font-size: 0.8rem;
           }
 
           .nav-menu {
-            gap: 1.2rem;
+            gap: 1.8rem;
           }
 
           .nav-link {
@@ -179,39 +234,71 @@ export default function TopNavigationBar() {
           }
         }
 
+        /* Responsive - Mobile */
         @media (max-width: 768px) {
           .mobile-menu-toggle {
             display: flex;
           }
 
           .nav-container {
-            height: 50px;
-            padding: 0 1rem;
+            flex-wrap: wrap;
+            padding: 0.75rem 1rem;
+            gap: 1rem;
+          }
+
+          .nav-left {
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 0.75rem;
+            order: 1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 1rem;
+            margin-bottom: 0.5rem;
+          }
+
+          .contact-info {
+            width: 100%;
+            justify-content: center;
+            gap: 0.5rem;
+          }
+
+          .phone-link {
+            font-size: 0.85rem;
+          }
+
+          .gstin-info {
+            width: 100%;
+            justify-content: center;
+            font-size: 0.75rem;
           }
 
           .nav-menu {
             position: absolute;
-            top: 50px;
+            top: 100%;
             left: 0;
             right: 0;
-            background: white;
+            background: rgba(44, 62, 80, 0.98);
             flex-direction: column;
             gap: 0;
-            padding: 1rem 0;
-            border-bottom: 1px solid #f0f0f0;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            padding: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease;
+            z-index: 1000;
           }
 
           .nav-menu.mobile-open {
-            max-height: 500px;
+            max-height: 400px;
             overflow-y: auto;
           }
 
           .nav-item {
             width: 100%;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
           }
 
           .nav-link {
@@ -219,6 +306,7 @@ export default function TopNavigationBar() {
             padding: 1rem 1.5rem;
             width: 100%;
             text-align: left;
+            font-size: 0.9rem;
           }
 
           .nav-link::after {
@@ -226,40 +314,48 @@ export default function TopNavigationBar() {
           }
 
           .nav-link:active {
-            background: #f5f5f5;
+            background: rgba(231, 76, 60, 0.2);
           }
 
-          .contact-item .nav-link {
-            background: #e74c3c;
-            color: white;
-            margin: 0.75rem 1rem 0 1rem;
-            width: calc(100% - 2rem);
-            text-align: center;
-            border-radius: 6px;
-          }
-
-          .contact-item .nav-link:hover {
-            background: #c0392b;
+          .mobile-menu-toggle {
+            order: 2;
+            margin: 0;
           }
         }
 
+        /* Responsive - Small Mobile */
         @media (max-width: 480px) {
           .nav-container {
-            height: 50px;
+            padding: 0.6rem 0.75rem;
           }
 
-          .nav-menu {
-            top: 50px;
+          .nav-left {
+            padding-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
+            gap: 0.5rem;
+          }
+
+          .contact-info {
+            gap: 0.4rem;
+          }
+
+          .info-icon {
+            font-size: 0.9rem;
+          }
+
+          .phone-link {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+          }
+
+          .gstin-info {
+            font-size: 0.7rem;
+            gap: 0.3rem;
           }
 
           .nav-link {
-            font-size: 0.8rem;
-            padding: 0.75rem 1rem;
-          }
-
-          .brand-link {
-            font-size: 0.9rem;
-            letter-spacing: 0.5px;
+            font-size: 0.85rem;
+            padding: 0.85rem 1rem;
           }
         }
       `}</style>
