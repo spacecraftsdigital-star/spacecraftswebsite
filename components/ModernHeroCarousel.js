@@ -15,7 +15,7 @@ const heroSlides = [
     subtitle: 'Premium Furniture for Modern Living',
     description: 'Discover our curated collection of designer furniture that blends elegance with everyday comfort.',
     // Old: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1920&q=80'
-    image: '/hero/11.jpg',
+    image: '/hero/1.webp',
     cta: 'Shop Collection',
     ctaLink: '/products',
     gradient: 'linear-gradient(135deg, rgba(26,26,26,0.82) 0%, rgba(26,26,26,0.45) 50%, rgba(0,0,0,0.1) 100%)',
@@ -39,7 +39,7 @@ const heroSlides = [
     subtitle: 'Create Your Perfect Sanctuary',
     description: 'New arrivals in bedroom furniture — crafted for restful nights and beautiful mornings.',
     // Old: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1920&q=80'
-    image: '/hero/1.jpg',
+    image: '/hero/bed.jpg',
     cta: 'Explore Bedroom',
     ctaLink: '/products?category=bedroom',
     gradient: 'linear-gradient(135deg, rgba(45,20,35,0.85) 0%, rgba(45,20,35,0.4) 50%, rgba(0,0,0,0.05) 100%)',
