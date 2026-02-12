@@ -6,6 +6,7 @@ import FeaturedProductsSection from '../components/FeaturedProductsSection'
 import SpecialOfferBanner from '../components/SpecialOfferBanner'
 import StoreLocatorSection from '../components/StoreLocatorSection'
 import NeedHelpBuyingSection from '../components/NeedHelpBuyingSection'
+import NewsletterSection from '../components/NewsletterSection'
 
 // SEO Metadata
 export const metadata = {
@@ -147,46 +148,7 @@ export default async function Home() {
         <NeedHelpBuyingSection />
 
         {/* Newsletter Section */}
-        <section style={{ padding: '48px 20px', backgroundColor: '#f5f1e8' }}>
-          <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
-            <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '15px' }}>
-              Join Our Newsletter
-            </h2>
-            <p style={{ fontSize: '16px', color: '#666', marginBottom: '30px' }}>
-              Get exclusive offers, design tips, and new arrival updates delivered to your inbox
-            </p>
-            <form style={{ display: 'flex', gap: '10px', maxWidth: '500px', margin: '0 auto' }}>
-              <input
-                type="email"
-                placeholder="Enter your email"
-                required
-                style={{
-                  flex: 1,
-                  padding: '14px 20px',
-                  border: '2px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '15px'
-                }}
-              />
-              <button
-                type="submit"
-                style={{
-                  padding: '14px 30px',
-                  backgroundColor: '#1a1a1a',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                Subscribe
-              </button>
-            </form>
-          </div>
-        </section>
+        <NewsletterSection />
       </main>
     </>
   )
