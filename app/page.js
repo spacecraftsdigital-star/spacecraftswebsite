@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '../lib/supabaseClient'
 import ModernHeroCarousel from '../components/ModernHeroCarousel'
+import TrustBadges from '../components/TrustBadges'
 import ModernCategoryGrid from '../components/ModernCategoryGrid'
 import FeaturedProductsSection from '../components/FeaturedProductsSection'
 import StoreLocatorSection from '../components/StoreLocatorSection'
@@ -127,30 +128,7 @@ export default async function Home() {
         <ModernHeroCarousel />
 
         {/* Trust Badges / Benefits */}
-        <section style={{ padding: '40px 20px', backgroundColor: '#fff', borderBottom: '1px solid #eee' }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px', textAlign: 'center' }}>
-            <div>
-              <div style={{ fontSize: '32px', marginBottom: '10px' }}>🚚</div>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>Free Delivery</h3>
-              <p style={{ fontSize: '14px', color: '#666' }}>Free shipping on orders above ₹10,000</p>
-            </div>
-            <div>
-              <div style={{ fontSize: '32px', marginBottom: '10px' }}>✓</div>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>Quality Guaranteed</h3>
-              <p style={{ fontSize: '14px', color: '#666' }}>Premium materials & craftsmanship</p>
-            </div>
-            <div>
-              <div style={{ fontSize: '32px', marginBottom: '10px' }}>↩</div>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>Easy Returns</h3>
-              <p style={{ fontSize: '14px', color: '#666' }}>30-day hassle-free returns</p>
-            </div>
-            <div>
-              <div style={{ fontSize: '32px', marginBottom: '10px' }}>🔒</div>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>Secure Payment</h3>
-              <p style={{ fontSize: '14px', color: '#666' }}>100% secure transactions</p>
-            </div>
-          </div>
-        </section>
+        <TrustBadges />
 
         {/* Categories Section */}
         <ModernCategoryGrid serverCategories={categories} />

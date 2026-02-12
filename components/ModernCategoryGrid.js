@@ -1,295 +1,483 @@
-// Modern Category Grid Section - SEO Optimized
+﻿// Modern Category Grid Section - SEO Optimized
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { useInView } from 'react-intersection-observer'
 
 const categories = [
   {
     id: 1,
     name: 'Sofas & Couches',
     slug: 'sofas-couches',
-    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80',
+    image: '/category/sofas.webp',
     productCount: 45,
-    description: 'Premium comfort seating'
+    tagline: 'Premium Comfort',
+    accent: '#e67e22',
+    imagePosition: 'center 40%',
   },
   {
     id: 2,
-    name: 'Beds & Mattresses',
-    slug: 'beds-frames',
-    image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&q=80',
+    name: 'Chairs & Seating',
+    slug: 'chairs-seating',
+    image: '/category/chairs.webp',
     productCount: 38,
-    description: 'Sleep in luxury'
+    tagline: 'Refined Elegance',
+    accent: '#3498db',
+    imagePosition: 'center 35%',
   },
   {
     id: 3,
-    name: 'Dining Sets',
-    slug: 'dining-room',
-    image: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&q=80',
+    name: 'Tables',
+    slug: 'tables',
+    image: '/category/tables.webp',
     productCount: 32,
-    description: 'Gather in style'
+    tagline: 'Gather in Style',
+    accent: '#27ae60',
+    imagePosition: 'center 45%',
   },
   {
     id: 4,
-    name: 'Office Furniture',
-    slug: 'office-furniture',
-    image: 'https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=800&q=80',
+    name: 'Beds & Mattresses',
+    slug: 'beds-frames',
+    image: '/category/beds.webp',
     productCount: 28,
-    description: 'Work from home essentials'
+    tagline: 'Sleep in Luxury',
+    accent: '#9b59b6',
+    imagePosition: 'center 40%',
   },
   {
     id: 5,
-    name: 'Storage Solutions',
-    slug: 'storage-organization',
-    image: 'https://images.unsplash.com/photo-1594620302200-9a762244a156?w=800&q=80',
+    name: 'Dining Sets',
+    slug: 'dining-room',
+    image: '/category/diningsets.webp',
     productCount: 42,
-    description: 'Organize beautifully'
+    tagline: 'Cherish Every Meal',
+    accent: '#e74c3c',
+    imagePosition: 'center 45%',
   },
   {
     id: 6,
     name: 'Outdoor Living',
     slug: 'outdoor-furniture',
-    image: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80',
+    image: '/category/outdoor.webp',
     productCount: 24,
-    description: 'Embrace nature'
-  }
+    tagline: 'Embrace Nature',
+    accent: '#1abc9c',
+    imagePosition: 'center 40%',
+  },
 ]
 
-export default function ModernCategoryGrid({ serverCategories = [] }) {
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1
-  })
-
-  // Map category slugs to Unsplash images
-  const categoryImageMap = {
-    'living-room': 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80',
-    'bedroom': 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&q=80',
-    'dining-room': 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&q=80',
-    'office-furniture': 'https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=800&q=80',
-    'outdoor-furniture': 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80',
-    'storage-organization': 'https://images.unsplash.com/photo-1594620302200-9a762244a156?w=800&q=80',
-    'sofas-couches': 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80',
-    'beds-frames': 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&q=80',
-    'tables': 'https://images.unsplash.com/photo-1533090368676-1fd25485db88?w=800&q=80',
-    'chairs-seating': 'https://images.unsplash.com/photo-1592078615290-033ee584e267?w=800&q=80',
-    'kids-furniture': 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=800&q=80',
-    'mattresses': 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80',
-    'home-decor': 'https://images.unsplash.com/photo-1618220179428-22790b461013?w=800&q=80',
-    'tv-units-entertainment': 'https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?w=800&q=80',
-    'wardrobes-cabinets': 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=800&q=80'
-  }
-
-  const displayCategories = serverCategories.length > 0 
-    ? serverCategories.map(cat => ({
-        ...cat,
-        image: categoryImageMap[cat.slug] || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80',
-        productCount: 0,
-        description: cat.name
-      }))
-    : categories
-
+function CategoryCard({ category, index, isVisible }) {
+  const [hovered, setHovered] = useState(false)
   return (
-    <section 
-      ref={ref}
-      className="category-grid-section" 
-      style={{ padding: '80px 20px', backgroundColor: '#fff' }}
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={isVisible ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        
-        {/* Section Header */}
-        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5 }}
-            style={{ 
-              fontSize: '14px', 
-              textTransform: 'uppercase', 
-              letterSpacing: '2px', 
-              color: '#888',
-              marginBottom: '10px'
+      <Link
+        href={'/products?category=' + category.slug}
+        style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+      >
+        <article
+          onMouseEnter={function() { setHovered(true) }}
+          onMouseLeave={function() { setHovered(false) }}
+          style={{
+            position: 'relative',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            height: '300px',
+            cursor: 'pointer',
+            transition: 'transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
+            transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
+            boxShadow: hovered
+              ? '0 16px 40px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06)'
+              : '0 2px 12px rgba(0,0,0,0.06)',
+          }}
+        >
+          {/* Image with smooth subtle zoom */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '-2%',
+              left: '-1%',
+              width: '102%',
+              height: '104%',
+              transition: 'transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+              transform: hovered ? 'scale(1.04)' : 'scale(1)',
+              willChange: 'transform',
             }}
           >
-            EXPLORE BY CATEGORY
-          </motion.p>
+            <Image
+              src={category.image}
+              alt={category.name + ' furniture collection'}
+              fill
+              unoptimized
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              style={{ objectFit: 'cover', objectPosition: category.imagePosition || 'center center' }}
+            />
+          </div>
+
+          {/* Light gradient overlay - subtle bottom fade */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 1,
+              background: 'linear-gradient(180deg, rgba(0,0,0,0.02) 0%, transparent 35%, transparent 45%, rgba(0,0,0,0.5) 100%)',
+              transition: 'opacity 0.6s ease',
+              opacity: hovered ? 0.85 : 1,
+            }}
+          />
+
+          {/* Corner badge */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '18px',
+              right: '18px',
+              zIndex: 4,
+              padding: '6px 14px',
+              borderRadius: '20px',
+              background: 'rgba(255,255,255,0.12)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              fontSize: '11px',
+              fontWeight: 600,
+              color: '#fff',
+              letterSpacing: '0.5px',
+              transition: 'all 0.4s ease',
+              opacity: hovered ? 1 : 0.7,
+              transform: hovered ? 'translateY(0)' : 'translateY(-4px)',
+            }}
+          >
+            {category.productCount}+ Items
+          </div>
+
+          {/* Bottom content */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 3,
+              padding: '30px 28px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            {/* Tagline */}
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '3px',
+                color: hovered ? '#fff' : 'rgba(255,255,255,0.5)',
+                transition: 'color 0.4s ease, transform 0.5s cubic-bezier(0.16,1,0.3,1)',
+                transform: hovered ? 'translateY(0)' : 'translateY(6px)',
+                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {category.tagline}
+            </span>
+
+            {/* Category name */}
+            <h3
+              style={{
+                fontSize: '26px',
+                fontWeight: 700,
+                color: '#fff',
+                margin: 0,
+                letterSpacing: '-0.5px',
+                lineHeight: 1.2,
+                transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)',
+                transform: hovered ? 'translateY(0)' : 'translateY(4px)',
+                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {category.name}
+            </h3>
+
+            {/* Explore link with arrow */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                marginTop: '6px',
+                transition: 'all 0.5s cubic-bezier(0.16,1,0.3,1)',
+                opacity: hovered ? 1 : 0,
+                transform: hovered ? 'translateY(0)' : 'translateY(12px)',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: '#fff',
+                  letterSpacing: '0.5px',
+                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                Explore Collection
+              </span>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#fff"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{
+                  transition: 'transform 0.35s ease',
+                  transform: hovered ? 'translateX(4px)' : 'translateX(0)',
+                }}
+              >
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </div>
+
+            {/* Accent underline */}
+            <div
+              style={{
+                width: hovered ? '60px' : '30px',
+                height: '3px',
+                borderRadius: '3px',
+                backgroundColor: hovered ? '#fff' : category.accent,
+                transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                marginTop: '4px',
+                opacity: hovered ? 0.9 : 0.6,
+              }}
+            />
+          </div>
+        </article>
+      </Link>
+    </motion.div>
+  )
+}
+
+export default function ModernCategoryGrid({ serverCategories = [] }) {
+  const sectionRef = useRef(null)
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(function() {
+    var observer = new IntersectionObserver(
+      function(entries) {
+        if (entries[0].isIntersecting) {
+          setIsVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.08 }
+    )
+    if (sectionRef.current) observer.observe(sectionRef.current)
+    return function() { observer.disconnect() }
+  }, [])
+
+  var categoryImageMap = {
+    'sofas-couches': '/category/sofas.webp',
+    'chairs': '/category/chairs.webp',
+    'tables': '/category/tables.webp',
+    'beds': '/category/beds.webp',
+    'dining-sets': '/category/diningsets.webp',
+    'outdoor-furniture': '/category/outdoor.webp',
+    'living-room': '/category/sofas.webp',
+    'bedroom': '/category/beds.webp',
+    'storage-organization': '/category/tables.webp',
+    'office-furniture': '/category/chairs.webp',
+    'kids-furniture': '/category/beds.webp',
+    'mattresses': '/category/beds.webp',
+    'home-decor': '/category/sofas.webp',
+    'tv-units-entertainment': '/category/tables.webp',
+    'wardrobes-cabinets': '/category/beds.webp',
+  }
+
+  var accentMap = {
+    'sofas-couches': '#e67e22',
+    'chairs-seating': '#3498db',
+    'tables': '#27ae60',
+    'beds-frames': '#9b59b6',
+    'dining-room': '#e74c3c',
+    'outdoor-furniture': '#1abc9c',
+  }
+
+  var displayCategories =
+    serverCategories.length > 0
+      ? serverCategories.map(function(cat) {
+          return {
+            ...cat,
+            image: categoryImageMap[cat.slug] || '/category/sofas.webp',
+            productCount: 0,
+            tagline: cat.name,
+            accent: accentMap[cat.slug] || '#e67e22',
+            imagePosition: 'center 40%',
+          }
+        })
+      : categories
+
+  return (
+    <section
+      ref={sectionRef}
+      style={{
+        padding: '36px 20px 42px',
+        background: 'linear-gradient(180deg, #ffffff 0%, #f8f7f4 100%)',
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      }}
+    >
+      <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
+        {/* Section Header */}
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isVisible ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6 }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '16px',
+            }}
+          >
+            <span
+              style={{
+                width: '28px',
+                height: '1.5px',
+                background: 'linear-gradient(90deg, transparent, #1a1a1a)',
+                display: 'block',
+              }}
+            />
+            <span
+              style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '4px',
+                color: '#999',
+              }}
+            >
+              Explore
+            </span>
+            <span
+              style={{
+                width: '28px',
+                height: '1.5px',
+                background: 'linear-gradient(90deg, #1a1a1a, transparent)',
+                display: 'block',
+              }}
+            />
+          </motion.div>
+
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            style={{ 
-              fontSize: '42px', 
-              fontWeight: '700', 
+            animate={isVisible ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            style={{
+              fontSize: 'clamp(32px, 4vw, 46px)',
+              fontWeight: 800,
               color: '#1a1a1a',
-              marginBottom: '15px'
+              margin: '0 0 14px',
+              letterSpacing: '-1.5px',
+              lineHeight: 1.1,
             }}
           >
             Shop by Category
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            style={{ fontSize: '18px', color: '#666', maxWidth: '600px', margin: '0 auto' }}
+            animate={isVisible ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            style={{
+              fontSize: '16px',
+              color: '#888',
+              maxWidth: '480px',
+              margin: '0 auto',
+              lineHeight: 1.6,
+            }}
           >
-            Find the perfect furniture pieces for every room in your home
+            Curated collections for every room in your home
           </motion.p>
         </div>
 
-        {/* Category Cards Grid */}
-        <div 
-          className="category-grid"
-          style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-            gap: '30px' 
+        {/* Bento-style Grid */}
+        <div
+          className="category-bento-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateRows: 'auto auto',
+            gap: '20px',
           }}
         >
-          {displayCategories.slice(0, 6).map((category, index) => (
-            <motion.div
-              key={category.slug || category.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <Link 
-                href={`/products?category=${category.slug}`}
-                style={{ textDecoration: 'none', color: 'inherit' }}
-              >
-                <article 
-                  className="category-card"
-                  style={{
-                    position: 'relative',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    backgroundColor: '#f9f9f9',
-                    transition: 'all 0.4s ease',
-                    cursor: 'pointer',
-                    height: '320px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-8px)'
-                    e.currentTarget.style.boxShadow = '0 15px 40px rgba(0,0,0,0.15)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
-                >
-                  {/* Image */}
-                  <div style={{ position: 'relative', height: '220px', overflow: 'hidden' }}>
-                    <Image
-                      src={category.image}
-                      alt={`${category.name} furniture collection`}
-                      fill
-                      style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="category-image"
-                    />
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 100%)'
-                    }} />
-                  </div>
-
-                  {/* Content */}
-                  <div style={{ padding: '20px' }}>
-                    <h3 style={{ 
-                      fontSize: '22px', 
-                      fontWeight: '600', 
-                      marginBottom: '8px',
-                      color: '#1a1a1a'
-                    }}>
-                      {category.name}
-                    </h3>
-                    <p style={{ fontSize: '14px', color: '#888', marginBottom: '5px' }}>
-                      {category.description}
-                    </p>
-                    {category.productCount > 0 && (
-                      <p style={{ fontSize: '13px', color: '#666' }}>
-                        {category.productCount}+ Products
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Hover Arrow */}
-                  <div 
-                    className="hover-arrow"
-                    style={{
-                      position: 'absolute',
-                      bottom: '20px',
-                      right: '20px',
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      backgroundColor: '#1a1a1a',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#fff',
-                      fontSize: '18px',
-                      opacity: 0,
-                      transform: 'translateX(-10px)',
-                      transition: 'all 0.3s ease'
-                    }}
-                  >
-                    →
-                  </div>
-                </article>
-              </Link>
-            </motion.div>
-          ))}
+          {displayCategories.slice(0, 6).map(function(category, index) {
+            return (
+              <CategoryCard
+                key={category.slug || category.id}
+                category={category}
+                index={index}
+                isVisible={isVisible}
+              />
+            )
+          })}
         </div>
 
-        {/* View All Link */}
-        <div style={{ textAlign: 'center', marginTop: '50px' }}>
+        {/* View All CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.7 }}
+          style={{ textAlign: 'center', marginTop: '40px' }}
+        >
           <Link
             href="/products"
             style={{
-              display: 'inline-block',
-              padding: '14px 35px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '16px 40px',
               border: '2px solid #1a1a1a',
               color: '#1a1a1a',
               textDecoration: 'none',
-              borderRadius: '4px',
-              fontSize: '16px',
-              fontWeight: '600',
-              transition: 'all 0.3s ease'
+              borderRadius: '60px',
+              fontSize: '14px',
+              fontWeight: 600,
+              letterSpacing: '0.5px',
+              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#1a1a1a'
-              e.target.style.color = '#fff'
+            onMouseEnter={function(e) {
+              e.currentTarget.style.backgroundColor = '#1a1a1a'
+              e.currentTarget.style.color = '#fff'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.15)'
             }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#1a1a1a'
+            onMouseLeave={function(e) {
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.color = '#1a1a1a'
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = 'none'
             }}
           >
             View All Categories
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
           </Link>
-        </div>
+        </motion.div>
       </div>
 
-      <style jsx>{`
-        .category-card:hover .category-image {
-          transform: scale(1.08);
-        }
-        .category-card:hover .hover-arrow {
-          opacity: 1;
-          transform: translateX(0);
-        }
-        @media (max-width: 768px) {
-          .category-grid {
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important;
-          }
-        }
-      `}</style>
+      <style jsx>{
+        "@media (max-width: 900px) { .category-bento-grid { grid-template-columns: repeat(2, 1fr) !important; } } @media (max-width: 560px) { .category-bento-grid { grid-template-columns: 1fr !important; } }"
+      }</style>
     </section>
   )
 }
