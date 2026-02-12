@@ -1,4 +1,4 @@
-.section { width:100%; background:#fff; padding:44px 20px; }
+.section { width:100%; background:#fff; padding:48px 20px; }
 .container { max-width:1260px; margin:0 auto; }
 .layout { display:flex; gap:20px; align-items:flex-start; }
 .leftCol { flex: 0 0 360px; }

@@ -175,7 +175,7 @@ export default function TrustBadges() {
     <section
       ref={sectionRef}
       style={{
-        padding: '32px 20px',
+        padding: '48px 20px',
         background: 'linear-gradient(180deg, #fafafa 0%, #ffffff 100%)',
         borderBottom: '1px solid #f0f0f0',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",

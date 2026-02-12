@@ -328,7 +328,7 @@ export default function ModernCategoryGrid({ serverCategories = [] }) {
     <section
       ref={sectionRef}
       style={{
-        padding: '36px 20px 42px',
+        padding: '48px 20px',
         background: 'linear-gradient(180deg, #ffffff 0%, #f8f7f4 100%)',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}

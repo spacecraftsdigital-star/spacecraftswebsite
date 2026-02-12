@@ -3,6 +3,7 @@ import ModernHeroCarousel from '../components/ModernHeroCarousel'
 import TrustBadges from '../components/TrustBadges'
 import ModernCategoryGrid from '../components/ModernCategoryGrid'
 import FeaturedProductsSection from '../components/FeaturedProductsSection'
+import SpecialOfferBanner from '../components/SpecialOfferBanner'
 import StoreLocatorSection from '../components/StoreLocatorSection'
 import NeedHelpBuyingSection from '../components/NeedHelpBuyingSection'
 
@@ -137,35 +138,7 @@ export default async function Home() {
         <FeaturedProductsSection products={featuredProducts} />
 
         {/* Special Offer Banner */}
-        <section style={{ padding: '60px 20px', backgroundColor: '#1a1a1a', color: '#fff', textAlign: 'center' }}>
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <p style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '15px', color: '#f39c12' }}>
-              LIMITED TIME OFFER
-            </p>
-            <h2 style={{ fontSize: '38px', fontWeight: '700', marginBottom: '20px' }}>
-              Up to 40% Off on Selected Items
-            </h2>
-            <p style={{ fontSize: '18px', marginBottom: '30px', color: '#ccc' }}>
-              Transform your space with our premium furniture collection at unbeatable prices
-            </p>
-            <a
-              href="/products"
-              style={{
-                display: 'inline-block',
-                padding: '16px 40px',
-                backgroundColor: '#f39c12',
-                color: '#1a1a1a',
-                textDecoration: 'none',
-                borderRadius: '4px',
-                fontSize: '16px',
-                fontWeight: '600',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              Shop Sale Items
-            </a>
-          </div>
-        </section>
+        <SpecialOfferBanner />
 
         {/* Store Locator */}
         <StoreLocatorSection />
@@ -174,7 +147,7 @@ export default async function Home() {
         <NeedHelpBuyingSection />
 
         {/* Newsletter Section */}
-        <section style={{ padding: '60px 20px', backgroundColor: '#f5f1e8' }}>
+        <section style={{ padding: '48px 20px', backgroundColor: '#f5f1e8' }}>
           <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
             <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '15px' }}>
               Join Our Newsletter

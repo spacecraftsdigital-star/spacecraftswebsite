@@ -1,4 +1,4 @@
-.section { width:100%; background:#fff; padding:44px 20px; }
+.section { width:100%; background:#fff; padding:48px 20px; }
 .container { max-width:1260px; margin:0 auto; }
 .row { display:flex; gap:16px; align-items:flex-start; }
 .guides { display:grid; grid-template-columns: repeat(5, 1fr); gap:14px; flex:1 1 auto; }
