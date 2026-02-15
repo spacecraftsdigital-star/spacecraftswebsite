@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -10,6 +10,8 @@ import ProductQA from './ProductQA'
 import RazorpayPayment from './RazorpayPayment'
 import { supabase } from '../lib/supabaseClient'
 import { authenticatedFetch } from '../lib/authenticatedFetch'
+import { trackProductView } from '../lib/useProductViewTracker'
+import { useAuth } from '../app/providers/AuthProvider'
 
 export default function ProductDetailClient({ 
   product, 
@@ -26,6 +28,15 @@ export default function ProductDetailClient({
   reviews 
 }) {
   const router = useRouter()
+  const { isAuthenticated } = useAuth()
+
+  // Track product view for "Keep Shopping" feature
+  useEffect(() => {
+    if (product?.id) {
+      trackProductView(product.id, isAuthenticated)
+    }
+  }, [product?.id, isAuthenticated])
+
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedVariant, setSelectedVariant] = useState(null)
   const [quantity, setQuantity] = useState(1)

@@ -3,6 +3,7 @@ import ModernHeroCarousel from '../components/ModernHeroCarousel'
 import PromoBanners from '../components/PromoBanners'
 import BankBanner from '../components/BankBanner'
 import TrustBadges from '../components/TrustBadges'
+import KeepShoppingSection from '../components/KeepShoppingSection'
 import ModernCategoryGrid from '../components/ModernCategoryGrid'
 import FeaturedProductsSection from '../components/FeaturedProductsSection'
 import ShopAllThingsHome from '../components/ShopAllThingsHome'
@@ -179,6 +180,9 @@ export default async function Home() {
 
         {/* Trust Badges / Benefits */}
         {/* <TrustBadges /> */}
+
+        {/* Keep Shopping — Recently Viewed Products + Related Items */}
+        <KeepShoppingSection />
 
         {/* Categories Section */}
         <ModernCategoryGrid serverCategories={categories} />
