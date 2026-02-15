@@ -49,7 +49,8 @@ export default async function Home() {
   // Server-side data fetching for better SEO
   let categories = []
   let products = []
-  let featuredProducts = []
+  let bestsellers = []
+  let offeredProducts = []
   let allProducts = []
   
   try {
@@ -71,17 +72,29 @@ export default async function Home() {
       .order('created_at', { ascending: false })
       .limit(20)
     
-    // Fetch featured/bestselling products
-    const { data: featured } = await supabase
+    // Fetch bestseller products (best_seller = true)
+    const { data: bestsellerData } = await supabase
       .from('products')
       .select(`
         *,
         product_images (url, alt, position)
       `)
       .eq('is_active', true)
+      .eq('best_seller', true)
       .order('rating', { ascending: false })
-      .order('review_count', { ascending: false })
-      .limit(16)
+      .limit(20)
+
+    // Fetch offered products (is_offered = true)
+    const { data: offeredData } = await supabase
+      .from('products')
+      .select(`
+        *,
+        product_images (url, alt, position)
+      `)
+      .eq('is_active', true)
+      .eq('is_offered', true)
+      .order('rating', { ascending: false })
+      .limit(20)
 
     // Fetch all active products for ShopAllThingsHome tabs (with category relation)
     const { data: allProds } = await supabase
@@ -100,7 +113,11 @@ export default async function Home() {
       ...p,
       images: p.product_images?.sort((a, b) => a.position - b.position).map(img => img.url) || []
     }))
-    featuredProducts = (featured || []).map(p => ({
+    bestsellers = (bestsellerData || []).map(p => ({
+      ...p,
+      images: p.product_images?.sort((a, b) => a.position - b.position).map(img => img.url) || []
+    }))
+    offeredProducts = (offeredData || []).map(p => ({
       ...p,
       images: p.product_images?.sort((a, b) => a.position - b.position).map(img => img.url) || []
     }))
@@ -166,8 +183,8 @@ export default async function Home() {
         {/* Shop All Things Home — Tag-based Tabs */}
         <ShopAllThingsHome products={allProducts} />
 
-        {/* Featured Products */}
-        <FeaturedProductsSection products={featuredProducts} />
+        {/* Featured Products — Bestsellers & Offers */}
+        <FeaturedProductsSection bestsellers={bestsellers} offered={offeredProducts} />
 
         
 

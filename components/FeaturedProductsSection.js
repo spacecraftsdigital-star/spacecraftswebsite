@@ -1,303 +1,198 @@
-// Featured Products Section
+// Featured Products Section — Bestsellers & Offers tabs
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import ProductCard from './ProductCard'
+import styles from './FeaturedProductsSection.module.css'
 
-const tabs = [
-  { id: 'new-arrivals', label: 'New Arrivals', icon: '✦', filter: (p) => true },
-  { id: 'bestsellers', label: 'Bestsellers', icon: '★', filter: (p) => p.tags?.includes('bestseller') },
-  { id: 'trending', label: 'Trending', icon: '↗', filter: (p) => p.tags?.includes('trending') },
-  { id: 'on-sale', label: 'On Sale', icon: '%', filter: (p) => p.discount_price > 0 }
+var tabs = [
+  { id: 'bestsellers', label: 'Bestsellers', icon: '★' },
+  { id: 'offers',      label: 'Offers',      icon: '%' },
 ]
 
-export default function FeaturedProductsSection({ products = [] }) {
-  const [activeTab, setActiveTab] = useState('new-arrivals')
-  const sectionRef = useRef(null)
-  const [isVisible, setIsVisible] = useState(false)
-  const [tabIndicator, setTabIndicator] = useState({ left: 0, width: 0 })
-  const tabRefs = useRef({})
-  const tabContainerRef = useRef(null)
+export default function FeaturedProductsSection({ bestsellers = [], offered = [] }) {
+  var _active = useState('bestsellers')
+  var activeTab = _active[0]
+  var setActiveTab = _active[1]
 
-  useEffect(function() {
+  var sectionRef = useRef(null)
+  var _vis = useState(false)
+  var isVisible = _vis[0]
+  var setIsVisible = _vis[1]
+
+  var _indicator = useState({ left: 0, width: 0 })
+  var tabIndicator = _indicator[0]
+  var setTabIndicator = _indicator[1]
+
+  var tabRefs = useRef({})
+  var tabContainerRef = useRef(null)
+
+  // Visibility observer with fallback
+  useEffect(function () {
+    var fired = false
     var observer = new IntersectionObserver(
-      function(entries) {
-        if (entries[0].isIntersecting) {
+      function (entries) {
+        if (entries[0].isIntersecting && !fired) {
+          fired = true
           setIsVisible(true)
           observer.disconnect()
         }
       },
-      { threshold: 0.08 }
+      { threshold: 0.05 }
     )
     if (sectionRef.current) observer.observe(sectionRef.current)
-    return function() { observer.disconnect() }
+    var timer = setTimeout(function () {
+      if (!fired) { fired = true; setIsVisible(true) }
+    }, 800)
+    return function () { observer.disconnect(); clearTimeout(timer) }
   }, [])
 
-  // Update sliding indicator position with reliable getBoundingClientRect
-  useEffect(function() {
-    function updateIndicator() {
-      var el = tabRefs.current[activeTab]
-      var container = tabContainerRef.current
-      if (el && container) {
-        var elRect = el.getBoundingClientRect()
-        var containerRect = container.getBoundingClientRect()
-        setTabIndicator({
-          left: elRect.left - containerRect.left,
-          width: elRect.width,
-        })
-      }
+  // Sliding tab indicator
+  var updateIndicator = useCallback(function () {
+    var el = tabRefs.current[activeTab]
+    var container = tabContainerRef.current
+    if (el && container) {
+      var elRect = el.getBoundingClientRect()
+      var containerRect = container.getBoundingClientRect()
+      setTabIndicator({
+        left: elRect.left - containerRect.left,
+        width: elRect.width,
+      })
     }
-    updateIndicator()
-    // Recalc on window resize
-    window.addEventListener('resize', updateIndicator)
-    return function() { window.removeEventListener('resize', updateIndicator) }
   }, [activeTab])
 
-  const filteredProducts = products
-    .filter(tabs.find(t => t.id === activeTab)?.filter || (() => true))
-    .slice(0, 6)
+  useEffect(function () {
+    var t = setTimeout(updateIndicator, 100)
+    window.addEventListener('resize', updateIndicator)
+    return function () { clearTimeout(t); window.removeEventListener('resize', updateIndicator) }
+  }, [updateIndicator])
 
-  const totalFiltered = products
-    .filter(tabs.find(t => t.id === activeTab)?.filter || (() => true)).length
+  useEffect(function () {
+    if (isVisible) {
+      var t = setTimeout(updateIndicator, 350)
+      return function () { clearTimeout(t) }
+    }
+  }, [isVisible, updateIndicator])
 
-  const remainingCount = totalFiltered - 6
+  // Pick products based on active tab
+  var currentProducts = activeTab === 'bestsellers' ? bestsellers : offered
+  var displayProducts = currentProducts.slice(0, 12)
+  var remainingCount = currentProducts.length - 12
 
   return (
-    <section
-      ref={sectionRef}
-      style={{
-        padding: '48px 20px',
-        background: 'linear-gradient(180deg, #f8f7f4 0%, #ffffff 50%, #f8f7f4 100%)',
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}
-    >
-      <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
+    <section ref={sectionRef} className={styles.section}>
+      {/* Header */}
+      <div className={styles.header}>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5 }}
+          className={styles.eyebrowWrap}
+        >
+          <span className={styles.eyebrowLine + ' ' + styles.eyebrowLineLeft} />
+          <span className={styles.eyebrowText}>Handpicked</span>
+          <span className={styles.eyebrowLine + ' ' + styles.eyebrowLineRight} />
+        </motion.div>
 
-        {/* Section Header */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '14px',
-            }}
-          >
-            <span
+        <motion.h2
+          initial={{ opacity: 0, y: 16 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.08 }}
+          className={styles.title}
+        >
+          Featured Products
+        </motion.h2>
+
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.12 }}
+          className={styles.subtitle}
+        >
+          Our most loved pieces and exclusive deals
+        </motion.p>
+
+        {/* Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.18 }}
+          className={styles.tabsWrap}
+        >
+          <div ref={tabContainerRef} className={styles.tabsBar}>
+            <div
+              className={styles.tabIndicator}
               style={{
-                width: '28px',
-                height: '1.5px',
-                background: 'linear-gradient(90deg, transparent, #1a1a1a)',
-                display: 'block',
+                left: tabIndicator.left + 'px',
+                width: tabIndicator.width + 'px',
               }}
             />
-            <span
-              style={{
-                fontSize: '12px',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '4px',
-                color: '#999',
-              }}
-            >
-              Handpicked
-            </span>
-            <span
-              style={{
-                width: '28px',
-                height: '1.5px',
-                background: 'linear-gradient(90deg, #1a1a1a, transparent)',
-                display: 'block',
-              }}
-            />
-          </motion.div>
 
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={isVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            style={{
-              fontSize: 'clamp(32px, 4vw, 46px)',
-              fontWeight: 800,
-              color: '#1a1a1a',
-              margin: '0 0 24px',
-              letterSpacing: '-1.5px',
-              lineHeight: 1.1,
-            }}
-          >
-            Featured Products
-          </motion.h2>
-
-          {/* Tab Navigation with sliding indicator */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            ref={tabContainerRef}
-            style={{
-              display: 'inline-flex',
-              position: 'relative',
-              gap: '4px',
-              padding: '4px',
-              borderRadius: '50px',
-              background: '#f0eeeb',
-            }}
-          >
-            {/* Sliding pill indicator */}
-            {tabIndicator.width > 0 && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '4px',
-                  left: tabIndicator.left + 'px',
-                  width: tabIndicator.width + 'px',
-                  height: 'calc(100% - 8px)',
-                  borderRadius: '50px',
-                  background: '#1a1a1a',
-                  transition: 'left 0.4s cubic-bezier(0.16, 1, 0.3, 1), width 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                  zIndex: 0,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                }}
-              />
-            )}
-
-            {tabs.map(function(tab) {
+            {tabs.map(function (tab) {
               var isActive = activeTab === tab.id
               return (
                 <button
                   key={tab.id}
-                  ref={function(el) { tabRefs.current[tab.id] = el }}
-                  onClick={function() { setActiveTab(tab.id) }}
-                  style={{
-                    position: 'relative',
-                    zIndex: 1,
-                    padding: '10px 22px',
-                    backgroundColor: 'transparent',
-                    color: isActive ? '#fff' : '#777',
-                    border: 'none',
-                    borderRadius: '50px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'color 0.3s ease',
-                    whiteSpace: 'nowrap',
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
+                  ref={function (el) { tabRefs.current[tab.id] = el }}
+                  onClick={function () { setActiveTab(tab.id) }}
+                  className={styles.tabBtn + (isActive ? ' ' + styles.tabBtnActive : '')}
                 >
+                  <span className={styles.tabIcon}>{tab.icon}</span>
                   {tab.label}
                 </button>
               )
             })}
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
+      </div>
 
-        {/* Products Grid */}
+      {/* Product Grid */}
+      <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="featured-products-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '24px',
-          }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className={styles.grid}
         >
-          {filteredProducts.length > 0 ? (
-            filteredProducts.map(function(product) {
-              return <ProductCard key={product.id} product={product} />
+          {displayProducts.length > 0 ? (
+            displayProducts.map(function (product, i) {
+              return <ProductCard key={product.id || i} product={product} index={i} />
             })
           ) : (
-            <div style={{
-              gridColumn: '1/-1',
-              textAlign: 'center',
-              padding: '50px 20px',
-              color: '#aaa',
-              borderRadius: '16px',
-              background: 'rgba(0,0,0,0.02)',
-              border: '1px dashed #e0e0e0',
-            }}>
-              <p style={{ fontSize: '16px', margin: '0 0 6px', fontWeight: 600 }}>No products found</p>
-              <p style={{ fontSize: '14px', margin: 0, color: '#bbb' }}>Try a different category above</p>
+            <div className={styles.empty}>
+              <h3 className={styles.emptyTitle}>No products found</h3>
+              <p className={styles.emptyText}>Check back soon for updates</p>
             </div>
           )}
         </motion.div>
+      </AnimatePresence>
 
-        {/* "More products" indicator + View All CTA */}
-        {filteredProducts.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={isVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '18px',
-              marginTop: '36px',
-            }}
-          >
-            {remainingCount > 0 && (
-              <p style={{
-                fontSize: '14px',
-                color: '#999',
-                margin: 0,
-                fontWeight: 500,
-                letterSpacing: '0.2px',
-              }}>
-                + {remainingCount} more product{remainingCount > 1 ? 's' : ''} in this collection
-              </p>
-            )}
-
-            <Link
-              href="/products"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '14px 36px',
-                border: '2px solid #1a1a1a',
-                color: '#1a1a1a',
-                textDecoration: 'none',
-                borderRadius: '60px',
-                fontSize: '14px',
-                fontWeight: 600,
-                letterSpacing: '0.5px',
-                transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-              onMouseEnter={function(e) {
-                e.currentTarget.style.backgroundColor = '#1a1a1a'
-                e.currentTarget.style.color = '#fff'
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.15)'
-              }}
-              onMouseLeave={function(e) {
-                e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.color = '#1a1a1a'
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            >
-              View All Products
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-            </Link>
-          </motion.div>
-        )}
-      </div>
-
-      <style jsx>{
-        "@media (max-width: 900px) { .featured-products-grid { grid-template-columns: repeat(2, 1fr) !important; } } @media (max-width: 560px) { .featured-products-grid { grid-template-columns: 1fr !important; } }"
-      }</style>
+      {/* View All CTA */}
+      {displayProducts.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className={styles.ctaWrap}
+        >
+          {remainingCount > 0 && (
+            <p className={styles.remainingText}>
+              + {remainingCount} more product{remainingCount > 1 ? 's' : ''} in this collection
+            </p>
+          )}
+          <Link href="/products" className={styles.ctaButton}>
+            View All Products
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </Link>
+        </motion.div>
+      )}
     </section>
   )
 }
