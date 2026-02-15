@@ -7,6 +7,8 @@ import ModernCategoryGrid from '../components/ModernCategoryGrid'
 import FeaturedProductsSection from '../components/FeaturedProductsSection'
 import ShopAllThingsHome from '../components/ShopAllThingsHome'
 import MoreIdeasSection from '../components/MoreIdeasSection'
+import NewArrivalsGrid from '../components/NewArrivalsGrid'
+import CustomerReviewsSection from '../components/CustomerReviewsSection'
 import SpecialOfferBanner from '../components/SpecialOfferBanner'
 import StoreLocatorSection from '../components/StoreLocatorSection'
 import NeedHelpBuyingSection from '../components/NeedHelpBuyingSection'
@@ -189,6 +191,12 @@ export default async function Home() {
 
         {/* More Ideas & Inspiration — Editorial Masonry Grid */}
         <MoreIdeasSection />
+
+        {/* New Arrivals — 3-Column Feature Grid */}
+        <NewArrivalsGrid />
+
+        {/* Customer Reviews — Google Reviews Showcase */}
+        <CustomerReviewsSection />
 
         {/* Special Offer Banner */}
         <SpecialOfferBanner />
