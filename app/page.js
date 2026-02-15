@@ -1,5 +1,7 @@
 import { createSupabaseServerClient } from '../lib/supabaseClient'
 import ModernHeroCarousel from '../components/ModernHeroCarousel'
+import PromoBanners from '../components/PromoBanners'
+import BankBanner from '../components/BankBanner'
 import TrustBadges from '../components/TrustBadges'
 import ModernCategoryGrid from '../components/ModernCategoryGrid'
 import FeaturedProductsSection from '../components/FeaturedProductsSection'
@@ -129,8 +131,14 @@ export default async function Home() {
         {/* Hero Section */}
         <ModernHeroCarousel />
 
+        {/* Promo Banners — Coupon + Offer Cards */}
+        <PromoBanners />
+
+        {/* Bank Offer Banner + Ticker */}
+        <BankBanner />
+
         {/* Trust Badges / Benefits */}
-        <TrustBadges />
+        {/* <TrustBadges /> */}
 
         {/* Categories Section */}
         <ModernCategoryGrid serverCategories={categories} />

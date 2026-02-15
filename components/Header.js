@@ -16,6 +16,7 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState(null)
   const [closeTimeout, setCloseTimeout] = useState(null)
+  const [openTimeout, setOpenTimeout] = useState(null)
   
   const { user, profile, isAuthenticated, signOut, loading } = useAuth()
   const router = useRouter()
@@ -286,6 +287,7 @@ export default function Header() {
 
   // Handle nav area hover - only close when leaving the entire nav section
   const handleNavMouseLeave = () => {
+    if (openTimeout) { clearTimeout(openTimeout); setOpenTimeout(null) }
     const timeout = setTimeout(() => setHoveredCategory(null), 300)
     setCloseTimeout(timeout)
   }
@@ -501,7 +503,14 @@ export default function Header() {
               className="category-nav-item"
               onMouseEnter={() => {
                 if (closeTimeout) clearTimeout(closeTimeout)
-                setHoveredCategory(category)
+                if (openTimeout) clearTimeout(openTimeout)
+                // If already showing a dropdown, switch instantly; otherwise delay 250ms
+                if (hoveredCategory) {
+                  setHoveredCategory(category)
+                } else {
+                  const t = setTimeout(() => setHoveredCategory(category), 500)
+                  setOpenTimeout(t)
+                }
               }}
             >
               <button className="category-nav-link">
