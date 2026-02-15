@@ -395,6 +395,20 @@ label {
   border-width: 0;
 }
 
+/* ─── Header hide/show for MoreIdeasSection scroll ─── */
+html[data-hide-header] .site-header,
+html[data-hide-header] #top-nav-bar,
+html[data-hide-header] .announcement-bar {
+  transform: translateY(-100%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html:not([data-hide-header]) .site-header,
+html:not([data-hide-header]) #top-nav-bar,
+html:not([data-hide-header]) .announcement-bar {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Print Styles */
 @media print {
   .announcement-bar,

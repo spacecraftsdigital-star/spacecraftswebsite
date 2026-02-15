@@ -13,7 +13,7 @@ export default function TopNavigationBar() {
   ]
 
   return (
-    <nav className={styles.top_nav_bar}>
+    <nav id="top-nav-bar" className={styles.top_nav_bar}>
       <div className={styles.nav_container}>
         {/* Left Section: Contact Info */}
         <div className={styles.nav_left}>

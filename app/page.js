@@ -6,6 +6,7 @@ import TrustBadges from '../components/TrustBadges'
 import ModernCategoryGrid from '../components/ModernCategoryGrid'
 import FeaturedProductsSection from '../components/FeaturedProductsSection'
 import ShopAllThingsHome from '../components/ShopAllThingsHome'
+import MoreIdeasSection from '../components/MoreIdeasSection'
 import SpecialOfferBanner from '../components/SpecialOfferBanner'
 import StoreLocatorSection from '../components/StoreLocatorSection'
 import NeedHelpBuyingSection from '../components/NeedHelpBuyingSection'
@@ -186,16 +187,17 @@ export default async function Home() {
         {/* Featured Products — Bestsellers & Offers */}
         <FeaturedProductsSection bestsellers={bestsellers} offered={offeredProducts} />
 
-        
+        {/* More Ideas & Inspiration — Editorial Masonry Grid */}
+        <MoreIdeasSection />
 
         {/* Special Offer Banner */}
         <SpecialOfferBanner />
 
         {/* Store Locator */}
-        <StoreLocatorSection />
+        {/* <StoreLocatorSection /> */}
 
         {/* Help Section */}
-        <NeedHelpBuyingSection />
+        {/* <NeedHelpBuyingSection /> */}
 
         {/* Newsletter Section */}
         <NewsletterSection />
