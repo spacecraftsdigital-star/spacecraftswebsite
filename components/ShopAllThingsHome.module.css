@@ -1,0 +1,254 @@
+/* ── ShopAllThingsHome — Category Tabs + Product Grid ── */
+
+/* ─── Section ─── */
+.section {
+  padding: 28px clamp(16px, 4vw, 48px) 30px;
+  background: linear-gradient(180deg, #faf9f7 0%, #ffffff 50%, #faf9f7 100%);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ─── Header ─── */
+.header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.eyebrowWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.eyebrowLine {
+  width: 28px;
+  height: 1.5px;
+  display: block;
+}
+
+.eyebrowLineLeft {
+  background: linear-gradient(90deg, transparent, #bbb);
+}
+
+.eyebrowLineRight {
+  background: linear-gradient(90deg, #bbb, transparent);
+}
+
+.eyebrowText {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  color: #999;
+}
+
+.title {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0 0 12px;
+  letter-spacing: -1.2px;
+  line-height: 1.1;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: #888;
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ─── Tabs Container ─── */
+.tabsScroll {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 36px;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  padding: 0 4px;
+}
+
+.tabsScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.tabsBar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 50px;
+  background: #f0eeeb;
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* ─── Sliding Pill Indicator ─── */
+.tabIndicator {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  height: calc(100% - 10px);
+  border-radius: 40px;
+  background: #1a1a1a;
+  transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* ─── Tab Button ─── */
+.tabBtn {
+  position: relative;
+  z-index: 1;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 40px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+  font-family: inherit;
+  color: #777;
+}
+
+.tabBtn:hover {
+  color: #333;
+}
+
+.tabBtnActive {
+  color: #fff;
+}
+
+.tabBtnActive:hover {
+  color: #fff;
+}
+
+/* ─── Products Grid ─── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 18px;
+}
+
+/* ─── Empty State ─── */
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 6px;
+}
+
+.emptyText {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
+}
+
+/* ─── View All CTA ─── */
+.ctaWrap {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 38px;
+  border: 2px solid #1a1a1a;
+  color: #1a1a1a;
+  text-decoration: none;
+  border-radius: 60px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: transparent;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+}
+
+.ctaButton:hover {
+  background: #1a1a1a;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+}
+
+@media (max-width: 780px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .tabsScroll {
+    justify-content: flex-start;
+    padding: 0 2px;
+  }
+
+  .tabBtn {
+    padding: 9px 18px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .section {
+    padding: 40px 14px 44px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .header {
+    margin-bottom: 24px;
+  }
+
+  .tabsBar {
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .tabBtn {
+    padding: 8px 14px;
+    font-size: 11px;
+  }
+
+  .ctaWrap {
+    margin-top: 28px;
+  }
+}

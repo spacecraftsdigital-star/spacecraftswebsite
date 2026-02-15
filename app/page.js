@@ -5,10 +5,14 @@ import BankBanner from '../components/BankBanner'
 import TrustBadges from '../components/TrustBadges'
 import ModernCategoryGrid from '../components/ModernCategoryGrid'
 import FeaturedProductsSection from '../components/FeaturedProductsSection'
+import ShopAllThingsHome from '../components/ShopAllThingsHome'
 import SpecialOfferBanner from '../components/SpecialOfferBanner'
 import StoreLocatorSection from '../components/StoreLocatorSection'
 import NeedHelpBuyingSection from '../components/NeedHelpBuyingSection'
 import NewsletterSection from '../components/NewsletterSection'
+
+// Force dynamic rendering — always fetch fresh data from Supabase
+export const dynamic = 'force-dynamic'
 
 // SEO Metadata
 export const metadata = {
@@ -46,15 +50,15 @@ export default async function Home() {
   let categories = []
   let products = []
   let featuredProducts = []
+  let allProducts = []
   
   try {
     const supabase = createSupabaseServerClient()
     
-    // Fetch categories with product count
+    // Fetch ALL categories (needed by ShopAllThingsHome for slug→id mapping)
     const { data: cats } = await supabase
       .from('categories')
       .select('*')
-      .limit(12)
     
     // Fetch latest products
     const { data: prods } = await supabase
@@ -78,6 +82,18 @@ export default async function Home() {
       .order('rating', { ascending: false })
       .order('review_count', { ascending: false })
       .limit(16)
+
+    // Fetch all active products for ShopAllThingsHome tabs (with category relation)
+    const { data: allProds } = await supabase
+      .from('products')
+      .select(`
+        *,
+        categories (id, name, slug),
+        product_images (url, alt, position)
+      `)
+      .eq('is_active', true)
+      .order('rating', { ascending: false })
+      .limit(80)
     
     categories = cats || []
     products = (prods || []).map(p => ({
@@ -85,6 +101,10 @@ export default async function Home() {
       images: p.product_images?.sort((a, b) => a.position - b.position).map(img => img.url) || []
     }))
     featuredProducts = (featured || []).map(p => ({
+      ...p,
+      images: p.product_images?.sort((a, b) => a.position - b.position).map(img => img.url) || []
+    }))
+    allProducts = (allProds || []).map(p => ({
       ...p,
       images: p.product_images?.sort((a, b) => a.position - b.position).map(img => img.url) || []
     }))
@@ -143,8 +163,13 @@ export default async function Home() {
         {/* Categories Section */}
         <ModernCategoryGrid serverCategories={categories} />
 
+        {/* Shop All Things Home — Tag-based Tabs */}
+        <ShopAllThingsHome products={allProducts} />
+
         {/* Featured Products */}
         <FeaturedProductsSection products={featuredProducts} />
+
+        
 
         {/* Special Offer Banner */}
         <SpecialOfferBanner />
