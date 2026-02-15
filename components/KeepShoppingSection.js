@@ -78,7 +78,7 @@ function RelatedCard({ product, index }) {
             src={imageUrl}
             alt={product.name}
             fill
-            sizes="120px"
+            sizes="80px"
             className={styles.relatedImage}
           />
         </div>
@@ -115,7 +115,7 @@ function MainProductCard({ product }) {
           src={imageUrl}
           alt={product.name}
           fill
-          sizes="(max-width: 768px) 85vw, (max-width: 1024px) 50vw, 33vw"
+          sizes="(max-width: 768px) 80vw, (max-width: 1024px) 22vw, 15vw"
           className={styles.mainImage}
         />
         <span className={styles.viewedBadge}>

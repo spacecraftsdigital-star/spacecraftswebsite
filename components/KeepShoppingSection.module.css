@@ -2,7 +2,7 @@
 /* Premium "Keep Shopping" section — recently viewed products with related items */
 
 .section {
-  padding: 48px clamp(16px, 4vw, 48px) 60px;
+  padding: 28px clamp(16px, 4vw, 48px) 30px;
   background: #fff;
   position: relative;
   overflow: hidden;
@@ -13,29 +13,29 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 32px;
-  gap: 16px;
+  margin-bottom: 18px;
+  gap: 12px;
 }
 
 .titleGroup {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
 }
 
 .sectionTitle {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(22px, 2.4vw, 30px);
+  font-size: clamp(18px, 2vw, 24px);
   font-weight: 700;
   color: #1a1a1a;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
   line-height: 1.2;
   margin: 0;
 }
 
 .sectionSubtitle {
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   color: #888;
   font-weight: 400;
   margin: 0;
@@ -50,8 +50,8 @@
 }
 
 .navBtn {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: 1.5px solid #e6e6e6;
   background: #fff;
@@ -83,40 +83,42 @@
 
 .carouselTrack {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* ── Each "group" = 1 main product + its related products ── */
 .productGroup {
-  flex: 0 0 calc(33.333% - 16px);
+  flex: 0 0 calc(33.333% - 11px);
   min-width: 0;
 }
 
-/* ── Main (hero) product card ── */
+/* ── Main (hero) product card — horizontal layout ── */
 .mainCard {
   position: relative;
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   background: #fafaf8;
   border: 1px solid #e6e6e6;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   text-decoration: none;
   color: inherit;
-  display: block;
+  display: flex;
+  flex-direction: row;
 }
 
 .mainCard:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.09);
+  transform: translateY(-2px);
   border-color: rgba(0, 0, 0, 0.12);
 }
 
 .mainImageWrap {
   position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3.5;
+  width: 44%;
+  flex-shrink: 0;
+  aspect-ratio: 4 / 4.2;
   overflow: hidden;
 }
 
@@ -133,22 +135,22 @@
 /* Badge on main card */
 .viewedBadge {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 8px;
+  left: 8px;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  padding: 5px 12px;
+  padding: 3px 9px;
   border-radius: 60px;
   font-family: 'Inter', sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #1a1a1a;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .viewedDot {
@@ -162,31 +164,35 @@
 /* Discount badge */
 .discountBadge {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 8px;
+  right: 8px;
   background: #1a1a1a;
   color: #fff;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 60px;
   font-family: 'Inter', sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   z-index: 2;
 }
 
 /* Main card info panel */
 .mainInfo {
-  padding: 16px 18px 18px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
 }
 
 .mainName {
   font-family: 'Inter', sans-serif;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: #1a1a1a;
-  margin: 0 0 6px 0;
-  line-height: 1.35;
+  margin: 0 0 5px 0;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -196,20 +202,20 @@
 .mainPriceRow {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 
 .mainPrice {
   font-family: 'Inter', sans-serif;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   color: #1a1a1a;
 }
 
 .mainOriginalPrice {
   font-family: 'Inter', sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   color: #999;
   text-decoration: line-through;
 }
@@ -217,9 +223,9 @@
 .mainRating {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   color: #888;
 }
 
@@ -231,18 +237,18 @@
 /* ── Related products row (below main card) ── */
 .relatedLabel {
   font-family: 'Inter', sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #999;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin: 14px 0 8px;
+  letter-spacing: 0.8px;
+  margin: 10px 0 6px;
 }
 
 .relatedRow {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .relatedRow2 { grid-template-columns: repeat(2, 1fr); }
@@ -251,7 +257,7 @@
 
 /* ── Related (small) product card ── */
 .relatedCard {
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   background: #fff;
   border: 1px solid #e6e6e6;
@@ -264,8 +270,8 @@
 
 .relatedCard:hover {
   border-color: #1a1a1a;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+  transform: translateY(-1px);
 }
 
 .relatedImageWrap {
@@ -282,20 +288,20 @@
 }
 
 .relatedCard:hover .relatedImage {
-  transform: scale(1.06);
+  transform: scale(1.05);
 }
 
 .relatedInfo {
-  padding: 8px 10px 10px;
+  padding: 5px 7px 6px;
 }
 
 .relatedName {
   font-family: 'Inter', sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   color: #1a1a1a;
-  margin: 0 0 3px 0;
-  line-height: 1.3;
+  margin: 0 0 2px 0;
+  line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
@@ -304,17 +310,17 @@
 
 .relatedPrice {
   font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #1a1a1a;
 }
 
 .relatedOriginalPrice {
   font-family: 'Inter', sans-serif;
-  font-size: 10px;
+  font-size: 9px;
   color: #999;
   text-decoration: line-through;
-  margin-left: 4px;
+  margin-left: 3px;
 }
 
 /* ── Dots indicator for carousel ── */
@@ -322,7 +328,7 @@
   display: flex;
   justify-content: center;
   gap: 6px;
-  margin-top: 28px;
+  margin-top: 18px;
 }
 
 .dot {
@@ -360,14 +366,14 @@
 
 .skeletonImage {
   width: 100%;
-  aspect-ratio: 4 / 3.5;
+  aspect-ratio: 4 / 3;
   background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease infinite;
 }
 
 .skeletonInfo {
-  padding: 16px 18px 18px;
+  padding: 10px 14px 12px;
 }
 
 .skeletonLine {
@@ -386,8 +392,8 @@
 .skeletonRelated {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 14px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .skeletonRelatedCard {
@@ -405,7 +411,7 @@
 }
 
 .skeletonRelatedInfo {
-  padding: 8px 10px;
+  padding: 5px 7px;
 }
 
 .skeletonRelatedLine {
@@ -478,38 +484,47 @@
 
 @media (max-width: 768px) {
   .section {
-    padding: 36px 16px 48px;
+    padding: 24px 16px 32px;
   }
 
   .headerRow {
     flex-direction: column;
     align-items: flex-start;
-    margin-bottom: 24px;
+    margin-bottom: 14px;
   }
 
   .navArrows {
     align-self: flex-end;
-    margin-top: -32px;
+    margin-top: -28px;
   }
 
   .carouselTrack {
-    gap: 16px;
+    gap: 12px;
   }
 
   .productGroup {
-    flex: 0 0 calc(85vw - 16px);
+    flex: 0 0 calc(80vw - 12px);
   }
 
   .skeletonGroup {
-    flex: 0 0 calc(85vw - 16px);
+    flex: 0 0 calc(80vw - 12px);
+  }
+
+  .mainCard {
+    flex-direction: column;
+  }
+
+  .mainImageWrap {
+    width: 100%;
+    aspect-ratio: 16 / 9;
   }
 
   .mainInfo {
-    padding: 14px 14px 16px;
+    padding: 10px 12px 12px;
   }
 
   .mainName {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .relatedRow3,
@@ -520,11 +535,11 @@
 
 @media (max-width: 480px) {
   .productGroup {
-    flex: 0 0 calc(90vw - 16px);
+    flex: 0 0 calc(85vw - 12px);
   }
   
   .skeletonGroup {
-    flex: 0 0 calc(90vw - 16px);
+    flex: 0 0 calc(85vw - 12px);
   }
 
   .relatedRow4 {
@@ -532,7 +547,7 @@
   }
 
   .navBtn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
   }
 }
