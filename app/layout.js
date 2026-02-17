@@ -3,6 +3,7 @@ import AnnouncementBar from '../components/AnnouncementBar'
 import TopNavigationBar from '../components/TopNavigationBar'
 import Header from '../components/Header'
 import ModernFooter from '../components/ModernFooter'
+import DelayedSignupModal from '../components/DelayedSignupModal'
 import { AuthProvider } from './providers/AuthProvider'
 
 export const metadata = {
@@ -111,6 +112,7 @@ export default function RootLayout({ children }) {
             {children}
           </main>
           <ModernFooter />
+          <DelayedSignupModal />
         </AuthProvider>
       </body>
     </html>
