@@ -10,51 +10,64 @@ export default function AuthCallback() {
     const handleCallback = async () => {
       try {
         console.log('Auth callback started')
-        
+
         // Exchange code for session (PKCE) if present
-        const code = new URL(window.location.href).searchParams.get('code')
+        const url = new URL(window.location.href)
+        const code = url.searchParams.get('code')
         console.log('Auth code present:', !!code)
-        
+
         if (code) {
           console.log('Exchanging code for session...')
-          const { error: exchangeError, data } = await supabase.auth.exchangeCodeForSession(code)
-          console.log('Exchange result:', { error: exchangeError, data })
-          
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
           if (exchangeError) {
-            console.error('Auth code exchange error:', exchangeError)
-            router.push('/login?error=auth_failed')
-            return
+            console.warn('Code exchange error (may have been auto-exchanged):', exchangeError.message)
+            // Code might have been auto-exchanged by the Supabase client.
+            // Fall through and check if a session already exists.
           }
         }
 
-        // Wait a moment for the session to be persisted
-        console.log('Waiting for session to persist...')
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        // Check for hash-based tokens (implicit flow fallback)
+        if (!code && window.location.hash) {
+          console.log('Hash fragment detected, waiting for client to process...')
+          await new Promise(resolve => setTimeout(resolve, 1500))
+        }
+
+        // Give cookies/storage a moment to persist
+        await new Promise(resolve => setTimeout(resolve, 500))
 
         // Check the session
         console.log('Getting current session...')
         const { data: { session }, error } = await supabase.auth.getSession()
         console.log('Session check result:', { session: !!session, user: session?.user?.email, error })
-        
+
         if (error) {
           console.error('Auth callback error:', error)
-          router.push('/login?error=auth_failed')
+        }
+
+        if (session?.user) {
+          console.log('Authentication successful, redirecting to account:', session.user.email)
+          // Use hard redirect to ensure middleware sees fresh cookies
+          window.location.href = '/account'
           return
         }
 
-        if (!session?.user) {
-          console.error('No user found after exchange')
-          router.push('/login?error=no_user')
+        // No session found — retry once after a longer wait
+        console.log('No session found, retrying after delay...')
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        const { data: { session: retrySession } } = await supabase.auth.getSession()
+
+        if (retrySession?.user) {
+          console.log('Session found on retry, redirecting:', retrySession.user.email)
+          window.location.href = '/account'
           return
         }
 
-        console.log('Authentication successful, redirecting to account:', session.user.email)
-        
-        // Redirect to account
-        router.push('/account')
+        console.error('No user found after retries')
+        window.location.href = '/login?error=no_user'
       } catch (error) {
         console.error('Callback error:', error)
-        router.push('/login?error=callback_failed')
+        window.location.href = '/login?error=callback_failed'
       }
     }
 

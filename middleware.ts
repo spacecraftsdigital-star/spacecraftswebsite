@@ -16,10 +16,10 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
-  // If user is logged in (has auth token) and tries to access auth pages, redirect to account
+  // If user is logged in (has auth token) and tries to access login page, redirect to account
   if (
     hasAuthToken &&
-    (pathname === '/login' || pathname === '/auth/callback')
+    pathname === '/login'
   ) {
     return NextResponse.redirect(new URL('/account', request.url))
   }

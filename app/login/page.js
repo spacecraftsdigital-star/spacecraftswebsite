@@ -1,15 +1,29 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '../providers/AuthProvider'
 import styles from './login.module.css'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { signInWithGoogle, isAuthenticated, loading } = useAuth()
   const [signingIn, setSigningIn] = useState(false)
   const [error, setError] = useState('')
+
+  // Show error from callback redirect
+  useEffect(() => {
+    const authError = searchParams.get('error')
+    if (authError) {
+      const messages = {
+        auth_failed: 'Authentication failed. Please try again.',
+        no_user: 'Could not verify your account. Please try again.',
+        callback_failed: 'Something went wrong during sign-in. Please try again.'
+      }
+      setError(messages[authError] || 'Sign-in failed. Please try again.')
+    }
+  }, [searchParams])
 
   // Redirect if already logged in (but wait for loading to finish)
   if (!loading && isAuthenticated) {
