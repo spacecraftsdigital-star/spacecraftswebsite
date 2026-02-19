@@ -1201,11 +1201,8 @@ export default function Header() {
           left: 0;
           right: 0;
           width: 100%;
-          background: #ffffff;
+          background: transparent;
           border: none;
-          border-top: 3px solid transparent;
-          border-image: linear-gradient(90deg, #e74c3c, #e67e22, #f39c12) 1;
-          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.2), 0 8px 32px rgba(0, 0, 0, 0.08);
           border-radius: 0;
           max-width: none;
           max-height: 580px;
@@ -1216,8 +1213,9 @@ export default function Header() {
           display: flex;
           justify-content: center;
           box-sizing: border-box;
-          padding: 0 2rem;
+          padding: 0;
           font-family: 'Inter', sans-serif;
+          pointer-events: none;
         }
 
         @keyframes slideDown {
@@ -1240,6 +1238,11 @@ export default function Header() {
           max-height: 580px;
           box-sizing: border-box;
           position: relative;
+          pointer-events: auto;
+          background: #ffffff;
+          border-top: 3px solid transparent;
+          border-image: linear-gradient(90deg, #e74c3c, #e67e22, #f39c12) 1;
+          box-shadow: 0 20px 80px rgba(0, 0, 0, 0.2), 0 8px 32px rgba(0, 0, 0, 0.08);
         }
 
         .dropdown-inner {
