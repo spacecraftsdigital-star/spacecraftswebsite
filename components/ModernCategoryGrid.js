@@ -57,18 +57,57 @@ function CategoryCard({ category, index, isVisible }) {
 export default function ModernCategoryGrid({ serverCategories = [] }) {
   var sectionRef = useRef(null)
   var gridRef = useRef(null)
+  var autoSlideRef = useRef(null)
+  var isPausedRef = useRef(false)
   var _v = useState(false)
   var isVisible = _v[0]
   var setIsVisible = _v[1]
 
   function scrollGrid(direction) {
     if (gridRef.current) {
-      var scrollAmount = gridRef.current.clientWidth * 0.6
-      gridRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      })
+      var container = gridRef.current
+      var scrollAmount = container.clientWidth * 0.6
+      if (direction === 'right') {
+        // If near the end, loop back to start
+        if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) {
+          container.scrollTo({ left: 0, behavior: 'smooth' })
+        } else {
+          container.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+        }
+      } else {
+        // If at the start, loop to end
+        if (container.scrollLeft <= 10) {
+          container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' })
+        } else {
+          container.scrollBy({ left: -scrollAmount, behavior: 'smooth' })
+        }
+      }
     }
+  }
+
+  // Auto-slide every 5 seconds
+  useEffect(function () {
+    function startAutoSlide() {
+      autoSlideRef.current = setInterval(function () {
+        if (!isPausedRef.current) {
+          scrollGrid('right')
+        }
+      }, 5000)
+    }
+    if (isVisible) {
+      startAutoSlide()
+    }
+    return function () {
+      if (autoSlideRef.current) clearInterval(autoSlideRef.current)
+    }
+  }, [isVisible])
+
+  function handleMouseEnter() {
+    isPausedRef.current = true
+  }
+
+  function handleMouseLeave() {
+    isPausedRef.current = false
   }
 
   useEffect(function () {
@@ -150,7 +189,7 @@ export default function ModernCategoryGrid({ serverCategories = [] }) {
       </div>
 
       {/* Category Grid */}
-      <div className={styles.sliderWrap}>
+      <div className={styles.sliderWrap} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
         <button className={styles.sliderArrow + ' ' + styles.arrowLeft} onClick={function () { scrollGrid('left') }} aria-label="Scroll left">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
         </button>

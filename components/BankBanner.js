@@ -21,13 +21,14 @@ var banks = [
 ]
 
 var tickerItems = [
-  'No-Cost EMI Available Via Bajaj Finserv',
-  'Exclusive Sale! Upto 50% OFF',
-  'Easy Financing Options From Leading Banks',
-  'Special Online Offer Available',
-  'Shop Now & Save Big',
-  'Free Delivery Across India',
-]
+  'Exclusive Sale – Up to 40% Savings',
+  'Curated Online-Only Offers',
+  'Limited-Time Privileged Deals',
+  'Discover & Save on Premium Selections',
+  'No-Cost EMI Across All Collections',
+  'Seamless Delivery Across India',
+  'Bulk & Institutional Orders Welcome'
+];
 
 export default function BankBanner() {
   var sectionRef = useRef(null)

@@ -74,6 +74,7 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
   padding: 4px 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .grid::-webkit-scrollbar {
