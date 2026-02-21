@@ -1141,8 +1141,8 @@ export default function Header() {
 
         /* Category Navigation Bar */
         .category-nav {
-          background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-          border-bottom: 2px solid #1a252f;
+          background: linear-gradient(135deg, rgba(83, 83, 83, 1) 0%, rgba(63, 63, 63, 1) 100%);
+          border-bottom: 2px solid rgba(50, 50, 50, 1);
           display: flex;
           justify-content: center;
           gap: 0;
