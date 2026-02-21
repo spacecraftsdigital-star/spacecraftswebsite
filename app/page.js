@@ -203,7 +203,7 @@ export default async function Home() {
         <CustomerReviewsSection />
 
         {/* Special Offer Banner */}
-        <SpecialOfferBanner />
+        {/* <SpecialOfferBanner /> */}
 
         {/* Store Locator */}
         {/* <StoreLocatorSection /> */}
