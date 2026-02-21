@@ -117,9 +117,9 @@ export default function PromoBanners() {
           <div className={styles.couponGoldLine} />
           <div className={styles.couponInner}>
             <div className={styles.couponTextGroup}>
-              <span className={styles.couponTitle}>Sign Up & Get Upto</span>
-              <span className={styles.couponAmount}>₹1,500 Off</span>
-              <span className={styles.couponSub}>On Your First Purchase</span>
+              <span className={styles.couponTitle}>Sign Up & Enjoy Up to</span>
+              <span className={styles.couponAmount}>40% Off + An Additional 10%</span>
+              <span className={styles.couponSub}>On Your First Furniture Purchase</span>
             </div>
 
             <div className={styles.couponDivider} />
@@ -127,7 +127,7 @@ export default function PromoBanners() {
             <div className={styles.couponCodeGroup}>
               <span className={styles.couponLabel}>Use Coupon :</span>
               <button onClick={handleCopy} className={styles.couponBadge}>
-                <span className={styles.couponCode}>HELLO1500</span>
+                <span className={styles.couponCode}>HOLIDAY10</span>
                 {copied ? (
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#27ae60" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12l5 5L20 7" />

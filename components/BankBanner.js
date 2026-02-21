@@ -7,21 +7,25 @@ import { motion } from 'framer-motion'
 import styles from './BankBanner.module.css'
 
 var banks = [
-  { name: 'Axis Bank', src: '/bank/axis.png' },
+  { name: 'Bajaj Finserv', src: '/bank/bajaj-finserv.svg' },
+  { name: 'SBI', src: '/bank/sbi.png' },
   { name: 'HDFC Bank', src: '/bank/hdfc.png' },
-  { name: 'Bank of Baroda', src: '/bank/bankofbaroda.png' },
   { name: 'ICICI Bank', src: '/bank/icici.png' },
+  { name: 'Axis Bank', src: '/bank/axis.png' },
+  { name: 'Indian Bank', src: '/bank/indian.png' },
+  { name: 'Bank of Baroda', src: '/bank/bankofbaroda.png' },
   { name: 'IDFC First', src: '/bank/idfc.png' },
   { name: 'Yes Bank', src: '/bank/yesbank.png' },
   { name: 'Kotak Mahindra', src: '/bank/kodak.png' },
+  { name: 'IndusInd Bank', src: '/bank/indusind-bank.webp' },
 ]
 
 var tickerItems = [
+  'No-Cost EMI Available Via Bajaj Finserv',
   'Exclusive Sale! Upto 50% OFF',
+  'Easy Financing Options From Leading Banks',
   'Special Online Offer Available',
-  'Limited Time Deal',
   'Shop Now & Save Big',
-  'No-Cost EMI On All Orders',
   'Free Delivery Across India',
 ]
 
@@ -67,40 +71,36 @@ export default function BankBanner() {
         {/* Left — Text */}
         <div className={styles.textBlock}>
           <p className={styles.headline}>
-            Get{' '}
             <span className={styles.boldBlack}>NO-COST EMI</span>
-            {' '}And An{' '}
-            <span className={styles.boldDark}>Extra Rs. 4,000 Off</span>
+            {' '}Via{' '}
+            <span className={styles.bajajInline}>
+              <Image src="/bank/bajaj-finserv.svg" alt="Bajaj Finserv" width={120} height={32} unoptimized className={styles.bajajInlineImg} />
+              {/* Bajaj Finserv */}
+            </span>
+            {' '}&{' '}
+            <span className={styles.boldDark}>Easy Finance Options</span>
             {' '}From Leading Banks
           </p>
         </div>
 
-        {/* Right — Bank Logos */}
-        <div className={styles.logosRow}>
-          {banks.map(function (bank, i) {
-            return (
-              <motion.div
-                key={bank.name}
-                className={styles.logoBox}
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={isVisible ? { opacity: 1, scale: 1 } : {}}
-                transition={{
-                  duration: 0.4,
-                  delay: 0.15 + i * 0.06,
-                  ease: [0.25, 0.46, 0.45, 0.94],
-                }}
-              >
-                <Image
-                  src={bank.src}
-                  alt={bank.name}
-                  width={64}
-                  height={40}
-                  unoptimized
-                  className={styles.logoImg}
-                />
-              </motion.div>
-            )
-          })}
+        {/* Right — Bank Logos Marquee */}
+        <div className={styles.logosMarquee}>
+          <div className={styles.logosTrack}>
+            {banks.concat(banks).map(function (bank, i) {
+              return (
+                <div key={i} className={styles.logoBox}>
+                  <Image
+                    src={bank.src}
+                    alt={bank.name}
+                    width={64}
+                    height={40}
+                    unoptimized
+                    className={styles.logoImg}
+                  />
+                </div>
+              )
+            })}
+          </div>
         </div>
       </motion.div>
 

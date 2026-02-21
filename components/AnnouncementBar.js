@@ -5,12 +5,16 @@ export default function AnnouncementBar(){
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
 
+  // const announcements = [
+  //   "🎉 Extra 20% off on All Home and Kitchen Orders — Use code: HOLIDAY20",
+  //   "📦 Free Shipping on orders above ₹2,999 — No minimum cart limit!",
+  //   "⭐ Handcrafted Furniture Made in India — Support Local Artisans"
+  // ]
   const announcements = [
-    "🎉 Extra 20% off on All Home and Kitchen Orders — Use code: HOLIDAY20",
-    "📦 Free Shipping on orders above ₹2,999 — No minimum cart limit!",
-    "⭐ Handcrafted Furniture Made in India — Support Local Artisans"
-  ]
-
+  "✨ Up to 40% Off + Extra 10% on Premium Furniture — Use Code: HOLIDAY10",
+  "🇮🇳 Delivering Across India — Crafted with Care, Shipped with Trust",
+  "🛋️ India’s Leading Space-Saving Furniture Brand"
+];
   useEffect(() => {
     const interval = setInterval(() => {
       setIsTransitioning(true)

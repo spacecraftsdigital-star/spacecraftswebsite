@@ -19,13 +19,13 @@ export default function TopNavigationBar() {
         <div className={styles.nav_left}>
           <div className={styles.contact_info}>
             <span className={styles.info_icon}>📞</span>
-            <a href="tel:+919003003733" className={styles.phone_link} aria-label="Call Ambattur store">
-              AMBATTUR: 90030 03733
+            <a href="tel:+91984222779" className={styles.phone_link} aria-label="Call Ambattur store">
+              AMBATTUR: 98402 22779
             </a>
           </div>
           <div className={styles.gstin_info}>
             <span className={styles.info_label}>GSTIN/UIN:</span>
-            <span className={styles.gstin_value}>33ACSFS7628C1ZV</span>
+            <span className={styles.gstin_value}>33AASFH4116N1Z2</span>
           </div>
         </div>
 
