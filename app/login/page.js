@@ -1,11 +1,11 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '../providers/AuthProvider'
 import styles from './login.module.css'
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { signInWithGoogle, isAuthenticated, loading } = useAuth()
@@ -108,3 +108,17 @@ export default function LoginPage() {
   )
 }
 
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Loading...</h2>
+          <p className="text-gray-600">Please wait.</p>
+        </div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
+  )
+}
