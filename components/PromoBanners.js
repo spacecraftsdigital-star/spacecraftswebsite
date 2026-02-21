@@ -44,10 +44,11 @@ function PromoCard({ card, index, isVisible }) {
             <Image
               src={card.image}
               alt={card.title}
-              fill
+              width={800}
+              height={400}
               unoptimized
               sizes="(max-width: 768px) 100vw, 33vw"
-              style={{ objectFit: 'cover', objectPosition: 'center' }}
+              style={{ width: '100%', height: 'auto', display: 'block' }}
             />
           </div>
           <div className={styles.promoCardOverlay} />
