@@ -18,9 +18,20 @@ export default function FeaturedProductsSection({ bestsellers = [], offered = []
   var setActiveTab = _active[1]
 
   var sectionRef = useRef(null)
+  var gridRef = useRef(null)
   var _vis = useState(false)
   var isVisible = _vis[0]
   var setIsVisible = _vis[1]
+
+  function scrollGrid(direction) {
+    if (gridRef.current) {
+      var scrollAmount = gridRef.current.clientWidth * 0.6
+      gridRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      })
+    }
+  }
 
   var _indicator = useState({ left: 0, width: 0 })
   var tabIndicator = _indicator[0]
@@ -149,27 +160,40 @@ export default function FeaturedProductsSection({ bestsellers = [], offered = []
       </div>
 
       {/* Product Grid */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className={styles.grid}
-        >
-          {displayProducts.length > 0 ? (
-            displayProducts.map(function (product, i) {
-              return <ProductCard key={product.id || i} product={product} index={i} />
-            })
-          ) : (
-            <div className={styles.empty}>
-              <h3 className={styles.emptyTitle}>No products found</h3>
-              <p className={styles.emptyText}>Check back soon for updates</p>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+      <div className={styles.sliderWrap}>
+        <button className={styles.sliderArrow + ' ' + styles.arrowLeft} onClick={function () { scrollGrid('left') }} aria-label="Scroll left">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+        </button>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            ref={gridRef}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className={styles.grid}
+          >
+            {displayProducts.length > 0 ? (
+              displayProducts.map(function (product, i) {
+                return (
+                  <div key={product.id || i} className={styles.gridItem}>
+                    <ProductCard product={product} index={i} />
+                  </div>
+                )
+              })
+            ) : (
+              <div className={styles.empty}>
+                <h3 className={styles.emptyTitle}>No products found</h3>
+                <p className={styles.emptyText}>Check back soon for updates</p>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+        <button className={styles.sliderArrow + ' ' + styles.arrowRight} onClick={function () { scrollGrid('right') }} aria-label="Scroll right">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+        </button>
+      </div>
 
       {/* View All CTA */}
       {displayProducts.length > 0 && (

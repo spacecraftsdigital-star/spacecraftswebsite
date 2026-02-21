@@ -47,14 +47,14 @@ export default function ProductCard({ product }) {
           width: '100%',
           aspectRatio: '4/5',
           overflow: 'hidden',
-          backgroundColor: '#fafaf8',
+          backgroundColor: '#ffffff',
         }}>
           <Image
             src={imageError ? '/placeholder-product.jpg' : imageUrl}
             alt={product.name}
             fill
             style={{ 
-              objectFit: 'cover',
+              objectFit: 'contain',
               transform: isHovered ? 'scale(1.04)' : 'scale(1)',
               transition: 'transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             }}
