@@ -10,6 +10,7 @@ import ShopAllThingsHome from '../components/ShopAllThingsHome'
 import MoreIdeasSection from '../components/MoreIdeasSection'
 import NewArrivalsGrid from '../components/NewArrivalsGrid'
 import CustomerReviewsSection from '../components/CustomerReviewsSection'
+import AboutFurnitureSection from '../components/AboutFurnitureSection'
 import SpecialOfferBanner from '../components/SpecialOfferBanner'
 import StoreLocatorSection from '../components/StoreLocatorSection'
 import NeedHelpBuyingSection from '../components/NeedHelpBuyingSection'
@@ -201,6 +202,9 @@ export default async function Home() {
 
         {/* Customer Reviews — Google Reviews Showcase */}
         <CustomerReviewsSection />
+
+        {/* About Furniture — SEO Content Block */}
+        <AboutFurnitureSection />
 
         {/* Special Offer Banner */}
         {/* <SpecialOfferBanner /> */}
