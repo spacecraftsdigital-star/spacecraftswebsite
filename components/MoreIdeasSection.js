@@ -270,9 +270,9 @@ export default function MoreIdeasSection() {
       {/* ─── Section Title ─── */}
       <div className={styles.header}>
         <h2 className={styles.title}>More ideas and inspiration</h2>
-        <p className={styles.subtitle}>
+        {/* <p className={styles.subtitle}>
           Explore curated rooms and styles to find what speaks to you
-        </p>
+        </p> */}
       </div>
 
       {/* ─── Category Filter Tabs (Sticky) ─── */}
