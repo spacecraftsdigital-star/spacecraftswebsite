@@ -62,15 +62,6 @@ export default function ProductCard({ product }) {
             onError={() => setImageError(true)}
           />
 
-          {/* Luxury gradient overlay */}
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.03) 0%, transparent 30%, transparent 50%, rgba(0,0,0,0.35) 100%)',
-            pointerEvents: 'none',
-            zIndex: 1,
-          }} />
-          
           {/* Badges — frosted glass */}
           <div style={{
             position: 'absolute',
@@ -198,35 +189,6 @@ export default function ProductCard({ product }) {
             </button>
           </div>
 
-          {/* Product name overlay on image bottom */}
-          <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            padding: '20px 16px 14px',
-            zIndex: 2,
-            pointerEvents: 'none',
-          }}>
-            <h3 style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              fontFamily: 'Inter, sans-serif',
-              color: '#fff',
-              letterSpacing: '-0.01em',
-              lineHeight: '1.35',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              margin: 0,
-              textShadow: '0 1px 4px rgba(0,0,0,0.3)',
-            }}>
-              {product.name}
-            </h3>
-          </div>
-
           {/* Out of Stock Overlay */}
           {product.stock === 0 && (
             <div style={{
@@ -255,6 +217,24 @@ export default function ProductCard({ product }) {
 
         {/* Product Info — compact luxury details */}
         <div style={{ padding: '16px 16px 18px' }}>
+
+          {/* Product Name */}
+          <h3 style={{
+            fontSize: '14px',
+            fontWeight: '600',
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            color: '#1a1a1a',
+            letterSpacing: '-0.01em',
+            lineHeight: '1.35',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            margin: '0 0 10px',
+          }}>
+            {product.name}
+          </h3>
 
           {/* Rating row */}
           {product.rating > 0 && (

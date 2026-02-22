@@ -212,7 +212,7 @@ export default async function Home() {
         {/* <NeedHelpBuyingSection /> */}
 
         {/* Newsletter Section */}
-        <NewsletterSection />
+        {/* <NewsletterSection /> */}
       </main>
     </>
   )

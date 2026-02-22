@@ -242,15 +242,15 @@ export default function CustomerReviewsSection() {
     <section className={styles.section}>
       {/* ─── Section Header ─── */}
       <div className={styles.header}>
-        <div className={styles.eyebrowWrap}>
+        {/* <div className={styles.eyebrowWrap}>
           <span className={`${styles.eyebrowLine} ${styles.eyebrowLineLeft}`} />
           <span className={styles.eyebrowText}>Testimonials</span>
           <span className={`${styles.eyebrowLine} ${styles.eyebrowLineRight}`} />
-        </div>
+        </div> */}
         <h2 className={styles.title}>What our customers say</h2>
-        <p className={styles.subtitle}>
+        {/* <p className={styles.subtitle}>
           Real reviews from real customers who love their furniture
-        </p>
+        </p> */}
       </div>
 
       {/* ─── Two-Column Layout ─── */}
