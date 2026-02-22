@@ -637,10 +637,10 @@ export default function Header() {
               Store
             </Link>
             <Link href="/wishlist" className="mobile-menu-item" onClick={() => setIsMobileMenuOpen(false)}>
-              Wishlist
+               Wishlist
             </Link>
             <Link href="/cart" className="mobile-menu-item" onClick={() => setIsMobileMenuOpen(false)}>
-              Cart {cartCount > 0 && `(${cartCount})`}
+               Cart {cartCount > 0 && `(${cartCount})`}
             </Link>
             {isAuthenticated ? (
               <>
@@ -672,7 +672,7 @@ export default function Header() {
           z-index: 1000;
           padding: 0;
           border-bottom: none;
-          font-family: 'Inter', sans-serif;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .header-container {
@@ -1170,7 +1170,7 @@ font-size: 0.875rem;
           letter-spacing: 0.3px;
           position: relative;
           text-transform: none;
-          font-family: 'Inter', sans-serif;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .category-nav-link::before {
@@ -1216,7 +1216,7 @@ font-size: 0.875rem;
           justify-content: center;
           box-sizing: border-box;
           padding: 0;
-          font-family: 'Inter', sans-serif;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           pointer-events: none;
         }
 
@@ -1384,7 +1384,7 @@ font-size: 0.875rem;
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          font-family: 'Inter', sans-serif;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .section-title::before {
@@ -1430,7 +1430,7 @@ font-size: 0.875rem;
           align-items: center;
           gap: 0.5rem;
           width: 100%;
-          font-family: 'Inter', sans-serif;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .section-item-link::before {
@@ -1544,7 +1544,7 @@ font-size: 0.875rem;
           border-radius: 6px;
           cursor: pointer;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          font-family: 'Inter', sans-serif;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .shop-all-link:hover {
@@ -1612,7 +1612,7 @@ font-size: 0.875rem;
           cursor: pointer;
           transition: all 0.3s ease;
           pointer-events: auto;
-          font-family: 'Inter', sans-serif;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .overlay-cta:hover {
@@ -1637,7 +1637,7 @@ font-size: 0.875rem;
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 2px;
-          font-family: 'Inter', sans-serif;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .overlay-category {
@@ -1646,7 +1646,7 @@ font-size: 0.875rem;
           font-weight: 800;
           letter-spacing: 0.5px;
           text-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          font-family: 'Inter', sans-serif;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         /* Backdrop Overlay Effect */

@@ -109,7 +109,7 @@
 .couponCode {
   font-size: clamp(16px, 2vw, 20px);
   font-weight: 900;
-  font-family: 'Inter', monospace;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #e8d5a3;
   letter-spacing: 2.5px;
 }
@@ -207,7 +207,7 @@
   margin: 0 0 3px;
   line-height: 1.25;
   letter-spacing: -0.3px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .promoCardSub {
@@ -215,7 +215,7 @@
   font-weight: 500;
   color: rgba(255,255,255,0.8);
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .promoCardCta {
@@ -226,7 +226,7 @@
   font-weight: 700;
   color: #fff;
   letter-spacing: 0.3px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .promoCardCta svg {

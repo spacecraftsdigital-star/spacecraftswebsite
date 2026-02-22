@@ -24,7 +24,7 @@
 }
 
 .sectionTitle {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: clamp(18px, 2vw, 24px);
   font-weight: 700;
   color: #1a1a1a;
@@ -34,7 +34,7 @@
 }
 
 .sectionSubtitle {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 13px;
   color: #888;
   font-weight: 400;
@@ -142,7 +142,7 @@
   -webkit-backdrop-filter: blur(8px);
   padding: 3px 9px;
   border-radius: 60px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 10px;
   font-weight: 600;
   color: #1a1a1a;
@@ -170,7 +170,7 @@
   color: #fff;
   padding: 3px 8px;
   border-radius: 60px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.2px;
@@ -187,7 +187,7 @@
 }
 
 .mainName {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: #1a1a1a;
@@ -207,14 +207,14 @@
 }
 
 .mainPrice {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 15px;
   font-weight: 700;
   color: #1a1a1a;
 }
 
 .mainOriginalPrice {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 11px;
   color: #999;
   text-decoration: line-through;
@@ -224,7 +224,7 @@
   display: flex;
   align-items: center;
   gap: 3px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 11px;
   color: #888;
 }
@@ -236,7 +236,7 @@
 
 /* ── Related products row (below main card) ── */
 .relatedLabel {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 10px;
   font-weight: 600;
   color: #999;
@@ -296,7 +296,7 @@
 }
 
 .relatedName {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 10px;
   font-weight: 500;
   color: #1a1a1a;
@@ -309,14 +309,14 @@
 }
 
 .relatedPrice {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 11px;
   font-weight: 700;
   color: #1a1a1a;
 }
 
 .relatedOriginalPrice {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 9px;
   color: #999;
   text-decoration: line-through;
@@ -447,7 +447,7 @@
   border-radius: 60px;
   background: transparent;
   color: #1a1a1a;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.5px;
