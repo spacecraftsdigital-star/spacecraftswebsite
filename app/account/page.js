@@ -507,7 +507,7 @@ export default function AccountPage() {
       <style jsx>{`
         .account-page {
           min-height: 100vh;
-          background: #f9f9f9;
+          background: #ffffff;
           padding: 2rem 1rem;
         }
         .account-container {
@@ -531,7 +531,7 @@ export default function AccountPage() {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          background: #f0f0f0;
+          background: #ffffff;
           border: 2px solid transparent;
           color: #666;
           padding: 0.75rem 1.5rem;
@@ -749,7 +749,7 @@ export default function AccountPage() {
           border: 1px solid #e0e0e0;
         }
         .btn-secondary:hover {
-          background: #f5f5f5;
+          background: #ffffff;
           border-color: #333;
         }
         .addresses-grid {
@@ -771,7 +771,7 @@ export default function AccountPage() {
         }
         .address-card.default {
           border-color: #333;
-          background: #fafafa;
+          background: #ffffff;
         }
         .default-badge {
           position: absolute;

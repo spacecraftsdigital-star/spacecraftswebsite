@@ -254,7 +254,7 @@ export default function WishlistClient() {
           position: relative;
           width: 100%;
           aspect-ratio: 1;
-          background: #f8f8f8;
+          background: #ffffff;
           overflow: hidden;
         }
         
@@ -263,7 +263,7 @@ export default function WishlistClient() {
           width: 100%; 
           height: 100%; 
           display: block; 
-          background: #f8f8f8;
+          background: #ffffff;
         }
         
         .card-image img {

@@ -87,7 +87,7 @@ export default function BulkImageUpload() {
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
       <h1>Bulk Image Upload</h1>
 
-      <div style={{ background: '#f5f5f5', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
+      <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
         <h3>Upload Images</h3>
 
         <div style={{ marginBottom: '15px' }}>

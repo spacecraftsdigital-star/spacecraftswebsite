@@ -95,8 +95,7 @@ export default function NewsletterSection() {
         position: 'relative',
         padding: '48px 20px',
         overflow: 'hidden',
-        background:
-          'linear-gradient(160deg, #f9f7f2 0%, #f3efe6 30%, #ede8db 60%, #f5f1e8 100%)',
+        background: '#ffffff',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >

@@ -1068,7 +1068,7 @@ export default function ProductDetailClient({
                     <tbody>
                       {/* Dimensions Section */}
                       <tr>
-                        <td colSpan="2" style={{ fontWeight: 'bold', background: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>Dimensions</td>
+                        <td colSpan="2" style={{ fontWeight: 'bold', background: '#ffffff', padding: '8px', borderRadius: '4px' }}>Dimensions</td>
                       </tr>
                       <tr>
                         <td><strong>Length</strong></td>
@@ -1089,7 +1089,7 @@ export default function ProductDetailClient({
 
                       {/* Material Section */}
                       <tr>
-                        <td colSpan="2" style={{ fontWeight: 'bold', background: '#f5f5f5', padding: '8px', marginTop: '10px', borderRadius: '4px' }}>Material & Construction</td>
+                        <td colSpan="2" style={{ fontWeight: 'bold', background: '#ffffff', padding: '8px', marginTop: '10px', borderRadius: '4px' }}>Material & Construction</td>
                       </tr>
                       {product.material && (
                         <tr>
@@ -1108,7 +1108,7 @@ export default function ProductDetailClient({
 
                       {/* Warranty & Other Info */}
                       <tr>
-                        <td colSpan="2" style={{ fontWeight: 'bold', background: '#f5f5f5', padding: '8px', marginTop: '10px', borderRadius: '4px' }}>Additional Information</td>
+                        <td colSpan="2" style={{ fontWeight: 'bold', background: '#ffffff', padding: '8px', marginTop: '10px', borderRadius: '4px' }}>Additional Information</td>
                       </tr>
                       {product.warranty_period && (
                         <tr>
@@ -3255,7 +3255,7 @@ function RelatedProductCard({ product }) {
         }
 
         .warranty-details {
-          background: #f9f9f9;
+          background: #ffffff;
           padding: 20px;
           border-radius: 8px;
           margin-bottom: 20px;
@@ -3573,7 +3573,7 @@ function RelatedProductCard({ product }) {
 
         .store-header-detail {
           padding: 14px 16px;
-          background: #f9f9f9;
+          background: #ffffff;
           border-bottom: 1px solid #e9ecef;
           display: flex;
           justify-content: space-between;
@@ -3655,7 +3655,7 @@ function RelatedProductCard({ product }) {
         }
 
         .no-stores {
-          background: #f9f9f9;
+          background: #ffffff;
           padding: 30px 20px;
           border-radius: 8px;
           text-align: center;

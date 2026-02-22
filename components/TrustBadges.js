@@ -71,7 +71,7 @@ function BadgeCard({ badge, index, isVisible }) {
         background: hovered
           ? `linear-gradient(135deg, ${badge.accent}08 0%, ${badge.accent}04 100%)`
           : '#fff',
-        border: `1px solid ${hovered ? badge.accent + '30' : '#f0f0f0'}`,
+        border: `1px solid ${hovered ? badge.accent + '30' : '#e5e5e5'}`,
         cursor: 'default',
         transition: 'all 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
         transform: isVisible
@@ -176,8 +176,8 @@ export default function TrustBadges() {
       ref={sectionRef}
       style={{
         padding: '48px 20px',
-        background: 'linear-gradient(180deg, #fafafa 0%, #ffffff 100%)',
-        borderBottom: '1px solid #f0f0f0',
+        background: '#ffffff',
+        borderBottom: '1px solid #e5e5e5',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >

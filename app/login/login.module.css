@@ -58,7 +58,7 @@
 }
 
 .googleButton:hover:not(:disabled) {
-  background: #f7fafc;
+  background: #ffffff;
   border-color: #cbd5e0;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -100,14 +100,14 @@
   font-size: 14px;
   margin-bottom: 24px;
   padding: 12px;
-  background: #f7fafc;
+  background: #ffffff;
   border-radius: 6px;
 }
 
 .benefits {
   margin: 24px 0;
   padding: 20px;
-  background: #f0fff4;
+  background: #ffffff;
   border-radius: 8px;
   border-left: 4px solid #22863a;
 }

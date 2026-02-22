@@ -58,7 +58,7 @@ export default function AnnouncementBar(){
 
         .announcement-text {
           color: white;
-          font-size: 0.85rem;
+          font-size: 0.8rem;
           font-weight: 500;
           letter-spacing: 0.3px;
           animation: fadeAnimation 0.3s ease-in-out forwards;

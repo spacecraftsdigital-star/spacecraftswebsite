@@ -656,9 +656,9 @@ export default function CartClient() {
         .cart-page { padding: 20px 0; }
         .cart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
         .cart-list { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-        .cart-item { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; border: 1px solid #f0f0f0; border-radius: 12px; padding: 12px; }
+        .cart-item { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; border: 1px solid #e5e5e5; border-radius: 12px; padding: 12px; }
         .cart-item-left { display: flex; gap: 12px; }
-        .cart-thumb { position: relative; width: 110px; height: 110px; border-radius: 10px; overflow: hidden; background: #f8f8f8; flex-shrink: 0; }
+        .cart-thumb { position: relative; width: 110px; height: 110px; border-radius: 10px; overflow: hidden; background: #ffffff; flex-shrink: 0; }
         .cart-info { display: flex; flex-direction: column; gap: 6px; }
         .cart-title { font-weight: 700; color: #111; text-decoration: none; }
         .cart-title:hover { color: #007bff; }
@@ -700,13 +700,13 @@ export default function CartClient() {
         .remove-coupon-btn:hover { background: #c82333; }
         .coupon-error { margin-top: 8px; color: #dc3545; font-size: 13px; background: #f8d7da; padding: 8px; border-radius: 6px; }
         
-        .related-section { margin-top: 48px; padding: 32px 0; border-top: 2px solid #f0f0f0; }
+        .related-section { margin-top: 48px; padding: 32px 0; border-top: 2px solid #e5e5e5; }
         .related-section h2 { font-size: 24px; margin-bottom: 24px; }
         .related-loading { text-align: center; padding: 20px; color: #666; }
         .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
         .related-card { text-decoration: none; color: inherit; transition: all 0.3s; border-radius: 12px; overflow: hidden; }
         .related-card:hover { transform: translateY(-4px); }
-        .related-image { position: relative; width: 100%; aspect-ratio: 1; background: #f8f8f8; border-radius: 12px; overflow: hidden; }
+        .related-image { position: relative; width: 100%; aspect-ratio: 1; background: #ffffff; border-radius: 12px; overflow: hidden; }
         .related-image img { width: 100%; height: 100%; object-fit: cover; }
         .badge { position: absolute; top: 12px; right: 12px; background: #e74c3c; color: #fff; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 13px; }
         .related-info { padding: 12px 0; }

@@ -324,7 +324,7 @@ export default function Header() {
           {/* Logo */}
           <div className="header-logo">
             <Link href="/">
-              <Image src="/logo.webp" alt="Spacecrafts Furniture" width={160} height={60} priority style={{ height: 'auto', width: 'auto' }} />
+              <Image src="/logo.webp" alt="Spacecrafts Furniture" width={150} height={48} priority style={{ height: 'auto', width: 'auto', maxHeight: '48px' }} />
             </Link>
           </div>
 
@@ -665,13 +665,13 @@ export default function Header() {
 
       <style jsx>{`
         .site-header {
-          background: white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          background: #ffffff;
+          box-shadow: none;
           position: sticky;
           top: 0;
           z-index: 1000;
           padding: 0;
-          border-bottom: 1px solid #f0f0f0;
+          border-bottom: none;
           font-family: 'Inter', sans-serif;
         }
 
@@ -681,7 +681,8 @@ export default function Header() {
           display: flex;
           align-items: center;
           gap: 2rem;
-          padding: 1rem 2rem;
+          padding: 0.75rem 2rem;
+          min-height: 72px;
         }
 
         .header-logo {
@@ -693,15 +694,14 @@ export default function Header() {
         }
 
         .header-logo a {
-          display: block;
-          height: 50px;
           display: flex;
+          height: 48px;
           align-items: center;
           justify-content: center;
         }
 
         .header-logo img {
-          max-height: 50px;
+          max-height: 48px;
           width: auto;
           object-fit: contain;
         }
@@ -716,24 +716,24 @@ export default function Header() {
 
         .search-form {
           display: flex;
-          background: white;
+          background: #ffffff;
           border-radius: 12px;
           overflow: hidden;
           border: 2px solid #e0e0e0;
           transition: all 0.3s ease;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+          box-shadow: none;
         }
 
         .search-form:focus-within {
           border-color: #e74c3c;
-          background: white;
+          background: #ffffff;
           box-shadow: 0 4px 16px rgba(231, 76, 60, 0.12);
         }
 
         .search-input {
           flex: 1;
           border: none;
-          padding: 0.9rem 1.25rem;
+          padding: 0.7rem 1.25rem;
           font-size: 0.875rem;
           outline: none;
           background: transparent;
@@ -767,7 +767,7 @@ export default function Header() {
           top: calc(100% + 0.5rem);
           left: 0;
           right: 0;
-          background: white;
+          background: #ffffff;
           border-radius: 8px;
           box-shadow: 0 4px 12px rgba(0,0,0,0.1);
           max-height: 500px;
@@ -782,12 +782,12 @@ export default function Header() {
           gap: 1rem;
           padding: 0.75rem 1rem;
           cursor: pointer;
-          border-bottom: 1px solid #f5f5f5;
+          border-bottom: 1px solid #e5e5e5;
           transition: background 0.2s;
         }
 
         .search-result-item:hover {
-          background: #f9f9f9;
+          background: #ffffff;
         }
 
         .result-image {
@@ -796,7 +796,7 @@ export default function Header() {
           border-radius: 6px;
           overflow: hidden;
           flex-shrink: 0;
-          background: #f0f0f0;
+          background: #ffffff;
         }
 
         .result-no-image {
@@ -844,7 +844,7 @@ export default function Header() {
         .search-view-all {
           width: 100%;
           padding: 0.75rem;
-          background: #f5f5f5;
+          background: #ffffff;
           color: #333;
           border: none;
           font-weight: 600;
@@ -875,13 +875,12 @@ export default function Header() {
           gap: 0.5rem;
           padding: 0.5rem 0.75rem;
           border-radius: 6px;
-          transition: all 0.2s;
+          transition: color 0.3s ease;
           position: relative;
         }
 
         .nav-link:hover {
-          background: #f5f5f5;
-          color: #000;
+          color: #e67e22;
         }
 
         .nav-text {
@@ -935,9 +934,9 @@ export default function Header() {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          background: #f5f5f5;
+          background: #ffffff;
           border: 1px solid #e5e5e5;
-          padding: 0.5rem 1rem;
+          padding: 0.35rem 0.85rem;
           border-radius: 6px;
           color: #333;
           cursor: pointer;
@@ -950,8 +949,8 @@ export default function Header() {
         }
 
         .user-avatar {
-          width: 32px;
-          height: 32px;
+          width: 28px;
+          height: 28px;
           border-radius: 50%;
           background: #333;
           color: white;
@@ -974,7 +973,7 @@ export default function Header() {
           position: absolute;
           top: calc(100% + 0.75rem);
           right: 0;
-          background: white;
+          background: #ffffff;
           border-radius: 8px;
           box-shadow: 0 8px 24px rgba(0,0,0,0.12);
           min-width: 240px;
@@ -992,7 +991,7 @@ export default function Header() {
           padding: 0.95rem 1.25rem;
           color: #333;
           text-decoration: none;
-          background: white;
+          background: #ffffff;
           border: none;
           border-left: 3px solid transparent;
           width: 100%;
@@ -1005,11 +1004,11 @@ export default function Header() {
         }
 
         .dropdown-item:not(:last-child) {
-          border-bottom: 1px solid #f0f0f0;
+          border-bottom: 1px solid #e5e5e5;
         }
 
         .dropdown-item:hover {
-          background: #f8f8f8;
+          background: #ffffff;
           color: #000;
           border-left-color: #333;
           padding-left: 1.35rem;
@@ -1033,7 +1032,7 @@ export default function Header() {
           background: #333;
           color: white;
           text-decoration: none;
-          padding: 0.65rem 1.5rem;
+          padding: 0.45rem 1.25rem;
           border-radius: 6px;
           font-weight: 600;
           transition: all 0.2s;
@@ -1094,7 +1093,7 @@ export default function Header() {
           }
 
           .header-logo img {
-            max-height: 45px;
+            max-height: 40px;
           }
 
           .mobile-menu-toggle {
@@ -1118,7 +1117,7 @@ export default function Header() {
             display: flex;
             flex-direction: column;
             padding: 1rem;
-            background: #f9f9f9;
+            background: #ffffff;
             border-top: 1px solid #e5e5e5;
           }
 
@@ -1137,18 +1136,19 @@ font-size: 0.875rem;
           }
 
           .mobile-menu-item:hover {
-            background: #f0f0f0;
+            background: #ffffff;
           }
         }
 
         /* Category Navigation Bar */
         .category-nav {
-          background: linear-gradient(135deg, rgba(83, 83, 83, 1) 0%, rgba(63, 63, 63, 1) 100%);
-          border-bottom: 2px solid rgba(50, 50, 50, 1);
+          background: #ffffff;
+          border-top: 1px solid #e5e5e5;
+          border-bottom: 1px solid #e5e5e5;
           display: flex;
           justify-content: center;
           gap: 0;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          box-shadow: none;
           position: relative;
         }
 
@@ -1157,12 +1157,12 @@ font-size: 0.875rem;
         }
 
         .category-nav-link {
-          color: #ecf0f1;
+          color: #333;
           background: transparent;
           border: none;
           padding: 0.85rem 1.8rem;
           font-size: 0.875rem;
-          font-weight: 400;
+          font-weight: 600;
           cursor: pointer;
           text-decoration: none;
           white-space: nowrap;
@@ -1187,8 +1187,8 @@ font-size: 0.875rem;
         }
 
         .category-nav-link:hover {
-          background: rgba(255, 255, 255, 0.1);
-          color: #ffffff;
+          background: transparent;
+          color: #e67e22;
         }
 
         .category-nav-link:hover::before {
@@ -1242,8 +1242,7 @@ font-size: 0.875rem;
           position: relative;
           pointer-events: auto;
           background: #ffffff;
-          border-top: 3px solid transparent;
-          border-image: linear-gradient(90deg, #e74c3c, #e67e22, #f39c12) 1;
+          border-top: none;
           box-shadow: 0 20px 80px rgba(0, 0, 0, 0.2), 0 8px 32px rgba(0, 0, 0, 0.08);
         }
 
@@ -1264,7 +1263,7 @@ font-size: 0.875rem;
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
           gap: 1.5rem;
-          background: linear-gradient(180deg, #ffffff 0%, #fafafa 50%, #f5f5f5 100%);
+          background: #ffffff;
           box-sizing: border-box;
           position: relative;
           min-width: 280px;
@@ -1277,9 +1276,9 @@ font-size: 0.875rem;
           column-gap: 1.5rem;
           grid: unset;
           display: block;
-          border-right: 2px solid #f0f0f0;
+          border-right: 2px solid #e5e5e5;
           padding: 1.25rem 1.5rem;
-          background: linear-gradient(180deg, #ffffff 0%, #fafafa 50%, #f5f5f5 100%);
+          background: #ffffff;
           overflow-y: auto;
           max-height: 580px;
           position: relative;
@@ -1354,7 +1353,7 @@ font-size: 0.875rem;
         }
 
         .dropdown-left::-webkit-scrollbar-track {
-          background: #f5f5f5;
+          background: #ffffff;
         }
 
         .dropdown-left::-webkit-scrollbar-thumb {
@@ -1479,7 +1478,7 @@ font-size: 0.875rem;
           height: 100%;
           border-radius: 0;
           overflow: hidden;
-          background: #f0f0f0;
+          background: #ffffff;
           border: none;
           box-shadow: none;
           position: relative;
@@ -1525,13 +1524,7 @@ font-size: 0.875rem;
 
         /* Dropdown Accent Bar */
         .dropdown-accent-bar {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 3px;
-          background: linear-gradient(90deg, #e74c3c 0%, #e67e22 50%, #f39c12 100%);
-          z-index: 10;
+          display: none;
         }
 
         /* Shop All Link */
@@ -1608,10 +1601,9 @@ font-size: 0.875rem;
           gap: 0.5rem;
           margin-top: 0.75rem;
           padding: 0.6rem 1.5rem;
-          background: rgba(255,255,255,0.15);
-          backdrop-filter: blur(4px);
-          border: 1.5px solid rgba(255,255,255,0.5);
-          color: #ffffff;
+          background: #ffffff;
+          border: 1.5px solid #ffffff;
+          color: #1a1a1a;
           font-size: 0.875rem;
           font-weight: 700;
           letter-spacing: 0.8px;

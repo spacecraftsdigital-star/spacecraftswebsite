@@ -98,7 +98,7 @@
   position: relative;
   border-radius: 12px;
   overflow: hidden;
-  background: #fafaf8;
+  background: #ffffff;
   border: 1px solid #e6e6e6;
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
@@ -279,7 +279,7 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  background: #fafaf8;
+  background: #ffffff;
 }
 
 .relatedImage {
@@ -360,7 +360,7 @@
 .skeletonMain {
   border-radius: 14px;
   overflow: hidden;
-  background: #f5f5f5;
+  background: #ffffff;
   animation: shimmer 1.5s ease infinite;
 }
 
@@ -399,7 +399,7 @@
 .skeletonRelatedCard {
   border-radius: 10px;
   overflow: hidden;
-  background: #f5f5f5;
+  background: #ffffff;
 }
 
 .skeletonRelatedImg {

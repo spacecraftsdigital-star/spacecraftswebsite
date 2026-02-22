@@ -275,7 +275,7 @@ export default function CheckoutPage() {
           max-width: 1200px;
           margin: 0 auto;
           padding: 20px;
-          background: #f5f5f5;
+          background: #ffffff;
           min-height: 100vh;
         }
 
@@ -344,7 +344,7 @@ export default function CheckoutPage() {
           justify-content: space-between;
           align-items: center;
           padding: 12px;
-          background: #f9f9f9;
+          background: #ffffff;
           border-radius: 6px;
         }
 
@@ -537,7 +537,7 @@ export default function CheckoutPage() {
         }
 
         .btn-secondary {
-          background: #f0f0f0;
+          background: #ffffff;
           color: #333;
         }
 

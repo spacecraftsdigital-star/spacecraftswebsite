@@ -11,7 +11,7 @@ module.exports = {
         secondary: '#e67e22',
         dark: '#2c3e50',
         'dark-light': '#34495e',
-        'light-gray': '#f9f9f9',
+        'light-gray': '#ffffff',
       },
       fontFamily: {
         inter: ['\'Inter\'', '-apple-system', 'BlinkMacSystemFont', '\'Segoe UI\'', 'sans-serif'],
