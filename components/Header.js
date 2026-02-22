@@ -1433,28 +1433,8 @@ font-size: 0.875rem;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
-        .section-item-link::before {
-          content: '';
-          width: 0;
-          height: 0;
-          border-left: 4px solid #e74c3c;
-          border-top: 3px solid transparent;
-          border-bottom: 3px solid transparent;
-          opacity: 0;
-          transition: opacity 0.2s ease, transform 0.2s ease;
-          transform: translateX(-4px);
-          flex-shrink: 0;
-        }
-
         .section-item-link:hover {
-          color: #e74c3c;
-          background: rgba(231, 76, 60, 0.04);
-          padding-left: 0.75rem;
-        }
-
-        .section-item-link:hover::before {
-          opacity: 1;
-          transform: translateX(0);
+          color: #e67e22;
         }
 
         .dropdown-right {
