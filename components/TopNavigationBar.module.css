@@ -68,7 +68,7 @@
 }
 
 .gstin_value {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #333;
   letter-spacing: 0.2px;
 }
