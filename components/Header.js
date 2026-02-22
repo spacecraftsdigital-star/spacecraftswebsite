@@ -26,10 +26,10 @@ export default function Header() {
 
   // Category Navigation Data
   const categoryData = {
-    ALL: {
+    All: {
       sections: [
         {
-          title: 'BEDS',
+          title: 'Beds',
           items: [
             { name: 'Bunk Beds', slug: 'bunk-beds' },
             { name: 'Futon Beds', slug: 'futon-beds' },
@@ -42,7 +42,7 @@ export default function Header() {
           ]
         },
         {
-          title: 'CHAIRS',
+          title: 'Chairs',
           items: [
             { name: 'Foldable Chairs', slug: 'foldable-chairs' },
             { name: 'Lazy Chairs', slug: 'lazy-chairs' },
@@ -53,7 +53,7 @@ export default function Header() {
           ]
         },
         {
-          title: 'DINING SETS',
+          title: 'Dining Sets',
           items: [
             { name: 'Dining Tables', slug: 'dining-tables' },
             { name: 'Dining Chairs', slug: 'dining-chairs' },
@@ -62,7 +62,7 @@ export default function Header() {
           ]
         },
         {
-          title: 'SOFA SETS',
+          title: 'Sofa Sets',
           items: [
             { name: '2 Seater', slug: '2-seater' },
             { name: '3+1+1 Sofas', slug: '3-1-1-sofas' },
@@ -74,7 +74,7 @@ export default function Header() {
           ]
         },
         {
-          title: 'SPACE SAVING',
+          title: 'Space Saving',
           items: [
             { name: 'Foldable Tables', slug: 'foldable-tables' },
             { name: 'Foldable Chairs', slug: 'foldable-chairs' },
@@ -83,7 +83,7 @@ export default function Header() {
           ]
         },
         {
-          title: 'TABLES',
+          title: 'Tables',
           items: [
             { name: 'Coffee Tables', slug: 'coffee-tables' },
             { name: 'Dressing Tables', slug: 'dressing-tables' },
@@ -92,7 +92,7 @@ export default function Header() {
           ]
         },
         {
-          title: 'WARDROBES & RACKS',
+          title: 'Wardrobes & Racks',
           items: [
             { name: 'Wardrobes', slug: 'wardrobes' },
             { name: 'Book Shelves', slug: 'book-shelves' },
@@ -103,10 +103,10 @@ export default function Header() {
       ],
       images: ['/header/All.jpg']
     },
-    'SPACE SAVING FURNITURE': {
+    'Space Saving Furniture': {
       sections: [
         {
-          title: 'SPACE SAVERS',
+          title: 'Space Savers',
           items: [
             { name: 'Bunk Beds', slug: 'bunk-beds' },
             { name: 'Diwan Cum Beds', slug: 'diwan-cum-beds' },
@@ -125,10 +125,10 @@ export default function Header() {
       ],
       images: ['/header/spacesavingfurniture.webp']
     },
-    'BEDS': {
+    'Beds': {
       sections: [
         {
-          title: 'ALL BEDS',
+          title: 'All Beds',
           items: [
             { name: 'Bunk Beds', slug: 'bunk-beds' },
             { name: 'Futon Beds', slug: 'futon-beds' },
@@ -143,10 +143,10 @@ export default function Header() {
       ],
       images: ['/header/beds.webp']
     },
-    'CHAIRS': {
+    'Chairs': {
       sections: [
         {
-          title: 'ALL CHAIRS',
+          title: 'All Chairs',
           items: [
             { name: 'Foldable Chairs', slug: 'foldable-chairs' },
             { name: 'Lazy Chairs', slug: 'lazy-chairs' },
@@ -159,10 +159,10 @@ export default function Header() {
       ],
       images: ['/header/chairs.webp']
     },
-    'DINING SETS': {
+    'Dining Sets': {
       sections: [
         {
-          title: 'DINING',
+          title: 'Dining',
           items: [
             { name: 'Shoe Racks', slug: 'shoe-racks' },
             { name: 'Dining Tables', slug: 'dining-tables' },
@@ -172,10 +172,10 @@ export default function Header() {
       ],
       images: ['/header/diningsets.webp']
     },
-    'SOFA SETS': {
+    'Sofa Sets': {
       sections: [
         {
-          title: 'SOFAS',
+          title: 'Sofas',
           items: [
             { name: '2 Seater', slug: '2-seater' },
             { name: '3+1+1 Sofas', slug: '3-1-1-sofas' },
@@ -189,10 +189,10 @@ export default function Header() {
       ],
       images: ['/header/sofasets.webp']
     },
-    'TABLES': {
+    'Tables': {
       sections: [
         {
-          title: 'TABLES',
+          title: 'Tables',
           items: [
             { name: 'Dressing Tables', slug: 'dressing-tables' },
             { name: 'Foldable Tables', slug: 'foldable-tables' },
@@ -203,10 +203,10 @@ export default function Header() {
       ],
       images: ['/header/tables.webp']
     },
-    'WARDROBE & RACKS': {
+    'Wardrobe & Racks': {
       sections: [
         {
-          title: 'STORAGE',
+          title: 'Storage',
           items: [
             { name: 'Book Racks', slug: 'book-racks' },
             { name: 'Shoe Racks', slug: 'shoe-racks' },
@@ -520,7 +520,7 @@ export default function Header() {
               {/* Dropdown Menu */}
               {hoveredCategory === category && (
                 <div className="category-dropdown">
-                  {category === 'ALL' ? (
+                  {category === 'All' ? (
                     <div className="dropdown-content">
                       <div className="dropdown-left dropdown-left-all">
                         {categoryData[category].sections.map((section, idx) => (
@@ -554,7 +554,7 @@ export default function Header() {
                             />
                             <div className="image-overlay-text image-overlay-all">
                               <span className="overlay-label">Explore</span>
-                              <span className="overlay-category">ALL FURNITURE</span>
+                              <span className="overlay-category">All Furniture</span>
                               <button className="overlay-cta" onClick={() => router.push('/products')}>
                                 Shop Now
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -734,7 +734,7 @@ export default function Header() {
           flex: 1;
           border: none;
           padding: 0.9rem 1.25rem;
-          font-size: 0.95rem;
+          font-size: 0.875rem;
           outline: none;
           background: transparent;
           color: #333;
@@ -805,7 +805,7 @@ export default function Header() {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 0.7rem;
+          font-size: 0.875rem;
           color: #ccc;
         }
 
@@ -823,7 +823,7 @@ export default function Header() {
         .result-price {
           color: #666;
           font-weight: 600;
-          font-size: 0.9rem;
+          font-size: 0.875rem;
         }
 
         .result-badge {
@@ -831,7 +831,7 @@ export default function Header() {
           color: white;
           padding: 0.25rem 0.5rem;
           border-radius: 4px;
-          font-size: 0.75rem;
+          font-size: 0.875rem;
           white-space: nowrap;
         }
 
@@ -884,7 +884,7 @@ export default function Header() {
         }
 
         .nav-text {
-          font-size: 0.95rem;
+          font-size: 0.875rem;
         }
 
         .cart-link {
@@ -897,7 +897,7 @@ export default function Header() {
           right: -5px;
           background: #ff6b6b;
           color: white;
-          font-size: 0.7rem;
+          font-size: 0.875rem;
           font-weight: 700;
           padding: 0.15rem 0.4rem;
           border-radius: 10px;
@@ -957,7 +957,7 @@ export default function Header() {
           align-items: center;
           justify-content: center;
           font-weight: 700;
-          font-size: 0.9rem;
+          font-size: 0.875rem;
         }
 
         .user-name {
@@ -996,7 +996,7 @@ export default function Header() {
           width: 100%;
           box-sizing: border-box;
           text-align: left;
-          font-size: 0.95rem;
+          font-size: 0.875rem;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.15s ease;
@@ -1048,7 +1048,7 @@ export default function Header() {
           background: transparent;
           border: none;
           color: #333;
-          font-size: 1.5rem;
+          font-size: 0.875rem;
           padding: 0.5rem 0.75rem;
           border-radius: 6px;
           cursor: pointer;
@@ -1129,7 +1129,7 @@ export default function Header() {
             background: none;
             border: none;
             text-align: left;
-            font-size: 1rem;
+font-size: 0.875rem;
             cursor: pointer;
             width: 100%;
           }
@@ -1158,16 +1158,16 @@ export default function Header() {
           color: #ecf0f1;
           background: transparent;
           border: none;
-          padding: 0.95rem 1.8rem;
-          font-size: 0.95rem;
-          font-weight: 600;
+          padding: 0.85rem 1.8rem;
+          font-size: 0.875rem;
+          font-weight: 400;
           cursor: pointer;
           text-decoration: none;
           white-space: nowrap;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           letter-spacing: 0.3px;
           position: relative;
-          text-transform: uppercase;
+          text-transform: none;
           font-family: 'Inter', sans-serif;
         }
 
@@ -1372,12 +1372,12 @@ export default function Header() {
         }
 
         .section-title {
-          font-size: 0.78rem;
-          font-weight: 800;
+          font-size: 0.875rem;
+          font-weight: 400;
           color: #1a1a1a;
           margin: 0 0 0.4rem 0;
-          letter-spacing: 1.2px;
-          text-transform: uppercase;
+          letter-spacing: 0.3px;
+          text-transform: none;
           padding-bottom: 0.35rem;
           border-bottom: none;
           display: flex;
@@ -1417,7 +1417,7 @@ export default function Header() {
           border: none;
           padding: 0.35rem 0.75rem;
           color: #555;
-          font-size: 0.85rem;
+          font-size: 0.875rem;
           cursor: pointer;
           text-align: left;
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1542,7 +1542,7 @@ export default function Header() {
           background: none;
           border: 1.5px solid #e74c3c;
           color: #e74c3c;
-          font-size: 0.72rem;
+          font-size: 0.875rem;
           font-weight: 700;
           letter-spacing: 0.5px;
           text-transform: uppercase;
@@ -1610,7 +1610,7 @@ export default function Header() {
           backdrop-filter: blur(4px);
           border: 1.5px solid rgba(255,255,255,0.5);
           color: #ffffff;
-          font-size: 0.82rem;
+          font-size: 0.875rem;
           font-weight: 700;
           letter-spacing: 0.8px;
           text-transform: uppercase;
@@ -1639,7 +1639,7 @@ export default function Header() {
 
         .overlay-label {
           color: rgba(255,255,255,0.8);
-          font-size: 0.7rem;
+          font-size: 0.875rem;
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 2px;
@@ -1648,7 +1648,7 @@ export default function Header() {
 
         .overlay-category {
           color: #ffffff;
-          font-size: 1.3rem;
+          font-size: 0.875rem;
           font-weight: 800;
           letter-spacing: 0.5px;
           text-shadow: 0 2px 8px rgba(0,0,0,0.3);
