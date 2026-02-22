@@ -1306,21 +1306,7 @@ font-size: 0.875rem;
         }
 
         .dropdown-right-all .category-image-wrapper::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, transparent 40%, transparent 45%, rgba(0,0,0,0.45) 100%);
-          opacity: 1;
-          transition: opacity 0.5s ease;
-          z-index: 2;
-          pointer-events: none;
-        }
-
-        .dropdown-right-all .category-image-wrapper:hover::before {
-          opacity: 0.6;
+          display: none;
         }
 
         .dropdown-right-all .category-image-wrapper:hover {
@@ -1333,14 +1319,12 @@ font-size: 0.875rem;
           object-fit: cover;
           object-position: center center;
           transform: scale(1);
-          transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.5s ease;
-          filter: saturate(0.9) brightness(0.97);
+          transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
           will-change: transform;
         }
 
         .dropdown-right-all .category-image-wrapper:hover :global(img) {
           transform: scale(1.08);
-          filter: saturate(1.15) brightness(1.03);
         }
 
         .dropdown-left-all .dropdown-section {
@@ -1465,21 +1449,7 @@ font-size: 0.875rem;
         }
 
         .category-image-wrapper::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, transparent 40%, transparent 50%, rgba(0,0,0,0.35) 100%);
-          opacity: 1;
-          transition: opacity 0.5s ease;
-          z-index: 2;
-          pointer-events: none;
-        }
-
-        .category-image-wrapper:hover::before {
-          opacity: 0;
+          display: none;
         }
 
         .category-image-wrapper:hover {
@@ -1491,15 +1461,13 @@ font-size: 0.875rem;
           height: 100% !important;
           object-fit: cover;
           transform: scale(1);
-          transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.5s ease;
+          transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
           display: block;
-          filter: saturate(0.9) brightness(0.97);
           will-change: transform;
         }
 
         .category-image-wrapper:hover :global(img) {
           transform: scale(1.08);
-          filter: saturate(1.15) brightness(1.03);
         }
 
         /* Dropdown Accent Bar */
@@ -1549,7 +1517,7 @@ font-size: 0.875rem;
           left: 0;
           right: 0;
           padding: 2rem 1.5rem;
-          background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 100%);
+          background: none;
           z-index: 3;
           display: flex;
           flex-direction: column;
@@ -1572,7 +1540,7 @@ font-size: 0.875rem;
 
         .image-overlay-all {
           padding: 2.5rem 2rem;
-          background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.65) 100%);
+          background: none;
         }
 
         .overlay-cta {
@@ -1581,9 +1549,9 @@ font-size: 0.875rem;
           gap: 0.5rem;
           margin-top: 0.75rem;
           padding: 0.6rem 1.5rem;
-          background: #ffffff;
-          border: 1.5px solid #ffffff;
-          color: #1a1a1a;
+          background: #1a1a1a;
+          border: 1.5px solid #1a1a1a;
+          color: #ffffff;
           font-size: 0.875rem;
           font-weight: 700;
           letter-spacing: 0.8px;
@@ -1596,9 +1564,9 @@ font-size: 0.875rem;
         }
 
         .overlay-cta:hover {
-          background: #ffffff;
-          color: #1a1a1a;
-          border-color: #ffffff;
+          background: #333;
+          color: #ffffff;
+          border-color: #333;
           transform: translateY(-1px);
           box-shadow: 0 4px 16px rgba(0,0,0,0.2);
         }
@@ -1612,7 +1580,7 @@ font-size: 0.875rem;
         }
 
         .overlay-label {
-          color: rgba(255,255,255,0.8);
+          color: #666;
           font-size: 0.875rem;
           font-weight: 600;
           text-transform: uppercase;
@@ -1621,11 +1589,11 @@ font-size: 0.875rem;
         }
 
         .overlay-category {
-          color: #ffffff;
+          color: #1a1a1a;
           font-size: 0.875rem;
           font-weight: 800;
           letter-spacing: 0.5px;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          text-shadow: none;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
