@@ -136,7 +136,7 @@ export default function ModernHeroCarousel() {
         minHeight: '480px',
         maxHeight: '760px',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        background: '#0a0a0a',
+        background: '#111',
       }}
     >
       <AnimatePresence mode="wait" custom={direction}>
@@ -194,23 +194,7 @@ export default function ModernHeroCarousel() {
             />
           </motion.div>
 
-          {/* Gradient overlays - smooth left-fade + top/bottom vignette */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0, left: 0, right: 0, bottom: 0,
-              zIndex: 1,
-              background: 'linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 40%, rgba(0,0,0,0.08) 70%, transparent 100%)',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              top: 0, left: 0, right: 0, bottom: 0,
-              zIndex: 1,
-              background: 'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.4) 100%)',
-            }}
-          />
+          {/* No dark overlay - images stay fully bright */}
 
           {/* Animated shimmer light sweep */}
           <motion.div
@@ -252,12 +236,13 @@ export default function ModernHeroCarousel() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '14px',
-                  fontSize: '12px',
-                  fontWeight: 600,
+                  fontSize: '13px',
+                  fontWeight: 700,
                   textTransform: 'uppercase',
                   letterSpacing: '4px',
-                  color: 'rgba(255,255,255,0.7)',
+                  color: '#ffffff',
                   margin: '0 0 22px',
+                  textShadow: '-1px -1px 0 rgba(0,0,0,0.8), 1px -1px 0 rgba(0,0,0,0.8), -1px 1px 0 rgba(0,0,0,0.8), 1px 1px 0 rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6)',
                 }}
               >
                 <motion.span
@@ -285,6 +270,7 @@ export default function ModernHeroCarousel() {
                   color: '#fff',
                   margin: '0 0 22px',
                   letterSpacing: '-1.5px',
+                  textShadow: '-1px -1px 0 rgba(0,0,0,0.7), 1px -1px 0 rgba(0,0,0,0.7), -1px 1px 0 rgba(0,0,0,0.7), 1px 1px 0 rgba(0,0,0,0.7), 0 0 12px rgba(0,0,0,0.5)',
                   perspective: '600px',
                   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
@@ -299,10 +285,12 @@ export default function ModernHeroCarousel() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
                 style={{
-                  fontSize: '16px',
+                  fontSize: '17px',
                   lineHeight: 1.75,
-                  color: 'rgba(255,255,255,0.72)',
+                  fontWeight: 500,
+                  color: '#ffffff',
                   margin: '0 0 38px',
+                  textShadow: '-1px -1px 0 rgba(0,0,0,0.8), 1px -1px 0 rgba(0,0,0,0.8), -1px 1px 0 rgba(0,0,0,0.8), 1px 1px 0 rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6)',
                   maxWidth: '460px',
                 }}
               >
