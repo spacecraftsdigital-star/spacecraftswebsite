@@ -869,9 +869,10 @@ export default function Header() {
           color: #333;
           text-decoration: none;
           font-weight: 500;
+          font-size: 0.875rem;
           display: flex;
           align-items: center;
-          gap: 0.4rem;
+          gap: 0.5rem;
           padding: 0.5rem 0.75rem;
           border-radius: 6px;
           transition: all 0.2s;
@@ -893,16 +894,17 @@ export default function Header() {
 
         .cart-badge {
           position: absolute;
-          top: -5px;
-          right: -5px;
+          top: -4px;
+          right: -8px;
           background: #ff6b6b;
           color: white;
-          font-size: 0.875rem;
-          font-weight: 700;
-          padding: 0.15rem 0.4rem;
-          border-radius: 10px;
-          min-width: 18px;
+          font-size: 0.65rem;
+          font-weight: 500;
+          padding: 0.1rem 0.3rem;
+          border-radius: 8px;
+          min-width: 14px;
           text-align: center;
+          line-height: 1.2;
         }
 
         /* User Menu */
