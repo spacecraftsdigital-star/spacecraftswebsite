@@ -96,7 +96,7 @@ export default function FeaturedProductsSection({ bestsellers = [], offered = []
     <section ref={sectionRef} className={styles.section}>
       {/* Header */}
       <div className={styles.header}>
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
@@ -105,7 +105,7 @@ export default function FeaturedProductsSection({ bestsellers = [], offered = []
           <span className={styles.eyebrowLine + ' ' + styles.eyebrowLineLeft} />
           <span className={styles.eyebrowText}>Handpicked</span>
           <span className={styles.eyebrowLine + ' ' + styles.eyebrowLineRight} />
-        </motion.div>
+        </motion.div> */}
 
         <motion.h2
           initial={{ opacity: 0, y: 16 }}
@@ -116,14 +116,14 @@ export default function FeaturedProductsSection({ bestsellers = [], offered = []
           Featured Products
         </motion.h2>
 
-        <motion.p
+        {/* <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, delay: 0.12 }}
           className={styles.subtitle}
         >
           Our most loved pieces and exclusive deals
-        </motion.p>
+        </motion.p> */}
 
         {/* Tabs */}
         <motion.div

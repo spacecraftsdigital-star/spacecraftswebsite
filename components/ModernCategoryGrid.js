@@ -159,7 +159,7 @@ export default function ModernCategoryGrid({ serverCategories = [] }) {
     <section ref={sectionRef} className={styles.section}>
       {/* Section Header */}
       <div className={styles.header}>
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
@@ -168,7 +168,7 @@ export default function ModernCategoryGrid({ serverCategories = [] }) {
           <span className={`${styles.eyebrowLine} ${styles.eyebrowLineLeft}`} />
           <span className={styles.eyebrowText}>Explore</span>
           <span className={`${styles.eyebrowLine} ${styles.eyebrowLineRight}`} />
-        </motion.div>
+        </motion.div> */}
 
         <motion.h2
           initial={{ opacity: 0, y: 16 }}
@@ -178,14 +178,14 @@ export default function ModernCategoryGrid({ serverCategories = [] }) {
         >
           Shop by Category
         </motion.h2>
-        <motion.p
+        {/* <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, delay: 0.15 }}
           className={styles.subtitle}
         >
           Curated collections for every room in your home
-        </motion.p>
+        </motion.p> */}
       </div>
 
       {/* Category Grid */}

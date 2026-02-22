@@ -169,7 +169,7 @@ export default function ShopAllThingsHome({ products = [] }) {
     <section ref={sectionRef} className={styles.section}>
       {/* Header */}
       <div className={styles.header}>
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
@@ -178,7 +178,7 @@ export default function ShopAllThingsHome({ products = [] }) {
           <span className={styles.eyebrowLine + ' ' + styles.eyebrowLineLeft} />
           <span className={styles.eyebrowText}>Collections</span>
           <span className={styles.eyebrowLine + ' ' + styles.eyebrowLineRight} />
-        </motion.div>
+        </motion.div> */}
 
         <motion.h2
           initial={{ opacity: 0, y: 16 }}
@@ -188,14 +188,14 @@ export default function ShopAllThingsHome({ products = [] }) {
         >
           Shop All Things Home
         </motion.h2>
-        <motion.p
+        {/* <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, delay: 0.15 }}
           className={styles.subtitle}
         >
           Explore furniture by room, material, or style
-        </motion.p>
+        </motion.p> */}
       </div>
 
       {/* Tabs */}
