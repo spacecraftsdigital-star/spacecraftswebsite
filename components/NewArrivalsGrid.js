@@ -132,9 +132,9 @@ export default function NewArrivalsGrid() {
       {/* Section heading */}
       <div className={styles.header}>
         <h2 className={styles.title}>New arrivals</h2>
-        <p className={styles.subtitle}>
+        {/* <p className={styles.subtitle}>
           Fresh finds for every room — explore what just landed
-        </p>
+        </p> */}
       </div>
 
       {/* 3-column masonry grid */}
