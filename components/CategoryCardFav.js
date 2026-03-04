@@ -4,7 +4,7 @@ import styles from "./OurFavouriteCategories.module.css"
 
 export default function CategoryCardFav({ item }) {
   return (
-    <a href={`/products?category=${encodeURIComponent(item.name)}`} className={styles.cardLink}>
+    <a href={`/products/category/${encodeURIComponent(item.name.toLowerCase().replace(/\s+/g, '-').replace(/&/g, ''))}`} className={styles.cardLink}>
       <div className={styles.card}>
         <div className={styles.media}>
           <img src={item.img} alt={item.name} className={styles.mediaImg} />

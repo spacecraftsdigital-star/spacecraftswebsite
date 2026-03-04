@@ -55,7 +55,7 @@ export async function GET() {
     // Add category pages
     categories?.forEach(cat => {
       sitemap += `  <url>
-    <loc>${baseUrl}/products?category=${cat.slug}</loc>
+    <loc>${baseUrl}/products/category/${cat.slug}</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

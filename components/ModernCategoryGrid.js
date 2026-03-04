@@ -23,7 +23,7 @@ function CategoryCard({ category, index, isVisible }) {
       animate={isVisible ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.5, delay: index * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
-      <Link href={'/products?categories=' + category.slug} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+      <Link href={'/products/category/' + category.slug} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
         <article className={styles.card}>
           <div className={styles.imageWrap}>
             <div className={styles.imageInner}>

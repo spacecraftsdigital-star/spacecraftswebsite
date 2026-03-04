@@ -418,7 +418,7 @@ export default function ProductDetailClient({
               <li className="breadcrumb-item"><Link href="/products">Products</Link></li>
               {category && (
                 <li className="breadcrumb-item">
-                  <Link href={`/products?category=${category.slug}`}>{category.name}</Link>
+                  <Link href={`/products/category/${category.slug}`}>{category.name}</Link>
                 </li>
               )}
               <li className="breadcrumb-item active" aria-current="page">{product.name}</li>

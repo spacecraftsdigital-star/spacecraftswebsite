@@ -76,8 +76,9 @@ export default async function ProductsPage({ searchParams }) {
     }
     
     // Search query
-    if (searchParams?.q) {
-      query = query.or(`name.ilike.%${searchParams.q}%,description.ilike.%${searchParams.q}%,tags.cs.{${searchParams.q}}`)
+    const searchQuery = searchParams?.q || searchParams?.search
+    if (searchQuery) {
+      query = query.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`)
     }
     
     // Sort

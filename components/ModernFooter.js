@@ -118,11 +118,11 @@ export default function ModernFooter() {
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {[
                 { name: 'All Products', href: '/products' },
-                { name: 'Sofas & Couches', href: '/products?category=sofas-couches' },
-                { name: 'Beds & Mattresses', href: '/products?category=beds-frames' },
-                { name: 'Dining Furniture', href: '/products?category=dining-room' },
-                { name: 'Office Furniture', href: '/products?category=office-furniture' },
-                { name: 'Outdoor Furniture', href: '/products?category=outdoor-furniture' }
+                { name: 'Sofas & Couches', href: '/products/category/sofas-couches' },
+                { name: 'Beds & Mattresses', href: '/products/category/beds-frames' },
+                { name: 'Dining Furniture', href: '/products/category/dining-room' },
+                { name: 'Office Furniture', href: '/products/category/office-furniture' },
+                { name: 'Outdoor Furniture', href: '/products/category/outdoor-furniture' }
               ].map((link) => (
                 <li key={link.href} style={{ marginBottom: '12px' }}>
                   <Link 

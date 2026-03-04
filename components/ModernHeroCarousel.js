@@ -27,7 +27,7 @@ const heroSlides = [
     description: 'Up to 40% off on selected premium sofas - sink into luxury without the premium price tag.',
     image: '/hero/2.jpg',
     cta: 'View Deals',
-    ctaLink: '/products?category=sofas-couches',
+    ctaLink: '/products/category/sofas-couches',
     accent: '#3498db',
     imagePosition: 'center 40%',
   },
@@ -38,7 +38,7 @@ const heroSlides = [
     description: 'New arrivals in bedroom furniture - crafted for restful nights and beautiful mornings.',
     image: '/hero/8.webp',
     cta: 'Explore Bedroom',
-    ctaLink: '/products?category=bedroom',
+    ctaLink: '/products/category/bedroom',
     accent: '#e74c3c',
     imagePosition: 'center 45%',
   }

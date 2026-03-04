@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function ProductsClient({ initialProducts, categories, brands, searchParams }) {
+export default function ProductsClient({ initialProducts, categories, brands, searchParams, categoryPage }) {
   const router = useRouter()
   const searchParamsHook = useSearchParams()
   const [products, setProducts] = useState(initialProducts)
@@ -18,6 +18,7 @@ export default function ProductsClient({ initialProducts, categories, brands, se
     q: searchParams?.q || ''
   })
   const [showFilters, setShowFilters] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [view, setView] = useState('grid') // grid or list
 
   useEffect(() => {
@@ -25,16 +26,38 @@ export default function ProductsClient({ initialProducts, categories, brands, se
   }, [initialProducts])
 
   const updateFilters = (newFilters) => {
-    const params = new URLSearchParams()
-    Object.keys(newFilters).forEach(key => {
-      if (key === 'categories' || key === 'brands') {
-        if (newFilters[key] && newFilters[key].length > 0) {
-          params.set(key, newFilters[key].join(','))
-        }
-      } else if (newFilters[key]) {
-        params.set(key, newFilters[key])
-      }
-    })
+    // Helper to build common query params
+    const buildParams = (f) => {
+      const params = new URLSearchParams()
+      if (f.sort && f.sort !== 'rating-desc') params.set('sort', f.sort)
+      if (f.brands?.length > 0) params.set('brands', f.brands.join(','))
+      if (f.minPrice) params.set('minPrice', f.minPrice)
+      if (f.maxPrice) params.set('maxPrice', f.maxPrice)
+      if (f.q) params.set('q', f.q)
+      return params
+    }
+
+    const catCount = newFilters.categories?.length || 0
+
+    // No categories selected → go to /products
+    if (catCount === 0) {
+      const params = buildParams(newFilters)
+      const qs = params.toString()
+      router.push(`/products${qs ? '?' + qs : ''}`)
+      return
+    }
+
+    // Exactly 1 category → SEO-friendly URL
+    if (catCount === 1) {
+      const params = buildParams(newFilters)
+      const qs = params.toString()
+      router.push(`/products/category/${newFilters.categories[0]}${qs ? '?' + qs : ''}`)
+      return
+    }
+
+    // Multiple categories → /products with query params
+    const params = buildParams(newFilters)
+    params.set('categories', newFilters.categories.join(','))
     router.push(`/products?${params.toString()}`)
   }
 
@@ -58,70 +81,159 @@ export default function ProductsClient({ initialProducts, categories, brands, se
   }
 
   const clearFilters = () => {
-    setFilters({
-      categories: [],
-      brands: [],
-      minPrice: '',
-      maxPrice: '',
-      sort: 'rating-desc',
-      q: ''
-    })
-    router.push('/products')
+    if (categoryPage) {
+      setFilters({
+        categories: [categoryPage.slug],
+        brands: [],
+        minPrice: '',
+        maxPrice: '',
+        sort: 'rating-desc',
+        q: ''
+      })
+      router.push(`/products/category/${categoryPage.slug}`)
+    } else {
+      setFilters({
+        categories: [],
+        brands: [],
+        minPrice: '',
+        maxPrice: '',
+        sort: 'rating-desc',
+        q: ''
+      })
+      router.push('/products')
+    }
   }
+
+  const activeFilterCount = filters.categories.length + filters.brands.length + (filters.minPrice ? 1 : 0) + (filters.maxPrice ? 1 : 0)
 
   return (
     <div className="products-page">
-      {/* Breadcrumb */}
+      {/* Compact Breadcrumb */}
       <div className="breadcrumb-section">
         <div className="container">
           <nav aria-label="breadcrumb">
             <ol className="breadcrumb">
               <li className="breadcrumb-item"><Link href="/">Home</Link></li>
-              <li className="breadcrumb-item active" aria-current="page">Products</li>
+              <li className="breadcrumb-item"><Link href="/products">Products</Link></li>
+              {categoryPage && (
+                <li className="breadcrumb-item active" aria-current="page">{categoryPage.name}</li>
+              )}
             </ol>
           </nav>
         </div>
       </div>
 
       <div className="container products-container">
-        <div className="products-layout">
+        {/* Toolbar — always on top */}
+        <div className="products-toolbar">
+          <div className="toolbar-left">
+            <button 
+              className={`sidebar-toggle-btn ${sidebarOpen ? 'active' : ''}`}
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="4" y1="6" x2="20" y2="6"/>
+                <line x1="4" y1="12" x2="16" y2="12"/>
+                <line x1="4" y1="18" x2="12" y2="18"/>
+              </svg>
+              Filters
+              {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
+            </button>
+            {/* Mobile filter */}
+            <button 
+              className="filter-toggle-btn"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="4" y1="6" x2="20" y2="6"/>
+                <line x1="4" y1="12" x2="16" y2="12"/>
+                <line x1="4" y1="18" x2="12" y2="18"/>
+              </svg>
+              Filters
+              {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
+            </button>
+            <span className="results-count">{products.length} Products</span>
+            {categoryPage && <span className="category-label">{categoryPage.name}</span>}
+          </div>
+          
+          <div className="toolbar-right">
+            <select 
+              value={filters.sort}
+              onChange={(e) => handleFilterChange('sort', e.target.value)}
+              className="sort-select"
+            >
+              <option value="rating-desc">Highest Rated</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="name-asc">Name: A to Z</option>
+            </select>
+
+            <div className="view-toggle">
+              <button 
+                className={view === 'grid' ? 'active' : ''}
+                onClick={() => setView('grid')}
+                aria-label="Grid view"
+              >
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                  <rect x="2" y="2" width="7" height="7" rx="1"/>
+                  <rect x="11" y="2" width="7" height="7" rx="1"/>
+                  <rect x="2" y="11" width="7" height="7" rx="1"/>
+                  <rect x="11" y="11" width="7" height="7" rx="1"/>
+                </svg>
+              </button>
+              <button 
+                className={view === 'list' ? 'active' : ''}
+                onClick={() => setView('list')}
+                aria-label="List view"
+              >
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                  <rect x="2" y="3" width="16" height="3" rx="1"/>
+                  <rect x="2" y="8" width="16" height="3" rx="1"/>
+                  <rect x="2" y="13" width="16" height="3" rx="1"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className={`products-layout ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           {/* Sidebar Filters */}
-          <aside className={`products-sidebar ${showFilters ? 'show' : ''}`}>
+          <aside className={`products-sidebar ${showFilters ? 'show' : ''} ${sidebarOpen ? '' : 'desktop-hidden'}`}>
             <div className="sidebar-header">
-              <h3>Filters</h3>
+              <span className="sidebar-title">Filters</span>
+              {activeFilterCount > 0 && (
+                <button className="clear-all-btn" onClick={clearFilters}>Clear all</button>
+              )}
               <button 
                 className="close-sidebar"
                 onClick={() => setShowFilters(false)}
               >
-                ×
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
               </button>
             </div>
 
+            <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '14px', scrollbarWidth: 'thin', scrollbarColor: '#ddd transparent' }}>
             {/* Search */}
-            <div className="filter-section">
-              <h4>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <div className="filter-group">
+              <div className="filter-search-wrap">
+                <svg className="filter-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                 </svg>
-                Search
-              </h4>
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={filters.q}
-                onChange={(e) => handleFilterChange('q', e.target.value)}
-                className="search-input"
-              />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={filters.q}
+                  onChange={(e) => handleFilterChange('q', e.target.value)}
+                  className="filter-search-input"
+                />
+              </div>
             </div>
 
             {/* Categories */}
-            <div className="filter-section">
-              <h4>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2H2v7h10V2zm10 0h-8v7h8V2zM4 11v11h8V11H4zm10 0v11h8V11h-8z"/>
-                </svg>
-                Categories
-              </h4>
+            <div className="filter-group">
+              <div className="filter-group-title">Category</div>
               <div className="filter-chips">
                 {categories.map(cat => (
                   <button
@@ -129,6 +241,11 @@ export default function ProductsClient({ initialProducts, categories, brands, se
                     className={`chip ${filters.categories.includes(cat.slug) ? 'active' : ''}`}
                     onClick={() => handleMultiSelect('categories', cat.slug)}
                   >
+                    {filters.categories.includes(cat.slug) && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    )}
                     {cat.name}
                   </button>
                 ))}
@@ -136,13 +253,8 @@ export default function ProductsClient({ initialProducts, categories, brands, se
             </div>
 
             {/* Brands */}
-            <div className="filter-section">
-              <h4>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/>
-                </svg>
-                Brands
-              </h4>
+            <div className="filter-group">
+              <div className="filter-group-title">Brand</div>
               <div className="filter-chips">
                 {brands.map(brand => (
                   <button
@@ -150,6 +262,11 @@ export default function ProductsClient({ initialProducts, categories, brands, se
                     className={`chip ${filters.brands.includes(brand.slug) ? 'active' : ''}`}
                     onClick={() => handleMultiSelect('brands', brand.slug)}
                   >
+                    {filters.brands.includes(brand.slug) && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    )}
                     {brand.name}
                   </button>
                 ))}
@@ -157,102 +274,42 @@ export default function ProductsClient({ initialProducts, categories, brands, se
             </div>
 
             {/* Price Range */}
-            <div className="filter-section">
-              <h4>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2v20M8 6h8M6 10h12M8 14h8M6 18h12"/>
-                </svg>
-                Price Range
-              </h4>
+            <div className="filter-group">
+              <div className="filter-group-title">Price Range</div>
               <div className="price-inputs">
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={filters.minPrice}
-                  onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                  className="price-input"
-                />
-                <span className="price-separator">—</span>
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={filters.maxPrice}
-                  onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                  className="price-input"
-                />
+                <div className="price-field">
+                  <span className="price-prefix">₹</span>
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={filters.minPrice}
+                    onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                    className="price-input"
+                  />
+                </div>
+                <span className="price-dash">–</span>
+                <div className="price-field">
+                  <span className="price-prefix">₹</span>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={filters.maxPrice}
+                    onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                    className="price-input"
+                  />
+                </div>
               </div>
             </div>
-
-            <button className="clear-filters-btn" onClick={clearFilters}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M3 3v5h5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16m0 0v-5h-5"/>
-              </svg>
-              Reset Filters
-            </button>
+            </div>
           </aside>
 
           {/* Main Content */}
           <main className="products-main">
-            {/* Toolbar */}
-            <div className="products-toolbar">
-              <div className="toolbar-left">
-                <button 
-                  className="filter-toggle-btn"
-                  onClick={() => setShowFilters(!showFilters)}
-                >
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M3 4h14M6 10h8M9 16h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  Filters
-                </button>
-                <span className="results-count">{products.length} Products</span>
-              </div>
-              
-              <div className="toolbar-right">
-                {/* Sort */}
-                <select 
-                  value={filters.sort}
-                  onChange={(e) => handleFilterChange('sort', e.target.value)}
-                  className="sort-select"
-                >
-                  <option value="rating-desc">Highest Rated</option>
-                  <option value="price-asc">Price: Low to High</option>
-                  <option value="price-desc">Price: High to Low</option>
-                  <option value="name-asc">Name: A to Z</option>
-                </select>
-
-                {/* View Toggle */}
-                <div className="view-toggle">
-                  <button 
-                    className={view === 'grid' ? 'active' : ''}
-                    onClick={() => setView('grid')}
-                    aria-label="Grid view"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                      <rect x="2" y="2" width="7" height="7" rx="1"/>
-                      <rect x="11" y="2" width="7" height="7" rx="1"/>
-                      <rect x="2" y="11" width="7" height="7" rx="1"/>
-                      <rect x="11" y="11" width="7" height="7" rx="1"/>
-                    </svg>
-                  </button>
-                  <button 
-                    className={view === 'list' ? 'active' : ''}
-                    onClick={() => setView('list')}
-                    aria-label="List view"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                      <rect x="2" y="3" width="16" height="3" rx="1"/>
-                      <rect x="2" y="8" width="16" height="3" rx="1"/>
-                      <rect x="2" y="13" width="16" height="3" rx="1"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Products Grid/List */}
             {products.length === 0 ? (
               <div className="no-products">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
                 <p>No products found matching your criteria.</p>
                 <button onClick={clearFilters} className="btn-primary">
                   Clear Filters
@@ -271,16 +328,16 @@ export default function ProductsClient({ initialProducts, categories, brands, se
 
       <style jsx>{`
         .products-page {
-          background: #f8f9fa;
+          background: #f5f5f7;
           min-height: 100vh;
-          padding-bottom: 60px;
+          padding-bottom: 40px;
         }
 
+        /* ===== Compact Breadcrumb (matches product page) ===== */
         .breadcrumb-section {
-          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-          padding: 24px 0;
-          border-bottom: 1px solid #e9ecef;
-          margin-bottom: 32px;
+          background: #ffffff;
+          padding: 10px 0;
+          border-bottom: 1px solid #e5e5e5;
         }
 
         .breadcrumb {
@@ -288,143 +345,250 @@ export default function ProductsClient({ initialProducts, categories, brands, se
           list-style: none;
           padding: 0;
           margin: 0;
-          gap: 4px;
-          align-items: center;
+          gap: 2px;
           flex-wrap: wrap;
+          align-items: center;
         }
 
         .breadcrumb-item {
-          color: #6c757d;
-          font-size: 14px;
-          font-weight: 500;
-          position: relative;
-          animation: slideInBreadcrumb 0.4s ease-out backwards;
+          color: #1a1a1a;
+          font-size: 12px;
+          font-weight: 400;
         }
-
-        @keyframes slideInBreadcrumb {
-          from {
-            opacity: 0;
-            transform: translateX(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        .breadcrumb-item:nth-child(1) { animation-delay: 0.05s; }
-        .breadcrumb-item:nth-child(2) { animation-delay: 0.1s; }
-        .breadcrumb-item:nth-child(3) { animation-delay: 0.15s; }
-        .breadcrumb-item:nth-child(4) { animation-delay: 0.2s; }
-        .breadcrumb-item:nth-child(5) { animation-delay: 0.25s; }
 
         .breadcrumb-item a {
-          color: #007bff;
+          color: #e67e22;
           text-decoration: none;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          padding: 6px 10px;
-          border-radius: 6px;
-          position: relative;
-        }
-
-        .breadcrumb-item a::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(0, 123, 255, 0) 0%, rgba(0, 123, 255, 0.1) 100%);
-          border-radius: 6px;
-          opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: color 0.2s ease;
         }
 
         .breadcrumb-item a:hover {
-          color: #0056b3;
-          background: rgba(0, 123, 255, 0.08);
-          transform: translateX(2px);
-        }
-
-        .breadcrumb-item a:hover::before {
-          opacity: 1;
+          color: #d35400;
         }
 
         .breadcrumb-item.active {
           color: #333;
-          font-weight: 600;
+          font-weight: 500;
         }
 
         .breadcrumb-item:not(:last-child)::after {
           content: '›';
-          margin-left: 8px;
-          color: #dee2e6;
-          font-weight: 300;
-          transition: all 0.3s ease;
+          margin: 0 6px;
+          color: #ccc;
+          font-size: 13px;
         }
 
-        .breadcrumb-item:hover:not(:last-child)::after {
-          color: #007bff;
-          transform: scaleX(1.2);
-        }
-
-        .products-container {
-          max-width: 1400px;
+        .container {
+          max-width: 1440px;
           margin: 0 auto;
-          padding: 0 20px;
+          padding: 0 16px;
+        }
+
+        /* ===== Toolbar ===== */
+        .products-toolbar {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 10px 0;
+          margin-bottom: 2px;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .toolbar-left,
+        .toolbar-right {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .sidebar-toggle-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 7px 14px;
+          background: #fff;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          color: #333;
+        }
+
+        .sidebar-toggle-btn:hover {
+          border-color: #222;
+        }
+
+        .sidebar-toggle-btn.active {
+          background: #222;
+          color: #fff;
+          border-color: #222;
+        }
+
+        .filter-count {
+          background: #e67e22;
+          color: #fff;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 1px 6px;
+          border-radius: 10px;
+          min-width: 18px;
+          text-align: center;
+        }
+
+        .filter-toggle-btn {
+          display: none;
+          align-items: center;
+          gap: 6px;
+          padding: 7px 14px;
+          background: #fff;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          color: #333;
+        }
+
+        .results-count {
+          font-size: 13px;
+          color: #888;
+          font-weight: 500;
+        }
+
+        .category-label {
+          font-size: 13px;
+          font-weight: 600;
+          color: #222;
+          padding: 4px 10px;
+          background: #f0f0f0;
+          border-radius: 4px;
+        }
+
+        .sort-select {
+          padding: 7px 28px 7px 10px;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          background: #fff;
+          color: #444;
+          transition: border-color 0.2s;
+        }
+
+        .sort-select:hover,
+        .sort-select:focus {
+          border-color: #222;
+          outline: none;
+        }
+
+        .view-toggle {
+          display: flex;
+          gap: 2px;
+          background: #f0f0f0;
+          padding: 3px;
+          border-radius: 6px;
+        }
+
+        .view-toggle button {
+          padding: 5px 8px;
+          background: transparent;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.15s;
+          color: #aaa;
+          display: flex;
+          align-items: center;
+        }
+
+        .view-toggle button.active {
+          background: #fff;
+          color: #222;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* ===== Layout ===== */
+        .products-container {
+          max-width: 1440px;
+          margin: 0 auto;
+          padding: 0 16px;
         }
 
         .products-layout {
           display: flex;
-          gap: 30px;
+          gap: 16px;
           align-items: flex-start;
+          transition: all 0.3s ease;
         }
 
+        /* ===== Modern Sidebar ===== */
         .products-sidebar {
-          width: 280px;
-          background: white;
-          border-radius: 12px;
-          padding: 24px;
+          width: 240px;
+          flex-shrink: 0;
+          background: #fff;
+          border-radius: 8px;
+          padding: 0;
           position: sticky;
-          top: 20px;
-          max-height: calc(100vh - 40px);
-          overflow-y: auto;
-          overflow-x: hidden;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-          border: 1px solid #f0f0f0;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
+          top: 90px;
+          max-height: calc(100vh - 100px);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          border: 1px solid #eee;
         }
 
-        .products-sidebar::-webkit-scrollbar {
+
+
+        .products-sidebar.desktop-hidden {
           display: none;
         }
 
         .sidebar-header {
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          margin-bottom: 24px;
-          padding-bottom: 16px;
-          border-bottom: 2px solid #f0f4f9;
+          gap: 8px;
+          padding: 12px 14px;
+          border-bottom: 1px solid #f0f0f0;
+          background: #fff;
+          flex-shrink: 0;
+          z-index: 2;
         }
 
-        .sidebar-header h3 {
-          font-size: 18px;
+        .sidebar-title {
+          font-size: 13px;
           font-weight: 700;
-          margin: 0;
-          color: #1a1a1a;
+          color: #222;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.06em;
+        }
+
+        .clear-all-btn {
+          margin-left: auto;
+          background: none;
+          border: none;
+          font-size: 11px;
+          color: #e67e22;
+          font-weight: 600;
+          cursor: pointer;
+          padding: 2px 0;
+          transition: color 0.2s;
+        }
+
+        .clear-all-btn:hover {
+          color: #d35400;
         }
 
         .close-sidebar {
           display: none;
           background: none;
           border: none;
-          font-size: 28px;
           cursor: pointer;
           color: #999;
+          padding: 2px;
           transition: color 0.2s;
         }
 
@@ -432,368 +596,229 @@ export default function ProductsClient({ initialProducts, categories, brands, se
           color: #333;
         }
 
-        .filter-section {
-          margin-bottom: 28px;
-          padding-bottom: 28px;
-          border-bottom: 1px solid #e9ecef;
+        /* Filter groups */
+        .filter-group {
+          margin-bottom: 14px;
+          padding-bottom: 14px;
+          border-bottom: 1px solid #f5f5f5;
         }
 
-        .filter-section:last-child {
+        .filter-group:last-child {
           border-bottom: none;
+          margin-bottom: 0;
+          padding-bottom: 0;
         }
 
-        .filter-section h4 {
-          font-size: 14px;
+        .filter-group-title {
+          font-size: 11px;
           font-weight: 700;
-          margin-bottom: 16px;
-          color: #1a1a1a;
+          color: #999;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
+          letter-spacing: 0.08em;
+          margin-bottom: 8px;
         }
 
-        .filter-section h4 svg {
-          color: #007bff;
+        /* Search inside sidebar */
+        .filter-search-wrap {
+          position: relative;
+        }
+
+        .filter-search-icon {
+          position: absolute;
+          left: 8px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #bbb;
+          pointer-events: none;
+        }
+
+        .filter-search-input {
+          width: 100%;
+          padding: 7px 10px 7px 30px;
+          border: 1px solid #eee;
+          border-radius: 6px;
+          font-size: 12px;
+          background: #fafafa;
+          transition: all 0.2s;
+          color: #333;
+        }
+
+        .filter-search-input:focus {
+          outline: none;
+          border-color: #222;
+          background: #fff;
+        }
+
+        .filter-search-input::placeholder {
+          color: #bbb;
         }
 
         .filter-chips {
           display: flex;
           flex-wrap: wrap;
-          gap: 8px;
+          gap: 5px;
         }
 
         .chip {
-          padding: 8px 14px;
-          background: #f0f4f9;
-          border: 1.5px solid transparent;
-          border-radius: 20px;
-          font-size: 13px;
+          padding: 5px 10px;
+          background: #f7f7f7;
+          border: 1px solid #eee;
+          border-radius: 100px;
+          font-size: 11.5px;
           font-weight: 500;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.15s ease;
           color: #555;
           white-space: nowrap;
-          position: relative;
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 4px;
+          line-height: 1.3;
         }
 
         .chip:hover {
-          background: #e6eef7;
-          border-color: #007bff;
-          color: #007bff;
-          transform: translateY(-1px);
-          box-shadow: 0 2px 6px rgba(0, 123, 255, 0.15);
+          background: #f0f0f0;
+          border-color: #ccc;
+          color: #222;
         }
 
         .chip.active {
-          background: #007bff;
-          color: white;
-          border-color: #007bff;
-          font-weight: 600;
-        }
-
-        .chip.active::before {
-          content: '✓';
-          display: inline-block;
-          width: 16px;
-          height: 16px;
-          background: white;
-          color: #007bff;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 11px;
-          font-weight: 700;
-          margin-right: 2px;
-        }
-
-        .filter-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
-
-        .filter-list li {
-          margin-bottom: 10px;
-        }
-
-        .filter-list label {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          cursor: pointer;
-          padding: 6px 0;
-          transition: color 0.2s;
-        }
-
-        .filter-list label:hover {
-          color: #007bff;
-        }
-
-        .filter-list input[type="radio"] {
-          cursor: pointer;
+          background: #222;
+          color: #fff;
+          border-color: #222;
         }
 
         .price-inputs {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 6px;
         }
 
-        .price-separator {
-          color: #aaa;
-          font-weight: 600;
+        .price-field {
+          flex: 1;
+          position: relative;
+        }
+
+        .price-prefix {
+          position: absolute;
+          left: 8px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 11px;
+          color: #999;
+          pointer-events: none;
+        }
+
+        .price-dash {
+          color: #ccc;
+          font-size: 12px;
           flex-shrink: 0;
         }
 
         .price-input {
-          flex: 1;
-          padding: 10px 12px;
-          border: 1.5px solid #ddd;
-          border-radius: 8px;
-          font-size: 13px;
-          background: white;
+          width: 100%;
+          padding: 6px 8px 6px 22px;
+          border: 1px solid #eee;
+          border-radius: 6px;
+          font-size: 12px;
+          background: #fafafa;
           transition: all 0.2s;
         }
 
         .price-input:focus {
           outline: none;
-          border-color: #007bff;
-          background: #f8fbff;
+          border-color: #222;
+          background: #fff;
         }
 
         .price-input::placeholder {
-          color: #aaa;
+          color: #bbb;
         }
 
-        .clear-filters-btn {
-          width: 100%;
-          padding: 12px 16px;
-          background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-          border: 1.5px solid #dee2e6;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 600;
-          color: #555;
-          cursor: pointer;
-          transition: all 0.2s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .clear-filters-btn:hover {
-          background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
-          border-color: #bdc3c7;
-          color: #333;
-        }
-
-        .search-input {
-          width: 100%;
-          padding: 10px 14px;
-          border: 1.5px solid #ddd;
-          border-radius: 8px;
-          font-size: 14px;
-          background: white;
-          transition: all 0.2s;
-        }
-
-        .search-input:focus {
-          outline: none;
-          border-color: #007bff;
-          background: #f8fbff;
-        }
-
-        .search-input::placeholder {
-          color: #aaa;
-        }
-
+        /* ===== Main Content ===== */
         .products-main {
           flex: 1;
           min-width: 0;
         }
 
-        .products-toolbar {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          background: white;
-          padding: 18px 20px;
-          border-radius: 12px;
-          margin-bottom: 28px;
-          gap: 16px;
-          flex-wrap: wrap;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-          border: 1px solid #f0f0f0;
-        }
-
-        .toolbar-left,
-        .toolbar-right {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-        }
-
-        .filter-toggle-btn {
-          display: none;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 16px;
-          background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-          border: 1.5px solid #dee2e6;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-          color: #555;
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
-        }
-
-        .filter-toggle-btn:hover {
-          background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
-          border-color: #bdc3c7;
-        }
-
-        .results-count {
-          font-size: 14px;
-          color: #666;
-          font-weight: 500;
-        }
-
-        .sort-select {
-          padding: 10px 32px 10px 12px;
-          border: 1.5px solid #dee2e6;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 500;
-          cursor: pointer;
-          background: white;
-          transition: all 0.2s;
-          color: #555;
-        }
-
-        .sort-select:hover {
-          border-color: #007bff;
-        }
-
-        .sort-select:focus {
-          outline: none;
-          border-color: #007bff;
-          background: #f8fbff;
-        }
-
-        .view-toggle {
-          display: flex;
-          gap: 4px;
-          background: #f8f9fa;
-          padding: 4px;
-          border-radius: 8px;
-          border: 1px solid #dee2e6;
-        }
-
-        .view-toggle button {
-          padding: 8px 12px;
-          background: white;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.2s;
-          color: #999;
-          display: flex;
-          align-items: center;
-        }
-
-        .view-toggle button.active {
-          background: white;
-          color: #007bff;
-          box-shadow: 0 2px 6px rgba(0, 123, 255, 0.15);
-        }
-
-        .view-toggle button:hover:not(.active) {
-          color: #555;
-        }
-
-        .products-grid {
+        /* Grid: 4 cols with sidebar, 5 cols without */
+        .sidebar-open .products-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-          gap: 28px;
-          animation: fadeIn 0.5s ease-out;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 14px;
         }
 
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        .sidebar-closed .products-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 14px;
         }
 
         .products-grid.list-view {
-          grid-template-columns: 1fr;
+          grid-template-columns: 1fr !important;
         }
 
         .no-products {
           background: white;
-          padding: 80px 20px;
+          padding: 60px 20px;
           text-align: center;
-          border-radius: 12px;
-          border: 1px solid #f0f0f0;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+          border-radius: 8px;
+          border: 1px solid #eee;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
         }
 
         .no-products p {
-          font-size: 18px;
-          color: #666;
-          margin-bottom: 28px;
-          line-height: 1.6;
+          font-size: 14px;
+          color: #888;
+          margin: 0;
         }
 
         .btn-primary {
-          padding: 12px 32px;
-          background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+          padding: 8px 24px;
+          background: #222;
           color: white;
           border: none;
-          border-radius: 8px;
-          font-size: 14px;
+          border-radius: 6px;
+          font-size: 12px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.3s ease;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
+          transition: all 0.2s;
         }
 
         .btn-primary:hover {
-          background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+          background: #000;
         }
 
-        .btn-primary:active {
-          transform: translateY(0);
+        /* ===== Responsive ===== */
+        @media (max-width: 1200px) {
+          .sidebar-open .products-grid {
+            grid-template-columns: repeat(3, 1fr);
+          }
+          .sidebar-closed .products-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
         }
 
         @media (max-width: 1024px) {
+          .sidebar-toggle-btn {
+            display: none;
+          }
+          .filter-toggle-btn {
+            display: flex;
+          }
           .products-sidebar {
             position: fixed;
             left: 0;
             top: 0;
             bottom: 0;
-            z-index: 1000;
+            z-index: 1001;
+            border-radius: 0;
+            width: 280px;
             transform: translateX(-100%);
-            transition: transform 0.3s;
+            transition: transform 0.25s ease;
             max-height: 100vh;
           }
 
@@ -801,28 +826,46 @@ export default function ProductsClient({ initialProducts, categories, brands, se
             transform: translateX(0);
           }
 
+          .products-sidebar.desktop-hidden {
+            display: block;
+            transform: translateX(-100%);
+          }
+
+          .products-sidebar.desktop-hidden.show {
+            transform: translateX(0);
+          }
+
           .close-sidebar {
             display: block;
           }
 
-          .filter-toggle-btn {
-            display: flex;
+          .sidebar-open .products-grid,
+          .sidebar-closed .products-grid {
+            grid-template-columns: repeat(3, 1fr);
           }
         }
 
         @media (max-width: 768px) {
-          .products-grid {
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 16px;
+          .sidebar-open .products-grid,
+          .sidebar-closed .products-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
           }
 
           .products-toolbar {
-            padding: 12px 16px;
+            padding: 8px 0;
           }
 
-          .toolbar-left,
-          .toolbar-right {
-            gap: 12px;
+          .category-label {
+            display: none;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .sidebar-open .products-grid,
+          .sidebar-closed .products-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
           }
         }
       `}</style>
@@ -854,7 +897,7 @@ function ProductCard({ product, view }) {
               alt={product.name}
               width={view === 'list' ? 200 : 300}
               height={view === 'list' ? 200 : 300}
-              style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+              style={{ objectFit: 'contain', width: '100%', height: '100%' }}
             />
           </div>
           <div className={`image-overlay ${isHovering ? 'visible' : ''}`}></div>
@@ -903,21 +946,20 @@ function ProductCard({ product, view }) {
       <style jsx>{`
         .product-card {
           background: white;
-          border-radius: 12px;
+          border-radius: 8px;
           overflow: hidden;
-          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.25s ease;
           cursor: pointer;
           text-decoration: none;
           color: inherit;
           display: block;
-          border: 1px solid #f0f0f0;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+          border: 1px solid #eee;
         }
 
         .product-card:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
-          border-color: #e0e0e0;
+          transform: translateY(-4px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+          border-color: #ddd;
         }
 
         .product-card.list-card {
@@ -939,13 +981,13 @@ function ProductCard({ product, view }) {
         .product-image {
           position: relative;
           width: 100%;
-          height: 300px;
+          height: 250px;
           overflow: hidden;
-          background: linear-gradient(135deg, #f8f9fa 0%, #f0f1f3 100%);
+          background: #f5f5f5;
         }
 
         .product-card.list-card .product-image {
-          height: 220px;
+          height: 250px;
         }
 
         .image-container {
@@ -958,7 +1000,7 @@ function ProductCard({ product, view }) {
         .image-container img {
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: contain;
           transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
           display: block;
           transform: scale(1);
@@ -983,21 +1025,20 @@ function ProductCard({ product, view }) {
 
         .discount-badge {
           position: absolute;
-          top: 12px;
-          right: 12px;
-          background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+          top: 8px;
+          right: 8px;
+          background: #ff5252;
           color: white;
           padding: 0;
           border-radius: 50%;
-          width: 56px;
-          height: 56px;
+          width: 42px;
+          height: 42px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 14px;
+          font-size: 11px;
           font-weight: 700;
-          box-shadow: 0 4px 12px rgba(255, 82, 82, 0.3);
-          animation: badgePulse 0.6s ease-out;
+          box-shadow: 0 2px 6px rgba(255, 82, 82, 0.25);
         }
 
         .discount-value {
@@ -1023,18 +1064,16 @@ function ProductCard({ product, view }) {
 
         .stock-badge {
           position: absolute;
-          bottom: 12px;
-          left: 12px;
-          background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+          bottom: 8px;
+          left: 8px;
+          background: #ffc107;
           color: #333;
-          padding: 6px 12px;
-          border-radius: 20px;
-          font-size: 11px;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 10px;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
-          box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
-          animation: slideIn 0.4s ease-out;
+          letter-spacing: 0.3px;
         }
 
         .out-of-stock-badge {
@@ -1062,10 +1101,10 @@ function ProductCard({ product, view }) {
         }
 
         .product-info {
-          padding: 18px 16px;
+          padding: 10px 12px 12px;
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 4px;
         }
 
         .product-card.list-card .product-info {
@@ -1075,8 +1114,8 @@ function ProductCard({ product, view }) {
         }
 
         .product-category {
-          font-size: 11px;
-          color: #007bff;
+          font-size: 10px;
+          color: #e67e22;
           text-transform: uppercase;
           font-weight: 700;
           letter-spacing: 0.5px;
@@ -1084,11 +1123,11 @@ function ProductCard({ product, view }) {
         }
 
         .product-name {
-          font-size: 15px;
+          font-size: 13px;
           font-weight: 600;
           margin: 0;
           color: #1a1a1a;
-          line-height: 1.4;
+          line-height: 1.35;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
@@ -1097,7 +1136,7 @@ function ProductCard({ product, view }) {
         }
 
         .product-card:hover .product-name {
-          color: #007bff;
+          color: #e67e22;
         }
 
         .product-card.list-card .product-name {
@@ -1138,16 +1177,16 @@ function ProductCard({ product, view }) {
         }
 
         .current-price {
-          font-size: 18px;
+          font-size: 15px;
           font-weight: 700;
-          color: #28a745;
+          color: #222;
         }
 
         .original-price {
-          font-size: 14px;
+          font-size: 12px;
           color: #999;
           text-decoration: line-through;
-          font-weight: 500;
+          font-weight: 400;
         }
 
         .price-badge {
@@ -1170,24 +1209,24 @@ function ProductCard({ product, view }) {
         }
 
         .product-action-btn {
-          margin-top: 8px;
-          padding: 10px 14px;
-          background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+          margin-top: 4px;
+          padding: 8px 12px;
+          background: #222;
           color: white;
           border: none;
-          border-radius: 6px;
-          font-size: 12px;
+          border-radius: 5px;
+          font-size: 11px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
+          gap: 5px;
           text-transform: uppercase;
           letter-spacing: 0.3px;
           opacity: 0;
-          transform: translateY(10px);
+          transform: translateY(6px);
         }
 
         .product-card:hover .product-action-btn {
@@ -1196,9 +1235,7 @@ function ProductCard({ product, view }) {
         }
 
         .product-action-btn:hover {
-          background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
-          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-          transform: translateY(-2px);
+          background: #000;
         }
 
         .product-card.list-card .product-action-btn {
@@ -1216,11 +1253,11 @@ function ProductCard({ product, view }) {
           }
 
           .product-image {
-            height: 250px;
+            height: 220px;
           }
 
           .product-card.list-card .product-image {
-            height: 250px;
+            height: 220px;
           }
 
           .product-action-btn {

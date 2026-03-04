@@ -12,6 +12,8 @@ export default function Header() {
   const [searchResults, setSearchResults] = useState([])
   const [showResults, setShowResults] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
+  const [searchFocused, setSearchFocused] = useState(false)
+  const [popularSearches, setPopularSearches] = useState([])
   const [cartCount, setCartCount] = useState(0)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -233,6 +235,23 @@ export default function Header() {
     }
   }, [isAuthenticated])
 
+  // Fetch popular searches
+  useEffect(() => {
+    fetchPopularSearches()
+  }, [])
+
+  const fetchPopularSearches = async () => {
+    try {
+      const res = await fetch('/api/search/popular')
+      if (res.ok) {
+        const data = await res.json()
+        setPopularSearches(data.searches || [])
+      }
+    } catch (error) {
+      console.error('Error fetching popular searches:', error)
+    }
+  }
+
   const fetchCartCount = async () => {
     try {
       const res = await authenticatedFetch('/api/cart/get')
@@ -277,6 +296,7 @@ export default function Header() {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowResults(false)
+        setSearchFocused(false)
       }
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
         setShowUserMenu(false)
@@ -302,14 +322,23 @@ export default function Header() {
     if (query.trim()) {
       router.push(`/products?search=${encodeURIComponent(query)}`)
       setShowResults(false)
+      setSearchFocused(false)
       setQuery('')
     }
   }
 
   const handleProductClick = (slug) => {
     setShowResults(false)
+    setSearchFocused(false)
     setQuery('')
     router.push(`/products/${slug}`)
+  }
+
+  const handlePopularSearchClick = (term) => {
+    setShowResults(false)
+    setSearchFocused(false)
+    setQuery('')
+    router.push(`/products?search=${encodeURIComponent(term)}`)
   }
 
   const handleSignOut = async () => {
@@ -325,7 +354,7 @@ export default function Header() {
           {/* Logo */}
           <div className={styles['header-logo']}>
             <Link href="/">
-              <Image src="/logo.webp" alt="Spacecrafts Furniture" width={150} height={48} priority style={{ height: 'auto', width: 'auto', maxHeight: '48px' }} />
+              <Image src="/logo.webp" alt="Spacecrafts Furniture" width={160} height={54} priority style={{ height: 'auto', width: 'auto', maxHeight: '54px' }} />
             </Link>
           </div>
 
@@ -337,7 +366,8 @@ export default function Header() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search for furniture, categories, brands..."
+                onFocus={() => setSearchFocused(true)}
+                placeholder="Search furniture..."
                 className={styles['search-input']}
                 aria-label="Search products"
               />
@@ -349,9 +379,71 @@ export default function Header() {
               </button>
             </form>
 
+            {/* Search Dropdown - Popular Searches or Results */}
+            {(searchFocused && !showResults && query.trim().length < 2) && (
+              <div className={styles['search-dropdown']}>
+                {/* Popular Searches Tags */}
+                <div className={styles['popular-searches']}>
+                  <div className={styles['popular-header']}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="11" cy="11" r="8"/>
+                      <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <span className={styles['popular-title']}>Popular Searches</span>
+                  </div>
+                  <div className={styles['popular-tags']}>
+                    {(popularSearches.length > 0 ? popularSearches.slice(0, 8) : [
+                      'Sofa Sets', 'Wooden Beds', 'Office Chairs', 'Dining Tables',
+                      'Wardrobes', 'Bunk Beds', 'Shoe Racks', 'Recliner Sofas'
+                    ]).map((term, idx) => (
+                      <button
+                        key={idx}
+                        className={styles['popular-tag']}
+                        onClick={() => handlePopularSearchClick(typeof term === 'string' ? term : term.term)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="11" cy="11" r="8"/>
+                          <path d="m21 21-4.35-4.35"/>
+                        </svg>
+                        {typeof term === 'string' ? term : term.term}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles['popular-divider']} />
+
+                {/* Trending Now */}
+                <div className={styles['trending-section']}>
+                  <div className={styles['trending-title']}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                      <polyline points="17 6 23 6 23 12"/>
+                    </svg>
+                    Trending Now
+                  </div>
+                  {['Recliner Sofas', 'Bunk Beds', 'Folding Dining Tables', 'Corner Sofas', 'Study Tables'].map((item, idx) => (
+                    <div
+                      key={idx}
+                      className={styles['trending-item']}
+                      onClick={() => handlePopularSearchClick(item)}
+                    >
+                      <span className={styles['trending-rank']}>{idx + 1}</span>
+                      <span className={styles['trending-text']}>{item}</span>
+                      <svg className={styles['trending-arrow']} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M5 12h14"/>
+                        <path d="m12 5 7 7-7 7"/>
+                      </svg>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Search Results Dropdown */}
             {showResults && (
-              <div className={styles['search-results']}>
+              <div className={styles['search-dropdown']}>
+                <div className={styles['search-results']}>
                 {isSearching ? (
                   <div className={styles['search-loading']}>Searching...</div>
                 ) : searchResults.length > 0 ? (
@@ -389,6 +481,7 @@ export default function Header() {
                       onClick={() => {
                         router.push(`/products?search=${encodeURIComponent(query)}`)
                         setShowResults(false)
+                        setSearchFocused(false)
                         setQuery('')
                       }}
                     >
@@ -398,6 +491,7 @@ export default function Header() {
                 ) : (
                   <div className={styles['search-empty']}>No products found</div>
                 )}
+                </div>
               </div>
             )}
           </div>
@@ -536,7 +630,7 @@ export default function Header() {
                                 <li key={itemIdx}>
                                   <button
                                     className={styles['section-item-link']}
-                                    onClick={() => router.push(`/products?category=${item.slug}`)}
+                                    onClick={() => router.push(`/products/category/${item.slug}`)}
                                   >
                                     {item.name}
                                   </button>
@@ -585,7 +679,7 @@ export default function Header() {
                                   <li key={itemIdx}>
                                     <button
                                       className={styles['section-item-link']}
-                                      onClick={() => router.push(`/products?category=${item.slug}`)}
+                                      onClick={() => router.push(`/products/category/${item.slug}`)}
                                     >
                                       {item.name}
                                     </button>
@@ -594,7 +688,7 @@ export default function Header() {
                               </ul>
                               <button
                                 className={styles['shop-all-link']}
-                                onClick={() => router.push(`/products?category=${category.toLowerCase().replace(/\s+/g, '-')}`)}
+                                onClick={() => router.push(`/products/category/${category.toLowerCase().replace(/\s+/g, '-')}`)}
                               >
                                 Shop All {category}
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
