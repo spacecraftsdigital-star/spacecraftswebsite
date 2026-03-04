@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -43,6 +43,8 @@ export default function ProductDetailClient({
   const [activeTab, setActiveTab] = useState('description')
   const [selectedWarranty, setSelectedWarranty] = useState(null)
   const [expandedStore, setExpandedStore] = useState(0)
+  const [storePincode, setStorePincode] = useState('')
+  const [showNearbyStore, setShowNearbyStore] = useState(false)
   const [reviewStats, setReviewStats] = useState({
     avg: product.rating || 0,
     count: product.review_count || 0
@@ -56,10 +58,16 @@ export default function ProductDetailClient({
   const [deliveryRequest, setDeliveryRequest] = useState({ pincode: '', contact: '', email: '' })
   const [isZoomed, setIsZoomed] = useState(false)
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
+  const [showMagnifier, setShowMagnifier] = useState(false)
+  const [magnifierPos, setMagnifierPos] = useState({ x: 0, y: 0 })
+  const [lensPos, setLensPos] = useState({ x: 0, y: 0 })
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
   const [cartLoading, setCartLoading] = useState(false)
   const [cartError, setCartError] = useState(null)
   const [cartSuccess, setCartSuccess] = useState(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [expandedAccordion, setExpandedAccordion] = useState('description')
 
   console.log('ProductDetailClient Debug:', { product: product.name, productId: product.id, imagesCount: images?.length, images })
 
@@ -210,13 +218,59 @@ export default function ProductDetailClient({
     setImageError(false)
   }
 
-  // Zoom handlers
+  // Zoom handlers - Magnifier style (lens on image, zoomed view on right)
   const handleMouseMove = (e) => {
-    if (!isZoomed) return
     const rect = e.currentTarget.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * 100
-    const y = ((e.clientY - rect.top) / rect.height) * 100
-    setZoomPosition({ x, y })
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const xPercent = (x / rect.width) * 100
+    const yPercent = (y / rect.height) * 100
+    // Lens position (centered on cursor)
+    const lensSize = 150
+    setLensPos({
+      x: Math.max(0, Math.min(x - lensSize / 2, rect.width - lensSize)),
+      y: Math.max(0, Math.min(y - lensSize / 2, rect.height - lensSize))
+    })
+    setMagnifierPos({ x: xPercent, y: yPercent })
+    setShowMagnifier(true)
+  }
+
+  const handleMouseLeave = () => {
+    setShowMagnifier(false)
+  }
+
+  // Lightbox handlers
+  const openLightbox = (index) => {
+    setLightboxIndex(index)
+    setIsLightboxOpen(true)
+  }
+
+  const closeLightbox = () => {
+    setIsLightboxOpen(false)
+  }
+
+  const lightboxPrev = () => {
+    setLightboxIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
+  }
+
+  const lightboxNext = () => {
+    setLightboxIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+  }
+
+  // Accordion toggle
+  const toggleAccordion = (section) => {
+    setExpandedAccordion(expandedAccordion === section ? null : section)
+  }
+
+  // Scroll to product details accordion smoothly
+  const scrollToDetails = () => {
+    setExpandedAccordion('description')
+    setTimeout(() => {
+      const el = document.getElementById('product-accordions')
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 100)
   }
 
   // Pincode Delivery Checker
@@ -272,19 +326,40 @@ export default function ProductDetailClient({
     }
   }
 
+  const [locatingPincode, setLocatingPincode] = useState(false)
+
   const getGeolocation = () => {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser')
       return
     }
-    
+
+    setLocatingPincode(true)
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords
-        // In real app, reverse geocode to get pincode
-        alert(`Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}\n\nEnter your pincode for delivery check`)
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
+            { headers: { 'Accept-Language': 'en' } }
+          )
+          const data = await res.json()
+          const detectedPincode = data?.address?.postcode
+          if (detectedPincode && /^\d{6}$/.test(detectedPincode)) {
+            setPincode(detectedPincode)
+            checkDelivery(detectedPincode)
+          } else {
+            alert('Could not detect pincode. Please enter it manually.')
+          }
+        } catch (err) {
+          console.error('Reverse geocode error:', err)
+          alert('Could not detect pincode. Please enter it manually.')
+        } finally {
+          setLocatingPincode(false)
+        }
       },
       (error) => {
+        setLocatingPincode(false)
         alert('Unable to access location. Please enable location services.')
         console.error('Geolocation error:', error)
       }
@@ -333,7 +408,8 @@ export default function ProductDetailClient({
 
   return (
     <div className="product-detail-page">
-      {/* Breadcrumb */}
+
+      {/* ========== BREADCRUMB SECTION ========== */}
       <div className="breadcrumb-section">
         <div className="container">
           <nav aria-label="breadcrumb">
@@ -352,29 +428,28 @@ export default function ProductDetailClient({
       </div>
 
       <div className="container">
-        {/* Main Product Section */}
+
+        {/* ========== MAIN PRODUCT SECTION ========== */}
         <div className="product-main">
-          {/* Image Gallery */}
+
+          {/* ===== IMAGE GALLERY ===== */}
           <div className="product-gallery">
             <div className="main-image-container">
               <div 
-                className={`main-image ${isZoomed ? 'zoomed' : ''}`}
+                className="main-image"
                 onMouseMove={handleMouseMove}
-                onMouseEnter={() => setIsZoomed(true)}
-                onMouseLeave={() => setIsZoomed(false)}
+                onMouseLeave={handleMouseLeave}
+                onClick={() => openLightbox(selectedImage)}
               >
                 <Image 
                   src={mainImage}
                   alt={product.name}
-                  width={700}
-                  height={700}
+                  width={800}
+                  height={800}
                   style={{ 
                     objectFit: 'cover', 
                     width: '100%', 
                     height: 'auto',
-                    transformOrigin: isZoomed ? `${zoomPosition.x}% ${zoomPosition.y}%` : 'center',
-                    transform: isZoomed ? 'scale(2)' : 'scale(1)',
-                    transition: isZoomed ? 'none' : 'transform 0.3s ease'
                   }}
                   priority
                   onError={() => {
@@ -382,36 +457,63 @@ export default function ProductDetailClient({
                     setImageError(true)
                   }}
                 />
+                {/* Discount Badge */}
                 {discountPercentage > 0 && (
                   <span className="discount-badge">-{discountPercentage}%</span>
                 )}
-                {!isZoomed && (
+                {/* Magnifier Lens Overlay */}
+                {showMagnifier && (
+                  <div 
+                    className="magnifier-lens"
+                    style={{
+                      left: `${lensPos.x}px`,
+                      top: `${lensPos.y}px`,
+                    }}
+                  />
+                )}
+                {/* Zoom Hint */}
+                {!showMagnifier && (
                   <div className="zoom-hint">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <circle cx="11" cy="11" r="8"></circle>
                       <path d="m21 21-4.35-4.35"></path>
                       <line x1="11" y1="8" x2="11" y2="14"></line>
                       <line x1="8" y1="11" x2="14" y2="11"></line>
                     </svg>
-                    Hover to zoom
+                    Hover to zoom | Click to expand
                   </div>
                 )}
               </div>
+              {/* Navigation Arrows */}
               {images.length > 1 && (
                 <>
                   <button className="nav-arrow prev-arrow" onClick={handlePrevImage} aria-label="Previous image">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M15 18l-6-6 6-6"/>
                     </svg>
                   </button>
                   <button className="nav-arrow next-arrow" onClick={handleNextImage} aria-label="Next image">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M9 18l6-6-6-6"/>
                     </svg>
                   </button>
                 </>
               )}
+              {/* Magnifier Preview Panel (right side) */}
+              {showMagnifier && (
+                <div className="magnifier-preview">
+                  <div 
+                    className="magnifier-preview-inner"
+                    style={{
+                      backgroundImage: `url(${mainImage})`,
+                      backgroundPosition: `${magnifierPos.x}% ${magnifierPos.y}%`,
+                      backgroundSize: '250%',
+                    }}
+                  />
+                </div>
+              )}
             </div>
+            {/* Thumbnail Gallery */}
             {images.length > 1 && (
               <div className="thumbnail-gallery">
                 {images.map((img, index) => (
@@ -426,8 +528,8 @@ export default function ProductDetailClient({
                     <Image 
                       src={img.url}
                       alt={img.alt || `${product.name} view ${index + 1}`}
-                      width={100}
-                      height={100}
+                      width={80}
+                      height={80}
                       style={{ objectFit: 'cover' }}
                       onError={() => setImageError(true)}
                     />
@@ -437,13 +539,17 @@ export default function ProductDetailClient({
             )}
           </div>
 
-          {/* Product Info */}
+          {/* ===== PRODUCT INFO SECTION ===== */}
           <div className="product-info-section">
+
+            {/* Brand */}
             {brand && (
               <div className="product-brand">
                 <Link href={`/products?brand=${brand.slug}`}>{brand.name}</Link>
               </div>
             )}
+
+            {/* Product Title */}
             <h1 className="product-title">{product.name}</h1>
             
             {/* Rating */}
@@ -471,7 +577,7 @@ export default function ProductDetailClient({
             <div className="stock-status">
               {product.stock > 0 ? (
                 <span className="in-stock">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm3.5 5.5l-4 4-2-2"/>
                   </svg>
                   In Stock ({product.stock} available)
@@ -482,9 +588,17 @@ export default function ProductDetailClient({
             </div>
 
             {/* Short Description */}
-            <p className="short-description">
-              {product.description?.substring(0, 200)}...
-            </p>
+            {product.description && (
+              <div className="short-description">
+                <p>{product.description?.substring(0, 200)}...</p>
+                <button className="view-more-btn" onClick={scrollToDetails}>
+                  View More Details
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+              </div>
+            )}
 
             {/* Key Features */}
             <div className="key-features">
@@ -505,7 +619,7 @@ export default function ProductDetailClient({
               )}
             </div>
 
-            {/* Color Variants Section */}
+            {/* ===== Color Variants ===== */}
             {variants && variants.length > 0 ? (
               <div className="variants-section">
                 <h4>Select Colour</h4>
@@ -533,7 +647,7 @@ export default function ProductDetailClient({
                 </div>
               </div>
             ) : (
-              <div style={{ padding: '16px', background: '#f0f7ff', borderRadius: '8px', marginBottom: '20px', color: '#666', fontSize: '14px' }}>
+              <div style={{ padding: '12px', background: '#ffffff', border: '1px solid #eee', borderRadius: '4px', marginBottom: '10px', color: '#666', fontSize: '13px' }}>
                 ℹ️ No color variants added yet. Variants will appear here once added to the database.
               </div>
             )}
@@ -549,33 +663,28 @@ export default function ProductDetailClient({
             {/* People Viewing & Assurance */}
             <div className="product-assurance">
               <div className="assurance-badge">
-                <span className="badge-icon">✓</span>
                 <span>100% Authentic</span>
               </div>
               <div className="assurance-badge">
-                <span className="badge-icon">🛡️</span>
                 <span>Safe & Secure</span>
               </div>
               <div className="assurance-badge">
-                <span className="badge-icon">🚚</span>
                 <span>Fast Delivery</span>
               </div>
               {product.people_viewing > 0 && (
                 <div className="people-viewing">
-                  <span className="icon">👥</span>
                   <span>{product.people_viewing} viewing now</span>
                 </div>
               )}
             </div>
 
             {/* Additional Offers Section */}
-            {offers && offers.length > 0 ? (
+            {offers && offers.length > 0 && (
               <div className="offers-section">
-                <h4>Additional Offers</h4>
+                <h4>Offers</h4>
                 <ul className="offers-list">
-                  {offers.slice(0, 6).map((offer, idx) => (
+                  {offers.slice(0, 4).map((offer, idx) => (
                     <li key={offer.id} className="offer-item">
-                      <span className="offer-icon">🎁</span>
                       <span className="offer-text">
                         {offer.title}
                         {offer.promo_code && <span className="promo-code">{offer.promo_code}</span>}
@@ -584,14 +693,10 @@ export default function ProductDetailClient({
                   ))}
                 </ul>
               </div>
-            ) : (
-              <div style={{ padding: '16px', background: '#fff3f0', borderRadius: '8px', marginBottom: '20px', color: '#666', fontSize: '14px' }}>
-                ℹ️ No special offers available. Check back soon for exciting deals!
-              </div>
             )}
 
             {/* EMI Section */}
-            {product.emi_enabled && emiOptions && emiOptions.length > 0 ? (
+            {product.emi_enabled && emiOptions && emiOptions.length > 0 && (
               <div className="emi-section">
                 <h4>EMI Options</h4>
                 <div className="emi-cards">
@@ -604,14 +709,10 @@ export default function ProductDetailClient({
                   ))}
                 </div>
               </div>
-            ) : product.emi_enabled ? (
-              <div style={{ padding: '16px', background: '#f0f7ff', borderRadius: '8px', marginBottom: '20px', color: '#666', fontSize: '14px' }}>
-                ℹ️ EMI options not yet configured. Contact support for details.
-              </div>
-            ) : null}
+            )}
 
             {/* Protection Plan */}
-            {warranties && warranties.length > 0 ? (
+            {warranties && warranties.length > 0 && (
               <div className="protection-plan-section">
                 <h4>Protect Your Furniture</h4>
                 <div className="warranty-cards">
@@ -654,15 +755,11 @@ export default function ProductDetailClient({
                   </div>
                 )}
               </div>
-            ) : (
-              <div style={{ padding: '16px', background: '#fff3e0', borderRadius: '8px', marginBottom: '20px', color: '#666', fontSize: '14px' }}>
-                ℹ️ Protection plans available on premium models. Standard warranty included.
-              </div>
             )}
 
             {/* Delivery Checker Section */}
             <div className="delivery-checker-section">
-              <h4>📦 Check Delivery Availability</h4>
+              <h4>Check Delivery Availability</h4>
               
               <div className="pincode-input-group">
                 <div className="input-wrapper">
@@ -687,8 +784,9 @@ export default function ProductDetailClient({
                   onClick={getGeolocation}
                   className="locate-btn"
                   title="Use your device location"
+                  disabled={locatingPincode}
                 >
-                  📍 Use My Location
+                  {locatingPincode ? 'Detecting...' : 'Use My Location'}
                 </button>
               </div>
 
@@ -696,16 +794,15 @@ export default function ProductDetailClient({
               {deliveryInfo?.available && (
                 <div className="delivery-result success">
                   <div className="result-header">
-                    <span className="status-icon">✓</span>
-                    <h5>Delivery Available!</h5>
+                    <h5>Delivery Available</h5>
                   </div>
                   <div className="delivery-details">
                     <div className="detail-row">
-                      <span className="detail-label">📍 Location:</span>
+                      <span className="detail-label">Location:</span>
                       <span className="detail-value">{deliveryInfo.place}</span>
                     </div>
                     <div className="detail-row">
-                      <span className="detail-label">🚚 Shipping:</span>
+                      <span className="detail-label">Shipping:</span>
                       <span className="detail-value">
                         {deliveryInfo.freeShipping ? (
                           <span className="free-shipping">FREE</span>
@@ -715,7 +812,7 @@ export default function ProductDetailClient({
                       </span>
                     </div>
                     <div className="detail-row">
-                      <span className="detail-label">📅 Delivery:</span>
+                      <span className="detail-label">Delivery:</span>
                       <span className="detail-value">{deliveryInfo.deliveryDays} days ({deliveryInfo.estimatedDate})</span>
                     </div>
                   </div>
@@ -829,45 +926,52 @@ export default function ProductDetailClient({
             )}
 
             {/* Delivery & Stores Section */}
-            {stores && stores.length > 0 ? (
-              <div className="delivery-stores-section">
-                <h4>Delivery & Stores Near You</h4>
-                <div className="stores-list">
-                  {stores.slice(0, 3).map((store, idx) => (
-                    <div 
-                      key={store.id} 
-                      className={`store-card ${expandedStore === idx ? 'expanded' : ''}`}
-                    >
-                      <div 
-                        className="store-header"
-                        onClick={() => setExpandedStore(expandedStore === idx ? -1 : idx)}
-                      >
-                        <div className="store-info">
-                          <span className="store-name">{store.store_name}</span>
-                          <span className="store-distance">📍 {store.distance_km} km</span>
-                        </div>
-                        <span className="store-delivery">Delivery in {store.delivery_days} days</span>
-                      </div>
-                      {expandedStore === idx && (
-                        <div className="store-details">
-                          <p className="store-address">{store.address}</p>
-                          {store.phone && (
-                            <div className="store-phone">
-                              <span>Call Now:</span>
-                              <a href={`tel:${store.phone}`}>{store.phone}</a>
-                            </div>
-                          )}
-                        </div>
-                      )}
+            <div className="delivery-stores-section">
+              <h4>Stores Near You</h4>
+              <div className="store-pincode-input">
+                <input
+                  type="text"
+                  placeholder="Enter your pincode"
+                  maxLength={6}
+                  value={storePincode || ''}
+                  onChange={(e) => setStorePincode(e.target.value.replace(/\D/g, ''))}
+                  className="pincode-field"
+                />
+                <button
+                  className="pincode-check-btn"
+                  onClick={() => setShowNearbyStore(storePincode?.length === 6)}
+                  disabled={!storePincode || storePincode.length !== 6}
+                >
+                  Find Store
+                </button>
+              </div>
+              {showNearbyStore && (
+                <div className="store-card expanded">
+                  <div className="store-header">
+                    <div className="store-info">
+                      <span className="store-name">Spacecrafts Furniture – Ambattur</span>
+                      <span className="store-distance">Nearest Store</span>
                     </div>
-                  ))}
+                  </div>
+                  <div className="store-details">
+                    <p className="store-address">94A/1, 3rd Main Rd, Old Ambattur, Attipattu, Ambattur Industrial Estate, Chennai, Tamil Nadu 600058</p>
+                    <div className="store-hours">Mon–Sat 10 AM – 8 PM · Sun 11 AM – 6 PM</div>
+                    <div className="store-phone">
+                      <span>Call:</span>
+                      <a href="tel:09003003733">090030 03733</a>
+                    </div>
+                    <a
+                      href="https://maps.google.com/?q=94A/1+3rd+Main+Rd+Ambattur+Chennai"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="store-map-link"
+                    >
+                      View on Google Maps →
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div style={{ padding: '16px', background: '#f3f8f4', borderRadius: '8px', marginBottom: '20px', color: '#666', fontSize: '14px' }}>
-                ℹ️ Store information will be displayed here. Check delivery options at checkout.
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Status Messages */}
             {cartError && (
@@ -936,409 +1040,234 @@ export default function ProductDetailClient({
               </button>
             </div>
 
-            {/* Additional Info Tags */}
-            {product.tags && product.tags.length > 0 && (
-              <div className="product-tags">
-                <strong>Tags:</strong>
-                <div className="tags-list">
-                  {product.tags.map((tag, index) => (
-                    <Link 
-                      key={index} 
-                      href={`/products?q=${tag}`}
-                      className="tag"
-                    >
-                      {tag}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+            {/* ===== Additional Info Tags ===== */}
 
-        {/* Tabs Section */}
-        <div className="product-tabs">
-          <div className="tabs-header">
-            <button 
-              className={activeTab === 'description' ? 'active' : ''}
-              onClick={() => setActiveTab('description')}
-            >
-              Description
-            </button>
-            <button 
-              className={activeTab === 'specifications' ? 'active' : ''}
-              onClick={() => setActiveTab('specifications')}
-            >
-              Specifications
-            </button>
-            <button 
-              className={activeTab === 'warranty' ? 'active' : ''}
-              onClick={() => setActiveTab('warranty')}
-            >
-              Warranty
-            </button>
-            <button 
-              className={activeTab === 'care' ? 'active' : ''}
-              onClick={() => setActiveTab('care')}
-            >
-              Care & Maintenance
-            </button>
-            <button 
-              className={activeTab === 'brand' ? 'active' : ''}
-              onClick={() => setActiveTab('brand')}
-            >
-              Brand & Collection
-            </button>
-            <button 
-              className={activeTab === 'stores' ? 'active' : ''}
-              onClick={() => setActiveTab('stores')}
-            >
-              Stores Near You
-            </button>
-            <button 
-              className={activeTab === 'reviews' ? 'active' : ''}
-              onClick={() => setActiveTab('reviews')}
-            >
-              Reviews
-            </button>
-            <button 
-              className={activeTab === 'qa' ? 'active' : ''}
-              onClick={() => setActiveTab('qa')}
-            >
-              Q&A
-            </button>
-          </div>
+            {/* ========== ACCORDION SECTIONS (Product Details, Specs, etc.) ========== */}
+            <div className="product-accordions" id="product-accordions">
 
-          <div className="tabs-content">
-            {activeTab === 'description' && (
-              <div className="tab-pane">
-                <h3>Product Description</h3>
-                {product.description && (
-                  <ul className="description-list">
-                    {product.description
-                      .split(/[.!?]+/)
-                      .filter(sentence => sentence.trim().length > 10)
-                      .map((sentence, index) => (
-                        <li key={index}>{sentence.trim()}</li>
-                      ))
-                    }
-                  </ul>
-                )}
-                {product.material && (
-                  <>
-                    <h4>Material & Build Quality</h4>
-                    <p>{product.material}</p>
-                  </>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'specifications' && (
-              <div className="tab-pane">
-                <h3>Technical Specifications</h3>
-                {specifications && specifications.length > 0 ? (
-                  <div className="specifications-container">
-                    {/* Group specifications by category */}
-                    {Object.entries(
-                      specifications.reduce((acc, spec) => {
-                        if (!acc[spec.spec_category]) {
-                          acc[spec.spec_category] = []
-                        }
-                        acc[spec.spec_category].push(spec)
-                        return acc
-                      }, {})
-                    ).map(([category, specs]) => (
-                      <div key={category} className="spec-category">
-                        <h4>{category}</h4>
-                        <table className="specs-table">
-                          <tbody>
-                            {specs.map((spec) => (
-                              <tr key={spec.id}>
-                                <td><strong>{spec.spec_name}</strong></td>
-                                <td>{spec.spec_value} {spec.unit ? spec.unit : ''}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <table className="specs-table">
-                    <tbody>
-                      {/* Dimensions Section */}
-                      <tr>
-                        <td colSpan="2" style={{ fontWeight: 'bold', background: '#ffffff', padding: '8px', borderRadius: '4px' }}>Dimensions</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Length</strong></td>
-                        <td>180 cm</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Width</strong></td>
-                        <td>90 cm</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Height</strong></td>
-                        <td>85 cm</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Seating Height</strong></td>
-                        <td>42 cm</td>
-                      </tr>
-
-                      {/* Material Section */}
-                      <tr>
-                        <td colSpan="2" style={{ fontWeight: 'bold', background: '#ffffff', padding: '8px', marginTop: '10px', borderRadius: '4px' }}>Material & Construction</td>
-                      </tr>
+              {/* ===== Product Details Accordion ===== */}
+              <div className={`accordion-item ${expandedAccordion === 'description' ? 'open' : ''}`}>
+                <button className="accordion-header" onClick={() => toggleAccordion('description')}>
+                  <span>Product Details</span>
+                  <svg className={`accordion-arrow ${expandedAccordion === 'description' ? 'rotated' : ''}`} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                <div className={`accordion-body-wrapper ${expandedAccordion === 'description' ? 'expanded' : ''}`}>
+                  <div className="accordion-body">
+                    {/* Product attributes in 2-column grid */}
+                    <div className="details-grid">
+                      {brand && (
+                        <>
+                          <div className="detail-label-cell">Brand</div>
+                          <div className="detail-value-cell">{brand.name}</div>
+                        </>
+                      )}
                       {product.material && (
-                        <tr>
-                          <td><strong>Material</strong></td>
-                          <td>{product.material}</td>
-                        </tr>
+                        <>
+                          <div className="detail-label-cell">Primary Material</div>
+                          <div className="detail-value-cell">{product.material}</div>
+                        </>
                       )}
-                      <tr>
-                        <td><strong>Frame Material</strong></td>
-                        <td>Solid Wood</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Cushion Material</strong></td>
-                        <td>High Density Foam</td>
-                      </tr>
-
-                      {/* Warranty & Other Info */}
-                      <tr>
-                        <td colSpan="2" style={{ fontWeight: 'bold', background: '#ffffff', padding: '8px', marginTop: '10px', borderRadius: '4px' }}>Additional Information</td>
-                      </tr>
                       {product.warranty_period && (
-                        <tr>
-                          <td><strong>Warranty</strong></td>
-                          <td>{product.warranty_period} Months</td>
-                        </tr>
+                        <>
+                          <div className="detail-label-cell">Warranty</div>
+                          <div className="detail-value-cell">{product.warranty_period} Months' Warranty</div>
+                        </>
                       )}
-                      {product.return_days && (
-                        <tr>
-                          <td><strong>Return Period</strong></td>
-                          <td>{product.return_days} Days</td>
-                        </tr>
+                      {category && (
+                        <>
+                          <div className="detail-label-cell">Collections</div>
+                          <div className="detail-value-cell">{category.name}</div>
+                        </>
                       )}
-                      <tr>
-                        <td><strong>SKU</strong></td>
-                        <td>{product.id}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Stock Quantity</strong></td>
-                        <td>{product.stock_quantity || product.stock || 0} units</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'warranty' && (
-              <div className="tab-pane warranty-tab">
-                <h3>Warranty Information</h3>
-                {warranties && warranties.length > 0 ? (
-                  <div className="warranty-details">
-                    <p><strong>Standard Warranty:</strong> {product.warranty_period || 36} Months</p>
-                    <p><strong>Warranty Type:</strong> {product.warranty_type || 'Premium'}</p>
-                    <h4>Coverage Details</h4>
-                    <ul className="warranty-list">
-                      <li>✓ Manufacturing defects covered</li>
-                      <li>✓ Material & workmanship guarantee</li>
-                      <li>✓ Free repairs during warranty period</li>
-                      <li>✓ Parts replacement as per warranty terms</li>
-                    </ul>
-                    <h4>Extended Protection Plans Available</h4>
-                    <div className="warranty-plans">
-                      {warranties.map((plan, idx) => (
-                        <div key={plan.id} className="plan-card">
-                          <h5>{plan.warranty_name}</h5>
-                          <p className="plan-price">₹{plan.price?.toLocaleString('en-IN')}</p>
-                          <p className="plan-duration">{plan.warranty_months} Months Coverage</p>
-                          <p className="plan-description">{plan.description}</p>
-                        </div>
-                      ))}
+                      {product.weight && (
+                        <>
+                          <div className="detail-label-cell">Weight</div>
+                          <div className="detail-value-cell">{product.weight} KG</div>
+                        </>
+                      )}
+                      <>
+                        <div className="detail-label-cell">Product Rating</div>
+                        <div className="detail-value-cell">{reviewStats.avg?.toFixed?.(1) || '0.0'}</div>
+                      </>
+                      <>
+                        <div className="detail-label-cell">Sku</div>
+                        <div className="detail-value-cell">{product.sku || product.id}</div>
+                      </>
                     </div>
-                  </div>
-                ) : (
-                  <div className="warranty-details">
-                    <p><strong>Standard Warranty:</strong> {product.warranty_period || 36} Months</p>
-                    <p><strong>Warranty Type:</strong> {product.warranty_type || 'Premium'}</p>
-                    <h4>Coverage Details</h4>
-                    <ul className="warranty-list">
-                      <li>✓ Manufacturing defects covered</li>
-                      <li>✓ Material & workmanship guarantee</li>
-                      <li>✓ Free repairs during warranty period</li>
-                      <li>✓ Parts replacement as per warranty terms</li>
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'care' && (
-              <div className="tab-pane care-tab">
-                <h3>Care & Maintenance</h3>
-                <div className="care-content">
-                  <h4>General Care Instructions</h4>
-                  <p>{product.care_instructions || 'Dry clean only. Keep away from direct sunlight. Use soft brush for regular cleaning. Avoid sharp objects.'}</p>
-                  
-                  <h4>Cleaning Tips</h4>
-                  <ul className="care-list">
-                    <li><strong>Regular Cleaning:</strong> Use a soft brush or vacuum with upholstery attachment weekly</li>
-                    <li><strong>Spot Cleaning:</strong> Blot spills immediately with a soft, dry cloth</li>
-                    <li><strong>Deep Cleaning:</strong> Professional dry cleaning recommended once a year</li>
-                    <li><strong>Dust Control:</strong> Wipe wooden parts with a soft, damp cloth weekly</li>
-                  </ul>
-
-                  <h4>Prevention Tips</h4>
-                  <ul className="care-list">
-                    <li>Keep away from direct sunlight to prevent fading</li>
-                    <li>Maintain room humidity between 40-60%</li>
-                    <li>Use protective pads under furniture feet</li>
-                    <li>Avoid placing hot items directly on surface</li>
-                    <li>Keep away from heat sources and moisture</li>
-                  </ul>
-
-                  <h4>Longevity Tips</h4>
-                  <ul className="care-list">
-                    <li>Rotate cushions regularly for even wear</li>
-                    <li>Use furniture covers when not in use</li>
-                    <li>Avoid jumping or standing on upholstered furniture</li>
-                    <li>Use coasters and placemats to prevent stains</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'brand' && (
-              <div className="tab-pane brand-tab">
-                <h3>Brand & Collection Overview</h3>
-                <div className="brand-content">
-                  {brand && (
-                    <div className="brand-section">
-                      <h4>About {brand.name}</h4>
-                      <p>{brand.name} is a leading furniture manufacturer known for quality, durability, and stylish designs. We are committed to providing premium furniture solutions for modern living spaces.</p>
-                      
-                      <div className="brand-highlights">
-                        <div className="highlight-item">
-                          <span className="highlight-icon">🏆</span>
-                          <span className="highlight-text">Premium Quality Materials</span>
-                        </div>
-                        <div className="highlight-item">
-                          <span className="highlight-icon">🎯</span>
-                          <span className="highlight-text">Modern Designs</span>
-                        </div>
-                        <div className="highlight-item">
-                          <span className="highlight-icon">✓</span>
-                          <span className="highlight-text">Long-lasting Durability</span>
-                        </div>
-                        <div className="highlight-item">
-                          <span className="highlight-icon">💚</span>
-                          <span className="highlight-text">Eco-friendly Production</span>
-                        </div>
+                    {/* Description bullets */}
+                    {product.description && (
+                      <div className="description-section">
+                        <ul className="description-list">
+                          {product.description
+                            .split(/[.!?]+/)
+                            .filter(sentence => sentence.trim().length > 10)
+                            .map((sentence, index) => (
+                              <li key={index}>{sentence.trim()}</li>
+                            ))
+                          }
+                        </ul>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                </div>
+              </div>
 
-                  {category && (
-                    <div className="category-section">
-                      <h4>Collection: {category.name}</h4>
-                      <p>This product is part of our exclusive {category.name} collection, carefully curated for style and functionality.</p>
-                      <Link href={`/category/${category.slug}`} className="view-collection-link">
-                        View Full Collection →
-                      </Link>
-                    </div>
-                  )}
+              {/* ===== Specifications Accordion ===== */}
+              <div className={`accordion-item ${expandedAccordion === 'specifications' ? 'open' : ''}`}>
+                <button className="accordion-header" onClick={() => toggleAccordion('specifications')}>
+                  <span>Specifications</span>
+                  <svg className={`accordion-arrow ${expandedAccordion === 'specifications' ? 'rotated' : ''}`} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                <div className={`accordion-body-wrapper ${expandedAccordion === 'specifications' ? 'expanded' : ''}`}>
+                  <div className="accordion-body">
+                    {specifications && specifications.length > 0 ? (
+                      <div className="specifications-container">
+                        {Object.entries(
+                          specifications.reduce((acc, spec) => {
+                            if (!acc[spec.spec_category]) acc[spec.spec_category] = []
+                            acc[spec.spec_category].push(spec)
+                            return acc
+                          }, {})
+                        ).map(([cat, specs]) => (
+                          <div key={cat} className="spec-category">
+                            <h4>{cat}</h4>
+                            <div className="details-grid">
+                              {specs.map((spec) => (
+                                <Fragment key={spec.id}>
+                                  <div className="detail-label-cell">{spec.spec_name}</div>
+                                  <div className="detail-value-cell">{spec.spec_value} {spec.unit || ''}</div>
+                                </Fragment>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="details-grid">
+                        {product.material && (
+                          <>
+                            <div className="detail-label-cell">Material</div>
+                            <div className="detail-value-cell">{product.material}</div>
+                          </>
+                        )}
+                        <div className="detail-label-cell">SKU</div>
+                        <div className="detail-value-cell">{product.id}</div>
+                        <div className="detail-label-cell">Stock</div>
+                        <div className="detail-value-cell">{product.stock_quantity || product.stock || 0} units</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-                  <div className="collection-benefits">
-                    <h4>Why Choose This Collection?</h4>
-                    <ul>
-                      <li>Handpicked designs for contemporary homes</li>
-                      <li>Best-selling products with proven quality</li>
-                      <li>Expert craftsmanship and attention to detail</li>
-                      <li>Backed by customer reviews and ratings</li>
+              {/* ===== Warranty Accordion ===== */}
+              <div className={`accordion-item ${expandedAccordion === 'warranty' ? 'open' : ''}`}>
+                <button className="accordion-header" onClick={() => toggleAccordion('warranty')}>
+                  <span>Warranty</span>
+                  <svg className={`accordion-arrow ${expandedAccordion === 'warranty' ? 'rotated' : ''}`} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                <div className={`accordion-body-wrapper ${expandedAccordion === 'warranty' ? 'expanded' : ''}`}>
+                  <div className="accordion-body">
+                    <div className="warranty-details">
+                      <p><strong>Standard Warranty:</strong> {product.warranty_period || 36} Months</p>
+                      <ul className="accordion-list">
+                        <li>Manufacturing defects covered</li>
+                        <li>Material & workmanship guarantee</li>
+                        <li>Free repairs during warranty period</li>
+                        <li>Parts replacement as per warranty terms</li>
+                      </ul>
+                      {warranties && warranties.length > 0 && (
+                        <div className="warranty-plans">
+                          {warranties.map((plan) => (
+                            <div key={plan.id} className="plan-card">
+                              <h5>{plan.warranty_name}</h5>
+                              <span className="plan-price">₹{plan.price?.toLocaleString('en-IN')}</span>
+                              <span className="plan-duration">{plan.warranty_months} Months</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ===== Care & Maintenance Accordion ===== */}
+              <div className={`accordion-item ${expandedAccordion === 'care' ? 'open' : ''}`}>
+                <button className="accordion-header" onClick={() => toggleAccordion('care')}>
+                  <span>Care & Maintenance</span>
+                  <svg className={`accordion-arrow ${expandedAccordion === 'care' ? 'rotated' : ''}`} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                <div className={`accordion-body-wrapper ${expandedAccordion === 'care' ? 'expanded' : ''}`}>
+                  <div className="accordion-body">
+                    <p className="care-intro">{product.care_instructions || 'Dry clean only. Keep away from direct sunlight. Use soft brush for regular cleaning.'}</p>
+                    <ul className="accordion-list">
+                      <li>Use a soft brush or vacuum with upholstery attachment weekly</li>
+                      <li>Blot spills immediately with a soft, dry cloth</li>
+                      <li>Professional dry cleaning recommended once a year</li>
+                      <li>Keep away from direct sunlight to prevent fading</li>
+                      <li>Rotate cushions regularly for even wear</li>
+                      <li>Use coasters and placemats to prevent stains</li>
                     </ul>
                   </div>
                 </div>
               </div>
-            )}
 
-            {activeTab === 'stores' && (
-              <div className="tab-pane stores-tab">
-                <h3>Stores Near You</h3>
-                {stores && stores.length > 0 ? (
-                  <div className="stores-detailed">
-                    <p className="stores-intro">Visit our showrooms to experience the product in person:</p>
-                    <div className="stores-grid">
-                      {stores.map((store) => (
-                        <div key={store.id} className="store-detailed-card">
-                          <div className="store-header-detail">
-                            <h4>{store.store_name}</h4>
-                            <span className="store-distance">📍 {store.distance_km} km away</span>
-                          </div>
-                          <div className="store-body-detail">
-                            <p className="store-address-detail">{store.address}</p>
-                            {store.phone && (
-                              <p className="store-phone-detail">
-                                <strong>Phone:</strong> <a href={`tel:${store.phone}`}>{store.phone}</a>
-                              </p>
-                            )}
-                            <p className="store-delivery-detail">
-                              <strong>Delivery:</strong> {store.delivery_days} days
-                            </p>
-                            <button 
-                              className="store-directions-btn"
-                              onClick={() => {
-                                // Open Google Maps with store location
-                                const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(store.address)}`;
-                                window.open(mapsUrl, '_blank');
-                              }}
-                              title="Open directions in Google Maps"
-                            >
-                              📍 Get Directions
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+              {/* ===== Reviews Accordion ===== */}
+              <div className={`accordion-item ${expandedAccordion === 'reviews' ? 'open' : ''}`}>
+                <button className="accordion-header" onClick={() => toggleAccordion('reviews')}>
+                  <span>Reviews ({reviewStats.count})</span>
+                  <svg className={`accordion-arrow ${expandedAccordion === 'reviews' ? 'rotated' : ''}`} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                <div className={`accordion-body-wrapper ${expandedAccordion === 'reviews' ? 'expanded' : ''}`}>
+                  <div className="accordion-body">
+                    <ReviewForm 
+                      productId={product.id} 
+                      onReviewSubmitted={() => setReviewsRefresh((n) => n + 1)} 
+                    />
+                    <ReviewsList 
+                      productId={product.id} 
+                      refresh={reviewsRefresh} 
+                      onStatsChange={(avg, count) => setReviewStats({ avg, count })}
+                    />
                   </div>
-                ) : (
-                  <div className="no-stores">
-                    <p>Store information will be available soon. Check back later!</p>
-                    <Link href="/store-locator" className="store-locator-link">
-                      Find All Stores →
-                    </Link>
+                </div>
+              </div>
+
+              {/* ===== Q&A Accordion ===== */}
+              <div className={`accordion-item ${expandedAccordion === 'qa' ? 'open' : ''}`}>
+                <button className="accordion-header" onClick={() => toggleAccordion('qa')}>
+                  <span>Questions & Answers</span>
+                  <svg className={`accordion-arrow ${expandedAccordion === 'qa' ? 'rotated' : ''}`} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                <div className={`accordion-body-wrapper ${expandedAccordion === 'qa' ? 'expanded' : ''}`}>
+                  <div className="accordion-body">
+                    <ProductQA productId={product.id} />
                   </div>
-                )}
+                </div>
               </div>
-            )}
 
-            {activeTab === 'reviews' && (
-              <div className="tab-pane">
-                <ReviewForm 
-                  productId={product.id} 
-                  onReviewSubmitted={() => setReviewsRefresh((n) => n + 1)} 
-                />
-                <ReviewsList 
-                  productId={product.id} 
-                  refresh={reviewsRefresh} 
-                  onStatsChange={(avg, count) => setReviewStats({ avg, count })}
-                />
-              </div>
-            )}
+            </div>
+            {/* ===== END ACCORDIONS ===== */}
 
-            {activeTab === 'qa' && (
-              <div className="tab-pane">
-                <ProductQA productId={product.id} />
-              </div>
-            )}
           </div>
+          {/* ===== END PRODUCT INFO SECTION ===== */}
         </div>
+        {/* ===== END PRODUCT MAIN ===== */}
 
-        {/* Related Products */}
+        {/* ========== RELATED PRODUCTS ========== */}
         {relatedProducts.length > 0 && (
           <div className="related-products">
             <h2>Related Products</h2>
@@ -1351,17 +1280,81 @@ export default function ProductDetailClient({
         )}
       </div>
 
+      {/* ========== FULLSCREEN LIGHTBOX MODAL ========== */}
+      {isLightboxOpen && (
+        <div className="lightbox-overlay" onClick={closeLightbox}>
+          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            {/* Close Button */}
+            <button className="lightbox-close" onClick={closeLightbox} aria-label="Close">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            {/* Previous Arrow */}
+            {images.length > 1 && (
+              <button className="lightbox-arrow lightbox-prev" onClick={lightboxPrev} aria-label="Previous">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </button>
+            )}
+            {/* Main Image */}
+            <div className="lightbox-image-wrapper">
+              <img
+                src={images[lightboxIndex]?.url || mainImage}
+                alt={`${product.name} - Image ${lightboxIndex + 1}`}
+                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+              />
+            </div>
+            {/* Next Arrow */}
+            {images.length > 1 && (
+              <button className="lightbox-arrow lightbox-next" onClick={lightboxNext} aria-label="Next">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </button>
+            )}
+            {/* Image Counter */}
+            <div className="lightbox-counter">
+              {lightboxIndex + 1} / {images.length}
+            </div>
+            {/* Thumbnail Strip */}
+            {images.length > 1 && (
+              <div className="lightbox-thumbnails">
+                {images.map((img, idx) => (
+                  <button
+                    key={img.id}
+                    className={`lightbox-thumb ${idx === lightboxIndex ? 'active' : ''}`}
+                    onClick={() => setLightboxIndex(idx)}
+                  >
+                    <Image
+                      src={img.url}
+                      alt={`Thumb ${idx + 1}`}
+                      width={60}
+                      height={60}
+                      style={{ objectFit: 'cover' }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
+        /* ========== PAGE LAYOUT ========== */
         .product-detail-page {
-          background: #f8f9fa;
+          background: #ffffff;
           min-height: 100vh;
         }
 
+        /* ========== BREADCRUMB ========== */
         .breadcrumb-section {
-          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-          padding: 24px 0;
-          border-bottom: 1px solid #e9ecef;
-          margin-bottom: 32px;
+          background: #ffffff;
+          padding: 10px 0;
+          border-bottom: 1px solid #e5e5e5;
         }
 
         .breadcrumb {
@@ -1369,313 +1362,216 @@ export default function ProductDetailClient({
           list-style: none;
           padding: 0;
           margin: 0;
-          gap: 4px;
+          gap: 2px;
           flex-wrap: wrap;
           align-items: center;
         }
 
         .breadcrumb-item {
-          color: #6c757d;
-          font-size: 14px;
-          font-weight: 500;
-          position: relative;
-          animation: slideInBreadcrumb 0.4s ease-out backwards;
+          color: #1a1a1a;
+          font-size: 12px;
+          font-weight: 400;
         }
-
-        @keyframes slideInBreadcrumb {
-          from {
-            opacity: 0;
-            transform: translateX(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        .breadcrumb-item:nth-child(1) { animation-delay: 0.05s; }
-        .breadcrumb-item:nth-child(2) { animation-delay: 0.1s; }
-        .breadcrumb-item:nth-child(3) { animation-delay: 0.15s; }
-        .breadcrumb-item:nth-child(4) { animation-delay: 0.2s; }
-        .breadcrumb-item:nth-child(5) { animation-delay: 0.25s; }
 
         .breadcrumb-item a {
-          color: #007bff;
+          color: #e67e22;
           text-decoration: none;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          padding: 6px 10px;
-          border-radius: 6px;
-          position: relative;
-        }
-
-        .breadcrumb-item a::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(0, 123, 255, 0) 0%, rgba(0, 123, 255, 0.1) 100%);
-          border-radius: 6px;
-          opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: color 0.2s ease;
         }
 
         .breadcrumb-item a:hover {
-          color: #0056b3;
-          background: rgba(0, 123, 255, 0.08);
-          transform: translateX(2px);
-        }
-
-        .breadcrumb-item a:hover::before {
-          opacity: 1;
+          color: #d35400;
         }
 
         .breadcrumb-item.active {
           color: #333;
-          font-weight: 600;
+          font-weight: 500;
         }
 
         .breadcrumb-item:not(:last-child)::after {
           content: '›';
-          margin-left: 8px;
-          color: #dee2e6;
-          font-weight: 300;
-          transition: all 0.3s ease;
-        }
-
-        .breadcrumb-item:hover:not(:last-child)::after {
-          color: #007bff;
-          transform: scaleX(1.2);
+          margin: 0 6px;
+          color: #ccc;
+          font-size: 13px;
         }
 
         .container {
           max-width: 1400px;
           margin: 0 auto;
-          padding: 0 20px;
+          padding: 0 16px;
         }
 
+        /* ========== PRODUCT MAIN LAYOUT ========== */
         .product-main {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 60px;
-          background: white;
-          padding: 40px;
-          border-radius: 12px;
-          margin-bottom: 40px;
+          grid-template-columns: 58% 42%;
+          gap: 32px;
+          background: #ffffff;
+          padding: 20px 0;
         }
 
+        /* ========== IMAGE GALLERY ========== */
         .product-gallery {
           position: sticky;
-          top: 20px;
+          top: 80px;
           height: fit-content;
         }
 
         .main-image-container {
           position: relative;
-          margin-bottom: 16px;
+          margin-bottom: 10px;
         }
 
         .main-image {
           position: relative;
-          border-radius: 12px;
           overflow: hidden;
-          background: #f8f9fa;
-          cursor: zoom-in;
-        }
-
-        .main-image.zoomed {
-          cursor: zoom-out;
-        }
-
-        .nav-arrow {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.95);
-          border: none;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-          transition: all 0.3s ease;
-          z-index: 10;
-          color: #333;
-        }
-
-        .nav-arrow:hover {
-          background: white;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-          transform: translateY(-50%) scale(1.1);
-        }
-
-        .nav-arrow:active {
-          transform: translateY(-50%) scale(0.95);
-        }
-
-        .prev-arrow {
-          left: 16px;
-        }
-
-        .next-arrow {
-          right: 16px;
-        }
-
-        .zoom-hint {
-          position: absolute;
-          bottom: 16px;
-          right: 16px;
-          background: rgba(0, 0, 0, 0.75);
-          color: white;
-          padding: 8px 12px;
-          border-radius: 8px;
-          font-size: 13px;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          pointer-events: none;
-          opacity: 0;
-          transition: opacity 0.3s ease;
+          background: #f9f9f9;
+          cursor: crosshair;
+          border: 1px solid #eee;
         }
 
         .main-image:hover .zoom-hint {
           opacity: 1;
         }
 
-        .main-image.zoomed {
-          cursor: zoom-out;
+        /* Magnifier Lens (box on the main image) */
+        .magnifier-lens {
+          position: absolute;
+          width: 150px;
+          height: 150px;
+          border: 2px solid rgba(0,0,0,0.3);
+          background: rgba(255,255,255,0.2);
+          pointer-events: none;
+          z-index: 5;
+          box-shadow: 0 0 0 1px rgba(255,255,255,0.5);
+        }
+
+        /* Magnifier Preview (zoomed result shown on right) */
+        .magnifier-preview {
+          position: absolute;
+          top: 0;
+          left: calc(100% + 12px);
+          width: 400px;
+          height: 400px;
+          border: 1px solid #e0e0e0;
+          background: #fff;
+          z-index: 9990;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+          overflow: hidden;
+          pointer-events: none;
+        }
+
+        .magnifier-preview-inner {
+          width: 100%;
+          height: 100%;
+          background-repeat: no-repeat;
         }
 
         .nav-arrow {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
-          width: 48px;
-          height: 48px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
-          background: rgba(255, 255, 255, 0.95);
-          border: none;
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid #e0e0e0;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-          transition: all 0.3s ease;
+          box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+          transition: all 0.2s ease;
           z-index: 10;
           color: #333;
         }
 
         .nav-arrow:hover {
-          background: white;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-          transform: translateY(-50%) scale(1.1);
+          background: #fff;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
         }
 
-        .nav-arrow:active {
-          transform: translateY(-50%) scale(0.95);
-        }
-
-        .prev-arrow {
-          left: 16px;
-        }
-
-        .next-arrow {
-          right: 16px;
-        }
+        .prev-arrow { left: 10px; }
+        .next-arrow { right: 10px; }
 
         .zoom-hint {
           position: absolute;
-          bottom: 16px;
-          right: 16px;
-          background: rgba(0, 0, 0, 0.75);
+          bottom: 10px;
+          right: 10px;
+          background: rgba(0, 0, 0, 0.65);
           color: white;
-          padding: 8px 12px;
-          border-radius: 8px;
-          font-size: 13px;
+          padding: 5px 10px;
+          border-radius: 4px;
+          font-size: 11px;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 5px;
           pointer-events: none;
           opacity: 0;
           transition: opacity 0.3s ease;
-        }
-
-        .main-image:hover .zoom-hint {
-          opacity: 1;
         }
 
         .discount-badge {
           position: absolute;
-          top: 20px;
-          right: 20px;
-          background: #dc3545;
+          top: 12px;
+          left: 12px;
+          background: #e74c3c;
           color: white;
-          padding: 8px 16px;
-          border-radius: 8px;
-          font-size: 18px;
+          padding: 4px 10px;
+          border-radius: 4px;
+          font-size: 13px;
           font-weight: 700;
+          z-index: 5;
         }
 
         .thumbnail-gallery {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-          gap: 12px;
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          padding-bottom: 4px;
         }
 
         .thumbnail {
-          border: 2px solid #dee2e6;
-          border-radius: 8px;
+          flex-shrink: 0;
+          width: 70px;
+          height: 70px;
+          border: 2px solid #e5e5e5;
+          border-radius: 4px;
           overflow: hidden;
           cursor: pointer;
           background: none;
           padding: 0;
-          transition: all 0.2s;
+          transition: border-color 0.2s;
         }
 
         .thumbnail:hover,
         .thumbnail.active {
-          border-color: #007bff;
+          border-color: #e67e22;
         }
 
+        /* ========== PRODUCT INFO SECTION ========== */
         .product-info-section {
           display: flex;
           flex-direction: column;
-          gap: 12px;
-          animation: slideInRight 0.5s ease-out;
-        }
-
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
+          gap: 8px;
+          padding-right: 8px;
         }
 
         .product-brand a {
-          color: #007bff;
+          color: #e67e22;
           text-decoration: none;
-          font-size: 13px;
-          font-weight: 700;
+          font-size: 12px;
+          font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          transition: all 0.2s ease;
-          display: inline-block;
         }
 
         .product-brand a:hover {
-          color: #0056b3;
+          color: #d35400;
         }
 
         .product-title {
-          font-size: 32px;
+          font-size: 22px;
           font-weight: 700;
           color: #1a1a1a;
           line-height: 1.3;
@@ -1685,289 +1581,274 @@ export default function ProductDetailClient({
         .product-rating {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 8px 0;
-          border-bottom: 1px solid #e9ecef;
-          border-top: 1px solid #e9ecef;
+          gap: 8px;
+          padding: 4px 0;
         }
 
         .stars {
-          color: #ffc107;
-          font-size: 20px;
-          letter-spacing: 2px;
+          color: #f39c12;
+          font-size: 16px;
+          letter-spacing: 1px;
         }
 
         .rating-text {
-          font-size: 14px;
-          color: #6c757d;
-          font-weight: 500;
+          font-size: 12px;
+          color: #1a1a1a;
+          font-weight: 400;
         }
 
+        /* ===== PRICE ===== */
         .product-price {
           display: flex;
           align-items: baseline;
-          gap: 12px;
+          gap: 10px;
           flex-wrap: wrap;
-          padding: 8px 0;
+          padding: 4px 0;
         }
 
         .current-price {
-          font-size: 36px;
+          font-size: 28px;
           font-weight: 700;
-          color: #28a745;
+          color: #1a1a1a;
         }
 
         .original-price {
-          font-size: 20px;
-          color: #999;
+          font-size: 16px;
+          color: #666;
           text-decoration: line-through;
-          font-weight: 500;
         }
 
         .save-text {
-          font-size: 14px;
-          color: #dc3545;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          background: rgba(220, 53, 69, 0.1);
-          padding: 4px 10px;
-          border-radius: 4px;
+          font-size: 12px;
+          color: #1a1a1a;
+          font-weight: 600;
         }
 
+        /* ===== STOCK ===== */
         .stock-status {
-          padding: 12px 16px;
-          border-radius: 8px;
-          display: inline-block;
+          padding: 0;
         }
 
         .in-stock {
-          background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-          color: #155724;
+          color: #1a1a1a;
           display: flex;
           align-items: center;
-          gap: 8px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
+          gap: 5px;
+          font-weight: 600;
+          font-size: 13px;
         }
 
         .out-of-stock {
-          background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-          color: #721c24;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
+          color: #e74c3c;
+          font-weight: 600;
+          font-size: 13px;
         }
 
         .short-description {
-          padding: 8px 0 0 0;
-          animation: slideInUp 0.5s ease-out;
-          font-size: 14px;
+          font-size: 13px;
           line-height: 1.6;
-          color: #666;
-          border-bottom: none;
+          color: #1a1a1a;
           margin: 0;
+          padding: 0;
         }
 
         .short-description p {
-          font-size: 14px;
-          line-height: 1.6;
-          color: #666;
-          margin: 0;
+          margin: 0 0 8px 0;
         }
 
-        @keyframes slideInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .key-features {
-          background: white;
+        .view-more-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: none;
           border: none;
-          border-radius: 0;
-          margin: 4px 0 0 0;
+          padding: 0;
+          font-size: 13px;
+          font-weight: 600;
+          color: #1a1a1a;
+          cursor: pointer;
+          transition: color 0.2s;
+        }
+
+        .view-more-btn:hover {
+          color: #333;
+        }
+
+        .view-more-btn svg {
+          transition: transform 0.2s;
+        }
+
+        .view-more-btn:hover svg {
+          transform: translateY(2px);
+        }
+
+        /* ===== KEY FEATURES ===== */
+        .key-features {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-          gap: 12px;
+          grid-template-columns: 1fr 1fr;
+          gap: 0;
+          border-top: 1px solid #eee;
         }
 
         .feature {
           padding: 8px 0;
-          border-radius: 0;
-          background: white;
-          border: none;
-          border-bottom: 1px solid #e9ecef;
-          transition: border-color 0.3s ease;
-          font-size: 13px;
-          line-height: 1.5;
-          color: #666;
-        }
-
-        .feature:hover {
-          transform: none;
-          box-shadow: none;
-          border-bottom-color: #007bff;
-          background: white;
+          border-bottom: 1px solid #f0f0f0;
+          font-size: 12px;
+          color: #1a1a1a;
+          line-height: 1.4;
         }
 
         .feature strong {
           display: block;
-          color: #1a1a1a;
-          font-size: 12px;
+          color: #333;
+          font-size: 11px;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin-bottom: 6px;
-          font-weight: 700;
+          letter-spacing: 0.3px;
+          margin-bottom: 2px;
+          font-weight: 600;
         }
 
+        /* ===== QUANTITY ===== */
         .quantity-selector {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 12px;
+          padding: 4px 0;
         }
 
         .quantity-selector label {
-          font-weight: 600;
+          font-weight: 700;
+          font-size: 13px;
+          color: #1a1a1a;
         }
 
         .quantity-controls {
           display: flex;
           align-items: center;
-          border: 1px solid #dee2e6;
-          border-radius: 8px;
+          border: 1px solid #e0e0e0;
+          border-radius: 4px;
           overflow: hidden;
         }
 
         .quantity-controls button {
-          width: 40px;
-          height: 40px;
+          width: 32px;
+          height: 32px;
           border: none;
-          background: #f8f9fa;
+          background: #f5f5f5;
           cursor: pointer;
-          font-size: 20px;
+          font-size: 16px;
+          color: #333;
           transition: background 0.2s;
         }
 
         .quantity-controls button:hover:not(:disabled) {
-          background: #e9ecef;
+          background: #e0e0e0;
         }
 
         .quantity-controls button:disabled {
-          opacity: 0.5;
+          opacity: 0.4;
           cursor: not-allowed;
         }
 
         .quantity-controls input {
-          width: 60px;
-          height: 40px;
+          width: 50px;
+          height: 32px;
           border: none;
+          border-left: 1px solid #e0e0e0;
+          border-right: 1px solid #e0e0e0;
           text-align: center;
-          font-size: 16px;
-          font-weight: 600;
+          font-size: 15px;
+          font-weight: 700;
+          color: #1a1a1a;
+          background: #fff;
+          -moz-appearance: textfield;
+          appearance: textfield;
         }
 
+        .quantity-controls input::-webkit-outer-spin-button,
+        .quantity-controls input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        .quantity-controls input:focus {
+          outline: none;
+        }
+
+        /* ===== STATUS MESSAGES ===== */
         .cart-message {
-          padding: 14px 16px;
-          border-radius: 8px;
+          padding: 10px 12px;
+          border-radius: 4px;
           display: flex;
           align-items: center;
-          gap: 10px;
-          font-size: 14px;
+          gap: 8px;
+          font-size: 13px;
           font-weight: 500;
-          margin-bottom: 16px;
-          animation: slideDown 0.3s ease-out;
         }
 
         .error-message {
-          background: #fee;
-          color: #c33;
-          border: 1px solid #fcc;
+          background: #fdf0ef;
+          color: #c0392b;
+          border: 1px solid #f5c6cb;
         }
 
         .success-message {
-          background: #efe;
-          color: #3c3;
-          border: 1px solid #cfc;
+          background: #eaf7ee;
+          color: #27ae60;
+          border: 1px solid #c3e6cb;
         }
 
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
+        /* ===== ACTION BUTTONS ===== */
         .action-buttons {
           display: flex;
-          gap: 12px;
+          gap: 8px;
           flex-wrap: wrap;
-          margin-top: 28px;
+          margin-top: 4px;
+          padding-top: 8px;
+          border-top: 1px solid #eee;
         }
 
         .btn-large {
-          padding: 16px 32px;
-          font-size: 15px;
+          padding: 10px 18px;
+          font-size: 13px;
           font-weight: 700;
-          border-radius: 8px;
+          border-radius: 4px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 10px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          gap: 6px;
+          transition: all 0.2s ease;
           flex: 1;
-          min-width: 150px;
+          min-width: 120px;
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
 
         .btn-primary {
-          background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+          background: #e67e22;
           color: white;
           border: none;
-          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
         }
 
         .btn-primary:hover {
-          background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(0, 123, 255, 0.4);
+          background: #d35400;
         }
 
         .btn-secondary {
-          background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-          color: white;
-          border: none;
-          box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+          background: #ffffff;
+          color: #333;
+          border: 2px solid #333;
         }
 
         .btn-secondary:hover {
-          background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
+          background: #333;
+          color: #fff;
         }
 
         .btn-secondary:disabled,
         .btn-primary:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-          box-shadow: none;
-        }
-
-        .btn-large:disabled {
-          opacity: 0.6;
+          opacity: 0.5;
           cursor: not-allowed;
         }
 
@@ -1983,347 +1864,296 @@ export default function ProductDetailClient({
         .btn-outline {
           background: white;
           color: #333;
-          border: 2px solid #dee2e6;
+          border: 1px solid #ddd;
         }
 
         .btn-outline:hover {
-          border-color: #007bff;
-          color: #007bff;
+          border-color: #e74c3c;
+          color: #e74c3c;
         }
 
         .btn-icon {
-          padding: 16px;
+          padding: 14px;
           min-width: auto;
           flex: 0;
         }
 
         .btn-disabled {
           background: #e9ecef;
-          color: #6c757d;
+          color: #999;
           border: none;
           cursor: not-allowed;
         }
 
-        .product-tags {
+
+
+        /* ========== ACCORDION STYLES ========== */
+        .product-accordions {
+          margin-top: 16px;
+          border-top: 1px solid #e5e5e5;
+        }
+
+        .accordion-item {
+          border-bottom: 1px solid #e5e5e5;
+        }
+
+        .accordion-header {
+          width: 100%;
           display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .tags-list {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-
-        .tag {
-          padding: 6px 12px;
-          background: #f8f9fa;
-          border: 1px solid #dee2e6;
-          border-radius: 6px;
-          font-size: 13px;
-          color: #333;
-          text-decoration: none;
-          transition: all 0.2s;
-        }
-
-        .tag:hover {
-          background: #007bff;
-          color: white;
-          border-color: #007bff;
-        }
-
-        .product-tabs {
-          background: white;
-          border-radius: 8px;
-          overflow: hidden;
-          margin-bottom: 24px;
-          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-          border: 1px solid #f0f0f0;
-        }
-
-        .tabs-header {
-          display: flex;
-          border-bottom: 2px solid #e9ecef;
-          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-          overflow-x: auto;
-          overflow-y: hidden;
-        }
-
-        .tabs-header button {
-          flex: 0 0 auto;
-          min-width: 140px;
-          padding: 14px 16px;
+          justify-content: space-between;
+          align-items: center;
+          padding: 10px 0;
           background: none;
           border: none;
+          cursor: pointer;
           font-size: 14px;
           font-weight: 700;
-          cursor: pointer;
-          color: #6c757d;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          border-bottom: 2px solid transparent;
-          text-transform: uppercase;
-          letter-spacing: 0.4px;
-          position: relative;
-          white-space: nowrap;
+          color: #1a1a1a;
+          text-align: left;
+          transition: color 0.2s;
         }
 
-        .tabs-header button:hover {
-          color: #007bff;
-          background: rgba(0, 123, 255, 0.03);
+        .accordion-header:hover {
+          color: #333;
         }
 
-        .tabs-header button.active {
-          color: #007bff;
-          border-bottom-color: #007bff;
-          background: rgba(0, 123, 255, 0.05);
+        .accordion-arrow {
+          transition: transform 0.3s ease;
+          color: #1a1a1a;
+          flex-shrink: 0;
         }
 
-        .tabs-content {
-          padding: 28px;
-          animation: fadeIn 0.4s ease-out;
+        .accordion-arrow.rotated {
+          transform: rotate(180deg);
         }
 
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
+        /* Smooth accordion wrapper using max-height transition */
+        .accordion-body-wrapper {
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+          opacity: 0;
         }
 
-        .tab-pane h3 {
-          font-size: 20px;
-          font-weight: 700;
-          margin-bottom: 16px;
+        .accordion-body-wrapper.expanded {
+          max-height: 2000px;
+          opacity: 1;
+          transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease 0.05s;
+        }
+
+        .accordion-body {
+          padding: 0 0 10px 0;
+        }
+
+        /* Details Grid (2 column label-value like Pepperfry) */
+        .details-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0;
+        }
+
+        .detail-label-cell {
+          padding: 6px 0;
+          font-size: 13px;
+          font-weight: 600;
           color: #1a1a1a;
           border-bottom: 1px solid #f0f0f0;
-          padding-bottom: 12px;
         }
 
-        .tab-pane h4 {
-          font-size: 14px;
-          font-weight: 700;
-          margin-top: 18px;
-          margin-bottom: 12px;
+        .detail-value-cell {
+          padding: 6px 0;
+          font-size: 13px;
           color: #1a1a1a;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          padding-bottom: 8px;
-          border-bottom: 2px solid #007bff;
-          display: inline-block;
+          border-bottom: 1px solid #f0f0f0;
         }
-        .tab-pane p {
-          font-size: 14px;
-          line-height: 1.6;
-          color: #666;
-          margin-bottom: 16px;
-          text-align: left;
-          background: #f8f9fa;
-          padding: 14px 16px;
-          border-radius: 6px;
-          border-left: 3px solid #007bff;
+
+        .description-section {
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid #f0f0f0;
         }
 
         .description-list {
           list-style: none;
           padding: 0;
-          margin: 0 0 18px 0;
+          margin: 0;
         }
 
         .description-list li {
-          font-size: 14px;
-          line-height: 1.6;
-          color: #666;
-          padding: 8px 0 8px 10px;
+          font-size: 13px;
+          color: #1a1a1a;
+          padding: 4px 0 4px 16px;
           position: relative;
-          margin-bottom: 10px;
-          transition: color 0.3s ease;
+          line-height: 1.5;
         }
 
         .description-list li:before {
           content: '•';
           position: absolute;
-          left: -10px;
-          top: 1px;
-          color: #007bff;
+          left: 0;
+          color: #1a1a1a;
           font-weight: 700;
-          font-size: 18px;
-        }
-
-        .description-list li:hover {
-          color: #007bff;
-        }
-
-        .specs-table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-
-        .specs-table td {
-          padding: 10px 12px;
-          border-bottom: 1px solid #e9ecef;
-        }
-
-        .specs-table td:first-child {
-          width: 160px;
-          background: #f8f9fa;
-        }
-
-        .reviews-list {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .review-item {
-          padding: 24px;
-          background: #f8f9fa;
-          border-radius: 8px;
-        }
-
-        .review-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: start;
-          margin-bottom: 12px;
-        }
-
-        .review-rating {
-          color: #ffc107;
-          margin-top: 4px;
-        }
-
-        .review-date {
-          color: #999;
           font-size: 14px;
         }
 
-        .review-item h4 {
-          font-size: 14px;
+        .accordion-list {
+          list-style: none;
+          padding: 0;
+          margin: 4px 0;
+        }
+
+        .accordion-list li {
+          padding: 4px 0 4px 20px;
+          position: relative;
+          color: #1a1a1a;
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .accordion-list li:before {
+          content: '•';
+          position: absolute;
+          left: 0;
+          color: #1a1a1a;
+          font-weight: 700;
+        }
+
+        .care-intro {
+          font-size: 13px;
+          color: #1a1a1a;
+          line-height: 1.6;
           margin-bottom: 6px;
         }
 
-        .review-item p {
-          color: #666;
-          line-height: 1.6;
+        .specifications-container {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
         }
 
-        .related-products {
-          margin-bottom: 40px;
+        .spec-category h4 {
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: #1a1a1a;
+          margin: 0 0 4px 0;
+          letter-spacing: 0.5px;
         }
 
-        .related-products h2 {
-          font-size: 22px;
-          margin-bottom: 20px;
+        .warranty-details p {
+          font-size: 13px;
+          color: #1a1a1a;
+          margin: 0 0 6px 0;
         }
 
-        .products-grid {
+        .warranty-plans {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 24px;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 8px;
+          margin-top: 8px;
         }
 
-        @media (max-width: 1024px) {
-          .product-main {
-            grid-template-columns: 1fr;
-            gap: 40px;
-          }
-
-          .product-gallery {
-            position: static;
-          }
+        .plan-card {
+          background: #f9f9f9;
+          border: 1px solid #eee;
+          border-radius: 4px;
+          padding: 8px;
         }
 
-        /* ===== NEW SECTIONS CSS ===== */
+        .plan-card h5 {
+          margin: 0 0 4px 0;
+          color: #1a1a1a;
+          font-size: 13px;
+          font-weight: 600;
+        }
 
+        .plan-price {
+          font-size: 16px;
+          font-weight: 700;
+          color: #1a1a1a;
+        }
+
+        .plan-duration {
+          font-size: 12px;
+          color: #1a1a1a;
+        }
+
+        /* ========== VARIANTS ========== */
         .variants-section {
-          margin: 12px 0;
-          padding: 12px 0;
-          border-top: 1px solid #e9ecef;
-          border-bottom: 1px solid #e9ecef;
+          margin: 4px 0;
+          padding: 8px 0;
+          border-top: 1px solid #eee;
         }
 
         .variants-section h4 {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
           color: #1a1a1a;
         }
 
         .variants-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-          gap: 12px;
+          grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+          gap: 8px;
         }
 
         .variant-card {
-          border: 2px solid #e9ecef;
-          border-radius: 8px;
-          padding: 8px;
+          border: 2px solid #e5e5e5;
+          border-radius: 4px;
+          padding: 6px;
           cursor: pointer;
           text-align: center;
-          transition: all 0.3s ease;
+          transition: all 0.2s;
         }
 
         .variant-card:hover {
-          border-color: #007bff;
-          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+          border-color: #e67e22;
         }
 
         .variant-card.active {
-          border-color: #007bff;
-          background: rgba(0, 123, 255, 0.05);
+          border-color: #e67e22;
+          background: #fdf2e9;
         }
 
         .variant-image {
-          margin-bottom: 8px;
-          height: 60px;
+          margin-bottom: 4px;
+          height: 50px;
           display: flex;
           align-items: center;
           justify-content: center;
           overflow: hidden;
         }
 
-        .variant-image img {
-          max-width: 100%;
-          max-height: 100%;
-        }
-
         .variant-name {
-          font-size: 12px;
-          color: #666;
+          font-size: 10px;
+          color: #1a1a1a;
           display: block;
           text-transform: capitalize;
         }
 
+        /* ===== LIMITED STOCK ===== */
         .limited-stock-alert {
-          background: #fff3cd;
-          border: 1px solid #ffc107;
-          border-radius: 6px;
-          padding: 10px 12px;
-          margin: 8px 0;
+          background: #fef5e7;
+          border: 1px solid #f0c36d;
+          border-radius: 4px;
+          padding: 8px 10px;
           display: flex;
           align-items: center;
-          gap: 12px;
-          color: #856404;
+          gap: 8px;
+          color: #8a6914;
           font-weight: 600;
+          font-size: 12px;
         }
 
-        .alert-icon {
-          font-size: 18px;
-        }
-
+        /* ===== ASSURANCE ===== */
         .product-assurance {
           display: flex;
-          gap: 16px;
-          margin: 8px 0;
-          padding: 12px 0;
-          border-top: 1px solid #e9ecef;
-          border-bottom: 1px solid #e9ecef;
+          gap: 12px;
+          padding: 8px 0;
+          border-top: 1px solid #f0f0f0;
           flex-wrap: wrap;
         }
 
@@ -2331,32 +2161,32 @@ export default function ProductDetailClient({
         .assurance-badge {
           display: flex;
           align-items: center;
-          gap: 6px;
-          font-size: 13px;
-          color: #555;
+          gap: 4px;
+          font-size: 11px;
+          color: #1a1a1a;
           font-weight: 500;
         }
 
         .people-viewing .icon,
         .assurance-badge .badge-icon {
-          font-size: 16px;
-          line-height: 1;
+          font-size: 14px;
         }
 
+        /* ===== OFFERS ===== */
         .offers-section {
-          margin: 12px 0;
-          padding: 16px;
-          background: linear-gradient(135deg, #fff8f0 0%, #fffaf7 100%);
-          border-radius: 8px;
-          border: 1px solid #ffe6d5;
+          margin: 4px 0;
+          padding: 8px 0;
+          background: #ffffff;
+          border-radius: 0;
+          border: none;
         }
 
         .offers-section h4 {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           text-transform: uppercase;
-          margin-bottom: 10px;
-          color: #ff6b35;
+          margin-bottom: 6px;
+          color: #1a1a1a;
         }
 
         .offers-list {
@@ -2365,139 +2195,130 @@ export default function ProductDetailClient({
           margin: 0;
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 6px;
         }
 
         .offer-item {
           display: flex;
           align-items: flex-start;
-          gap: 12px;
-          font-size: 13px;
-          color: #666;
-          line-height: 1.4;
+          gap: 6px;
+          font-size: 12px;
+          color: #1a1a1a;
+          line-height: 1.3;
         }
 
-        .offer-icon {
-          font-size: 16px;
-          flex-shrink: 0;
-          margin-top: 2px;
-        }
-
-        .offer-text {
-          flex: 1;
-        }
+        .offer-text { flex: 1; }
 
         .promo-code {
-          background: #ff6b35;
+          background: #e67e22;
           color: white;
-          padding: 2px 6px;
-          border-radius: 4px;
+          padding: 1px 5px;
+          border-radius: 3px;
           font-weight: 700;
-          font-size: 11px;
-          margin-left: 6px;
-          display: inline-block;
+          font-size: 10px;
+          margin-left: 4px;
         }
 
+        /* ===== EMI ===== */
         .emi-section {
-          margin: 12px 0;
+          margin: 4px 0;
           padding: 0;
         }
 
         .emi-section h4 {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           text-transform: uppercase;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
           color: #1a1a1a;
         }
 
         .emi-cards {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-          gap: 12px;
+          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+          gap: 8px;
         }
 
         .emi-card {
-          border: 1px solid #e9ecef;
-          border-radius: 6px;
-          padding: 10px;
+          border: 1px solid #e5e5e5;
+          border-radius: 4px;
+          padding: 6px;
           text-align: center;
-          transition: all 0.3s ease;
+          transition: all 0.2s;
           cursor: pointer;
         }
 
         .emi-card:hover {
-          border-color: #007bff;
-          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+          border-color: #e67e22;
         }
 
         .bank-name {
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 700;
-          color: #666;
-          margin-bottom: 6px;
-          text-transform: capitalize;
-        }
-
-        .emi-amount {
-          font-size: 18px;
-          font-weight: 700;
-          color: #007bff;
+          color: #1a1a1a;
           margin-bottom: 4px;
         }
 
-        .emi-tenure {
-          font-size: 12px;
-          color: #999;
+        .emi-amount {
+          font-size: 15px;
+          font-weight: 700;
+          color: #1a1a1a;
+          margin-bottom: 2px;
         }
 
+        .emi-tenure {
+          font-size: 11px;
+          color: #1a1a1a;
+        }
+
+        /* ===== PROTECTION PLAN ===== */
         .protection-plan-section {
-          margin: 12px 0;
-          padding: 14px;
-          background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
-          border: 1px solid #e3f2fd;
-          border-radius: 6px;
+          margin: 2px 0;
+          padding: 6px 0;
+          background: #ffffff;
+          border: none;
+          border-radius: 0;
         }
 
         .protection-plan-section h4 {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           text-transform: uppercase;
-          margin-bottom: 10px;
-          color: #007bff;
+          margin-bottom: 6px;
+          color: #1a1a1a;
         }
 
         .warranty-cards {
           display: flex;
           flex-direction: column;
-          gap: 10px;
-          margin-bottom: 12px;
+          gap: 6px;
+          margin-bottom: 8px;
         }
 
         .warranty-card {
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 10px;
-          border: 1px solid #e9ecef;
-          border-radius: 6px;
+          gap: 6px;
+          padding: 6px 8px;
+          border: 1px solid #e5e5e5;
+          border-radius: 4px;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.2s;
         }
 
         .warranty-card:hover {
-          border-color: #007bff;
-          background: rgba(0, 123, 255, 0.02);
+          border-color: #e67e22;
         }
 
         .warranty-card.selected {
-          border-color: #007bff;
-          background: rgba(0, 123, 255, 0.05);
+          border-color: #e67e22;
+          background: #fdf2e9;
         }
 
         .warranty-card input[type="radio"] {
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
+          accent-color: #e67e22;
           cursor: pointer;
           flex-shrink: 0;
         }
@@ -2510,166 +2331,466 @@ export default function ProductDetailClient({
         }
 
         .warranty-name {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 600;
           color: #1a1a1a;
         }
 
         .warranty-price {
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 700;
-          color: #007bff;
+          color: #1a1a1a;
         }
 
         .warranty-description {
-          font-size: 13px;
-          color: #666;
-          line-height: 1.6;
-          margin-top: 12px;
-          padding: 12px;
+          font-size: 12px;
+          color: #1a1a1a;
+          line-height: 1.5;
+          margin-top: 6px;
+          padding: 8px;
           background: white;
-          border-radius: 6px;
+          border-radius: 4px;
         }
 
-        .warranty-summary {
-          margin-top: 16px;
-        }
+        .warranty-summary { margin-top: 12px; }
 
         .warranty-cost-breakdown {
-          background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
-          border: 1px solid #e3f2fd;
-          border-radius: 8px;
-          padding: 16px;
-          margin-top: 12px;
+          background: #ffffff;
+          border: 1px solid #eee;
+          border-radius: 4px;
+          padding: 8px 10px;
+          margin-top: 6px;
         }
 
         .cost-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 10px 0;
-          border-bottom: 1px solid #e9ecef;
-          font-size: 14px;
+          padding: 6px 0;
+          border-bottom: 1px solid #f0f0f0;
+          font-size: 13px;
         }
 
         .cost-row.total {
           border-bottom: none;
-          padding: 12px 0;
+          border-top: 1px solid #ddd;
+          padding-top: 8px;
           margin-top: 4px;
-          padding-top: 12px;
-          border-top: 2px solid #007bff;
         }
 
-        .cost-label {
-          color: #555;
-          font-weight: 600;
+        .cost-label { color: #1a1a1a; font-weight: 600; }
+        .cost-value { color: #1a1a1a; font-weight: 600; }
+        .cost-row.total .cost-label { color: #333; font-size: 14px; }
+        .total-price { color: #1a1a1a; font-size: 16px; font-weight: 700; }
+
+        /* ===== DELIVERY CHECKER ===== */
+        .delivery-checker-section {
+          background: #ffffff;
+          border: none;
+          border-radius: 0;
+          padding: 6px 0;
+          margin: 2px 0;
         }
 
-        .cost-value {
+        .delivery-checker-section h4 {
+          font-size: 13px;
+          font-weight: 700;
           color: #1a1a1a;
+          margin-bottom: 8px;
+        }
+
+        .pincode-input-group {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 12px;
+          flex-wrap: wrap;
+        }
+
+        .input-wrapper {
+          display: flex;
+          gap: 6px;
+          flex: 1;
+          min-width: 240px;
+        }
+
+        .pincode-input {
+          flex: 1;
+          padding: 8px 10px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 13px;
           font-weight: 600;
+          letter-spacing: 1px;
+          transition: border-color 0.2s;
         }
 
-        .cost-row.total .cost-label {
-          color: #007bff;
-          font-size: 16px;
+        .pincode-input:focus {
+          outline: none;
+          border-color: #e67e22;
         }
 
-        .total-price {
-          color: #28a745;
-          font-size: 18px;
+        .check-delivery-btn {
+          padding: 8px 14px;
+          background: #e67e22;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.2s;
+          white-space: nowrap;
+        }
+
+        .check-delivery-btn:hover:not(:disabled) {
+          background: #d35400;
+        }
+
+        .check-delivery-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .locate-btn {
+          padding: 10px 14px;
+          background: #333;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s;
+          white-space: nowrap;
+        }
+
+        .locate-btn:hover {
+          background: #1a1a1a;
+        }
+
+        /* Delivery Results */
+        .delivery-result {
+          margin-top: 10px;
+          padding: 12px;
+          border-radius: 4px;
+        }
+
+        .delivery-result.success {
+          background: #f5f5f5;
+          border: 1px solid #e0e0e0;
+        }
+
+        .delivery-result.unavailable {
+          background: #f5f5f5;
+          border: 1px solid #e0e0e0;
+        }
+
+        .result-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+
+        .status-icon { font-size: 18px; font-weight: bold; }
+        .delivery-result.success .status-icon { color: #1a1a1a; }
+        .delivery-result.unavailable .status-icon { color: #1a1a1a; }
+
+        .result-header h5 {
+          margin: 0;
+          font-size: 14px;
           font-weight: 700;
         }
 
+        .delivery-result.success .result-header h5 { color: #1a1a1a; }
+        .delivery-result.unavailable .result-header h5 { color: #1a1a1a; }
+
+        .delivery-details {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .detail-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 4px 0;
+          font-size: 13px;
+        }
+
+        .detail-label { color: #1a1a1a; font-weight: 600; }
+        .detail-value { color: #1a1a1a; font-weight: 600; }
+
+        .free-shipping {
+          color: #1a1a1a;
+          font-weight: 700;
+          background: #f0f0f0;
+          padding: 2px 8px;
+          border-radius: 10px;
+          font-size: 12px;
+        }
+
+        .unavailable-message {
+          margin: 0 0 8px 0;
+          color: #c0392b;
+          font-size: 13px;
+        }
+
+        .request-delivery-btn {
+          width: 100%;
+          padding: 10px 14px;
+          background: #e67e22;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .request-delivery-btn:hover {
+          background: #d35400;
+        }
+
+        /* Delivery Request Form */
+        .delivery-request-form {
+          background: white;
+          border: 1px solid #eee;
+          border-radius: 4px;
+          padding: 14px;
+          margin-top: 10px;
+        }
+
+        .delivery-request-form h5 {
+          margin: 0 0 4px 0;
+          font-size: 14px;
+          font-weight: 700;
+          color: #333;
+        }
+
+        .form-subtitle {
+          margin: 0 0 12px 0;
+          font-size: 12px;
+          color: #1a1a1a;
+        }
+
+        .form-group { margin-bottom: 10px; }
+
+        .form-group label {
+          display: block;
+          font-size: 11px;
+          font-weight: 700;
+          color: #1a1a1a;
+          margin-bottom: 4px;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
+
+        .form-input {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 13px;
+          font-family: inherit;
+          transition: border-color 0.2s;
+          box-sizing: border-box;
+        }
+
+        .form-input:focus {
+          outline: none;
+          border-color: #e67e22;
+        }
+
+        .form-actions {
+          display: flex;
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .submit-request-btn {
+          flex: 1;
+          padding: 10px 14px;
+          background: #e67e22;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .submit-request-btn:hover {
+          background: #d35400;
+        }
+
+        .cancel-request-btn {
+          flex: 1;
+          padding: 10px 14px;
+          background: #f5f5f5;
+          color: #1a1a1a;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .cancel-request-btn:hover {
+          background: #e9e9e9;
+        }
+
+        /* ===== DELIVERY & STORES ===== */
         .delivery-stores-section {
-          margin: 12px 0;
-          padding: 0;
+          margin: 4px 0;
         }
 
         .delivery-stores-section h4 {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           text-transform: uppercase;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
           color: #1a1a1a;
         }
 
         .stores-list {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 6px;
         }
 
         .store-card {
-          border: 1px solid #e9ecef;
-          border-radius: 6px;
+          border: none;
+          border-radius: 4px;
           overflow: hidden;
-          transition: all 0.3s ease;
+          transition: border-color 0.2s;
         }
 
         .store-card:hover {
-          border-color: #007bff;
-          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+          border-color: transparent;
+        }
+
+        .store-pincode-input {
+          display: flex;
+          gap: 6px;
+          margin-bottom: 8px;
+        }
+
+        .pincode-field {
+          flex: 1;
+          padding: 8px 10px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 1px;
+          transition: border-color 0.2s;
+        }
+
+        .pincode-field:focus {
+          outline: none;
+          border-color: #e67e22;
+        }
+
+        .pincode-check-btn {
+          padding: 8px 14px;
+          background: #e67e22;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.2s;
+          white-space: nowrap;
+        }
+
+        .pincode-check-btn:hover:not(:disabled) {
+          background: #d35400;
+        }
+
+        .pincode-check-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
 
         .store-header {
-          padding: 10px;
+          padding: 8px 10px;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          cursor: pointer;
-          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+          background: #ffffff;
+        }
+
+        .store-hours {
+          font-size: 11px;
+          color: #1a1a1a;
+          margin: 2px 0;
+        }
+
+        .store-map-link {
+          display: inline-block;
+          margin-top: 4px;
+          font-size: 12px;
+          color: #1a1a1a;
+          font-weight: 600;
+          text-decoration: none;
+        }
+
+        .store-map-link:hover {
+          text-decoration: underline;
         }
 
         .store-info {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 2px;
         }
 
         .store-name {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           color: #1a1a1a;
         }
 
         .store-distance {
-          font-size: 12px;
-          color: #999;
+          font-size: 11px;
+          color: #1a1a1a;
         }
 
         .store-delivery {
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 600;
-          color: #28a745;
-          white-space: nowrap;
+          color: #1a1a1a;
         }
 
         .store-details {
           padding: 8px 10px;
           background: white;
-          border-top: 1px solid #e9ecef;
+          border-top: 1px solid #f0f0f0;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 4px;
         }
 
         .store-address {
-          font-size: 12px;
-          color: #666;
-          line-height: 1.5;
+          font-size: 11px;
+          color: #1a1a1a;
+          line-height: 1.4;
           margin: 0;
         }
 
         .store-phone {
           display: flex;
-          gap: 8px;
-          font-size: 12px;
-          color: #666;
+          gap: 6px;
+          font-size: 11px;
+          color: #1a1a1a;
         }
 
         .store-phone a {
-          color: #007bff;
+          color: #1a1a1a;
           font-weight: 600;
           text-decoration: none;
         }
@@ -2678,379 +2799,184 @@ export default function ProductDetailClient({
           text-decoration: underline;
         }
 
-        .specifications-container {
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
+        /* ========== RELATED PRODUCTS ========== */
+        .related-products {
+          margin: 24px 0 40px;
+          padding-top: 20px;
+          border-top: 1px solid #eee;
         }
 
-        .spec-category {
-          border-bottom: 1px solid #e9ecef;
-          padding-bottom: 24px;
-        }
-
-        .spec-category:last-child {
-          border-bottom: none;
-        }
-
-        .spec-category h4 {
-          font-size: 13px;
+        .related-products h2 {
+          font-size: 18px;
           font-weight: 700;
-          text-transform: uppercase;
-          color: #007bff;
-          margin-bottom: 12px;
-          letter-spacing: 0.5px;
-        }
-
-        /* DELIVERY CHECKER SECTION */
-        .delivery-checker-section {
-          background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
-          border: 1px solid #e3f2fd;
-          border-radius: 10px;
-          padding: 24px;
-          margin-bottom: 20px;
-        }
-
-        .delivery-checker-section h4 {
-          font-size: 16px;
-          font-weight: 700;
-          color: #1a1a1a;
           margin-bottom: 16px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .pincode-input-group {
-          display: flex;
-          gap: 12px;
-          margin-bottom: 18px;
-          flex-wrap: wrap;
-        }
-
-        .input-wrapper {
-          display: flex;
-          gap: 8px;
-          flex: 1;
-          min-width: 280px;
-        }
-
-        .pincode-input {
-          flex: 1;
-          padding: 12px 16px;
-          border: 1.5px solid #e9ecef;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 600;
-          letter-spacing: 1px;
-          transition: all 0.3s ease;
-        }
-
-        .pincode-input:focus {
-          outline: none;
-          border-color: #007bff;
-          box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-        }
-
-        .pincode-input::placeholder {
-          color: #999;
-        }
-
-        .check-delivery-btn {
-          padding: 12px 24px;
-          background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          white-space: nowrap;
-        }
-
-        .check-delivery-btn:hover:not(:disabled) {
-          background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
-          box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-          transform: translateY(-1px);
-        }
-
-        .check-delivery-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .locate-btn {
-          padding: 12px 20px;
-          background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          white-space: nowrap;
-        }
-
-        .locate-btn:hover {
-          background: linear-gradient(135deg, #1e7e34 0%, #155c2e 100%);
-          box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
-          transform: translateY(-1px);
-        }
-
-        /* Delivery Results */
-        .delivery-result {
-          margin-top: 16px;
-          padding: 16px;
-          border-radius: 8px;
-          animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .delivery-result.success {
-          background: #f0fdf4;
-          border: 1px solid #dcfce7;
-        }
-
-        .delivery-result.unavailable {
-          background: #fef2f2;
-          border: 1px solid #fee2e2;
-        }
-
-        .result-header {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 12px;
-        }
-
-        .status-icon {
-          font-size: 24px;
-          font-weight: bold;
-        }
-
-        .delivery-result.success .status-icon {
-          color: #22c55e;
-        }
-
-        .delivery-result.unavailable .status-icon {
-          color: #ef4444;
-        }
-
-        .result-header h5 {
-          margin: 0;
-          font-size: 16px;
-          font-weight: 700;
           color: #1a1a1a;
         }
 
-        .delivery-result.success .result-header h5 {
-          color: #15803d;
+        .products-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 16px;
         }
 
-        .delivery-result.unavailable .result-header h5 {
-          color: #991b1b;
-        }
-
-        .delivery-details {
+        /* ========== FULLSCREEN LIGHTBOX ========== */
+        .lightbox-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.92);
+          z-index: 9999;
           display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .detail-row {
-          display: flex;
-          justify-content: space-between;
           align-items: center;
-          padding: 8px 0;
-          font-size: 14px;
+          justify-content: center;
+          animation: fadeIn 0.2s ease;
         }
 
-        .detail-label {
-          color: #666;
-          font-weight: 600;
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
-        .detail-value {
-          color: #1a1a1a;
-          font-weight: 700;
+        .lightbox-content {
+          position: relative;
+          width: 90vw;
+          height: 90vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
-        .free-shipping {
-          color: #22c55e;
-          font-weight: 700;
-          background: #f0fdf4;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 13px;
+        .lightbox-close {
+          position: absolute;
+          top: 0;
+          right: 0;
+          background: rgba(255,255,255,0.1);
+          border: none;
+          color: white;
+          cursor: pointer;
+          padding: 10px;
+          border-radius: 50%;
+          z-index: 10;
+          transition: background 0.2s;
         }
 
-        .unavailable-message {
-          margin: 0 0 12px 0;
-          color: #991b1b;
-          font-size: 14px;
-          line-height: 1.6;
+        .lightbox-close:hover {
+          background: rgba(255,255,255,0.25);
         }
 
-        .request-delivery-btn {
+        .lightbox-arrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(255,255,255,0.1);
+          border: none;
+          color: white;
+          cursor: pointer;
+          padding: 14px;
+          border-radius: 50%;
+          z-index: 10;
+          transition: background 0.2s;
+        }
+
+        .lightbox-arrow:hover {
+          background: rgba(255,255,255,0.25);
+        }
+
+        .lightbox-prev { left: 10px; }
+        .lightbox-next { right: 10px; }
+
+        .lightbox-image-wrapper {
           width: 100%;
-          padding: 12px 16px;
-          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .request-delivery-btn:hover {
-          background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-          box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-          transform: translateY(-1px);
-        }
-
-        /* Delivery Request Form */
-        .delivery-request-form {
-          background: white;
-          border: 1px solid #e9ecef;
-          border-radius: 8px;
+          height: 100%;
+          max-width: 80vw;
+          max-height: 80vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           padding: 20px;
-          margin-top: 16px;
         }
 
-        .delivery-request-form h5 {
-          margin: 0 0 4px 0;
-          font-size: 16px;
-          font-weight: 700;
-          color: #1a1a1a;
+        .lightbox-image-wrapper img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain !important;
+          width: auto !important;
+          height: auto !important;
         }
 
-        .form-subtitle {
-          margin: 0 0 16px 0;
+        .lightbox-counter {
+          position: absolute;
+          bottom: 60px;
+          left: 50%;
+          transform: translateX(-50%);
+          color: rgba(255,255,255,0.7);
           font-size: 13px;
-          color: #666;
+          font-weight: 500;
         }
 
-        .form-group {
-          margin-bottom: 16px;
-        }
-
-        .form-group label {
-          display: block;
-          font-size: 13px;
-          font-weight: 700;
-          color: #555;
-          margin-bottom: 6px;
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
-        }
-
-        .form-input {
-          width: 100%;
-          padding: 12px 14px;
-          border: 1.5px solid #e9ecef;
-          border-radius: 6px;
-          font-size: 14px;
-          font-family: inherit;
-          transition: all 0.3s ease;
-          box-sizing: border-box;
-        }
-
-        .form-input:focus {
-          outline: none;
-          border-color: #007bff;
-          box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-        }
-
-        .form-actions {
+        .lightbox-thumbnails {
+          position: absolute;
+          bottom: 10px;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
-          gap: 12px;
-          margin-top: 20px;
+          gap: 6px;
         }
 
-        .submit-request-btn {
-          flex: 1;
-          padding: 12px 16px;
-          background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 700;
+        .lightbox-thumb {
+          width: 48px;
+          height: 48px;
+          border: 2px solid transparent;
+          border-radius: 4px;
+          overflow: hidden;
           cursor: pointer;
-          transition: all 0.3s ease;
+          padding: 0;
+          background: none;
+          opacity: 0.5;
+          transition: all 0.2s;
         }
 
-        .submit-request-btn:hover {
-          background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
-          box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-          transform: translateY(-1px);
+        .lightbox-thumb.active,
+        .lightbox-thumb:hover {
+          border-color: #e67e22;
+          opacity: 1;
         }
 
-        .cancel-request-btn {
-          flex: 1;
-          padding: 12px 16px;
-          background: #f3f4f6;
-          color: #555;
-          border: 1px solid #e9ecef;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s ease;
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1200px) {
+          .magnifier-preview {
+            display: none;
+          }
         }
 
-        .cancel-request-btn:hover {
-          background: #e5e7eb;
-          border-color: #d1d5db;
+        @media (max-width: 1024px) {
+          .product-main {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+
+          .product-gallery {
+            position: static;
+          }
+
+          .product-info-section {
+            max-height: none;
+          }
         }
 
         @media (max-width: 768px) {
           .product-main {
-            padding: 24px;
-            grid-template-columns: 1fr;
-          }
-
-          .product-gallery {
-            margin-bottom: 24px;
-          }
-
-          .nav-arrow {
-            width: 40px;
-            height: 40px;
-          }
-
-          .prev-arrow {
-            left: 8px;
-          }
-
-          .next-arrow {
-            right: 8px;
-          }
-
-          .zoom-hint {
-            display: none;
+            padding: 12px 0;
           }
 
           .product-title {
-            font-size: 24px;
+            font-size: 18px;
           }
 
           .current-price {
-            font-size: 28px;
+            font-size: 22px;
           }
 
           .action-buttons {
@@ -3061,39 +2987,12 @@ export default function ProductDetailClient({
             width: 100%;
           }
 
-          .tabs-header {
-            overflow-x: auto;
+          .key-features {
+            grid-template-columns: 1fr;
           }
 
-          .tabs-header button {
-            white-space: nowrap;
-          }
-
-          .tabs-content {
-            padding: 18px;
-          }
-
-          .variants-grid {
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-          }
-
-          .emi-cards {
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-          }
-
-          .product-assurance {
-            flex-direction: column;
-            gap: 12px;
-          }
-
-          .store-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-          }
-
-          .store-delivery {
-            width: 100%;
+          .details-grid {
+            grid-template-columns: 1fr 1fr;
           }
 
           .pincode-input-group {
@@ -3104,29 +3003,17 @@ export default function ProductDetailClient({
             min-width: auto;
           }
 
-          .check-delivery-btn,
-          .locate-btn {
-            width: 100%;
-          }
-
-          .delivery-checker-section {
-            padding: 16px;
-          }
-
           .form-actions {
             flex-direction: column;
           }
 
-          .submit-request-btn,
-          .cancel-request-btn {
-            width: 100%;
+          .lightbox-image-wrapper {
+            max-width: 95vw;
+            padding: 10px;
           }
 
-          .detail-row {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 4px;
-          }
+          .lightbox-prev { left: 4px; }
+          .lightbox-next { right: 4px; }
         }
       `}</style>
 
@@ -3179,35 +3066,38 @@ function RelatedProductCard({ product }) {
       </div>
 
       <style jsx>{`
+        /* ========== RELATED PRODUCT CARD ========== */
         .related-product-card {
           background: white;
-          border-radius: 12px;
+          border: 1px solid #eee;
+          border-radius: 4px;
           overflow: hidden;
           text-decoration: none;
           color: inherit;
-          transition: all 0.3s;
+          transition: all 0.2s;
         }
 
         .related-product-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+          border-color: #e67e22;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.08);
         }
 
         .product-image {
           width: 100%;
-          height: 280px;
+          height: 240px;
           overflow: hidden;
-          background: #f8f9fa;
+          background: #f9f9f9;
         }
 
         .product-info {
-          padding: 16px;
+          padding: 12px;
         }
 
         .product-info h4 {
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 600;
-          margin: 0 0 8px 0;
+          margin: 0 0 6px 0;
+          color: #1a1a1a;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
@@ -3217,468 +3107,36 @@ function RelatedProductCard({ product }) {
         .rating {
           display: flex;
           align-items: center;
-          gap: 6px;
-          margin-bottom: 8px;
+          gap: 4px;
+          margin-bottom: 6px;
         }
 
         .stars {
-          color: #ffc107;
-          font-size: 14px;
+          color: #f39c12;
+          font-size: 13px;
         }
 
         .count {
-          font-size: 12px;
-          color: #666;
+          font-size: 11px;
+          color: #1a1a1a;
         }
 
         .price {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 8px;
         }
 
         .current {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 700;
-          color: #28a745;
+          color: #1a1a1a;
         }
 
         .original {
-          font-size: 14px;
-          color: #999;
-          text-decoration: line-through;
-        }
-
-        /* WARRANTY TAB STYLES */
-        .warranty-tab {
-          padding: 20px 0;
-        }
-
-        .warranty-details {
-          background: #ffffff;
-          padding: 20px;
-          border-radius: 8px;
-          margin-bottom: 20px;
-        }
-
-        .warranty-details h4 {
-          margin-top: 16px;
-          margin-bottom: 10px;
-          color: #1a1a1a;
-          font-size: 15px;
-          font-weight: 600;
-        }
-
-        .warranty-list {
-          list-style: none;
-          padding: 0;
-          margin: 12px 0 0 0;
-        }
-
-        .warranty-list li {
-          padding: 10px 0 10px 10px;
-          color: #555;
-          font-size: 13px;
-          line-height: 1.6;
-          position: relative;
-        }
-
-        .warranty-list li:before {
-          content: "✓";
-          position: absolute;
-          left: -10px;
-          color: #28a745;
-          font-weight: bold;
-        }
-
-        .warranty-plans {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 16px;
-          margin-top: 16px;
-        }
-
-        .plan-card {
-          background: white;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          padding: 16px;
-          transition: all 0.3s ease;
-        }
-
-        .plan-card:hover {
-          border-color: #007bff;
-          box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
-        }
-
-        .plan-card h5 {
-          margin: 0 0 8px 0;
-          color: #1a1a1a;
-          font-size: 14px;
-          font-weight: 600;
-        }
-
-        .plan-price {
-          font-size: 18px;
-          font-weight: 700;
-          color: #28a745;
-          margin: 8px 0;
-        }
-
-        .plan-duration {
-          font-size: 13px;
-          color: #666;
-          margin: 4px 0;
-        }
-
-        .plan-description {
-          font-size: 13px;
-          color: #666;
-          line-height: 1.5;
-          margin: 8px 0;
-        }
-
-        /* CARE TAB STYLES */
-        .care-tab {
-          padding: 0;
-        }
-
-        .care-content {
-          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-          padding: 24px;
-          border-radius: 8px;
-          border: 1px solid #e9ecef;
-        }
-
-        .care-content h4 {
-          margin-top: 20px;
-          margin-bottom: 12px;
-          color: #007bff;
-          font-size: 14px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          padding-bottom: 8px;
-          border-bottom: 2px solid #007bff;
-          display: inline-block;
-        }
-
-        .care-content h4:first-child {
-          margin-top: 0;
-        }
-
-        .care-list {
-          list-style: none;
-          padding: 0;
-          margin: 12px 0 18px 0;
-        }
-
-        .care-list li {
-          padding: 10px 0 10px 10px;
-          position: relative;
-          color: #555;
-          font-size: 13px;
-          line-height: 1.6;
-        }
-
-        .care-list li:before {
-          content: "•";
-          position: absolute;
-          left: -10px;
-          color: #28a745;
-          font-weight: bold;
-          font-size: 14px;
-        }
-
-        .care-list li strong {
-          color: #1a1a1a;
-        }
-
-        /* BRAND TAB STYLES */
-        .brand-tab {
-          padding: 0;
-        }
-
-        .brand-content {
-          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-          padding: 24px;
-          border-radius: 8px;
-          border: 1px solid #e9ecef;
-        }
-
-        .brand-section {
-          margin-bottom: 24px;
-        }
-
-        .brand-section h4 {
-          margin-top: 0;
-          margin-bottom: 10px;
-          color: #007bff;
-          font-size: 14px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          padding-bottom: 8px;
-          border-bottom: 2px solid #007bff;
-          display: inline-block;
-        }
-
-        .brand-section p {
-          color: #555;
-          font-size: 13px;
-          line-height: 1.6;
-          margin-bottom: 14px;
-        }
-
-        .brand-highlights {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-          gap: 12px;
-          margin-top: 14px;
-          margin-bottom: 20px;
-        }
-
-        .highlight-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 12px;
-          background: white;
-          border-radius: 6px;
-          border: 1px solid #e9ecef;
-          border-left: 3px solid #28a745;
-          transition: all 0.3s ease;
-        }
-
-        .highlight-item:hover {
-          box-shadow: 0 2px 8px rgba(40, 167, 69, 0.1);
-          border-left-color: #007bff;
-        }
-
-        .highlight-icon {
-          font-size: 20px;
-          flex-shrink: 0;
-        }
-
-        .highlight-text {
-          font-size: 13px;
-          font-weight: 600;
-          color: #1a1a1a;
-        }
-          font-size: 13px;
-          font-weight: 600;
-          color: #1a1a1a;
-        }
-
-        .category-section {
-          margin-top: 16px;
-          padding-top: 16px;
-          border-top: 1px solid #ddd;
-        }
-
-        .category-section h4 {
-          margin-top: 0;
-          margin-bottom: 8px;
-          color: #1a1a1a;
-          font-size: 15px;
-          font-weight: 600;
-        }
-
-        .category-section p {
-          color: #666;
-          font-size: 14px;
-          line-height: 1.6;
-          margin-bottom: 12px;
-        }
-
-        .view-collection-link {
-          display: inline-block;
-          color: #007bff;
-          font-weight: 600;
-          text-decoration: none;
-          font-size: 14px;
-          transition: color 0.2s;
-        }
-
-        .view-collection-link:hover {
-          color: #0056b3;
-        }
-
-        .collection-benefits {
-          margin-top: 20px;
-          padding-top: 16px;
-          border-top: 1px solid #ddd;
-        }
-
-        .collection-benefits h4 {
-          margin-top: 0;
-          margin-bottom: 10px;
-          color: #1a1a1a;
-          font-size: 15px;
-          font-weight: 600;
-        }
-
-        .collection-benefits ul {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
-
-        .collection-benefits li {
-          padding: 8px 0 8px 10px;
-          position: relative;
-          color: #666;
-          font-size: 14px;
-          line-height: 1.6;
-        }
-
-        .collection-benefits li:before {
-          content: "✓";
-          position: absolute;
-          left: -10px;
-          color: #28a745;
-          font-weight: bold;
-        }
-
-        /* STORES TAB STYLES */
-        .stores-tab {
-          padding: 20px 0;
-        }
-
-        .stores-intro {
-          color: #666;
-          font-size: 14px;
-          margin-bottom: 16px;
-          line-height: 1.6;
-        }
-
-        .stores-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 16px;
-        }
-
-        .store-detailed-card {
-          background: white;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          overflow: hidden;
-          transition: all 0.3s ease;
-        }
-
-        .store-detailed-card:hover {
-          border-color: #007bff;
-          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
-        }
-
-        .store-header-detail {
-          padding: 14px 16px;
-          background: #ffffff;
-          border-bottom: 1px solid #e9ecef;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .store-header-detail h4 {
-          margin: 0;
-          color: #1a1a1a;
-          font-size: 14px;
-          font-weight: 600;
-        }
-
-        .store-distance {
           font-size: 12px;
           color: #666;
-          white-space: nowrap;
-        }
-
-        .store-body-detail {
-          padding: 16px;
-        }
-
-        .store-address-detail {
-          font-size: 13px;
-          color: #666;
-          line-height: 1.6;
-          margin: 0 0 12px 0;
-        }
-
-        .store-phone-detail {
-          font-size: 13px;
-          color: #666;
-          margin: 0 0 8px 0;
-        }
-
-        .store-phone-detail a {
-          color: #007bff;
-          font-weight: 600;
-          text-decoration: none;
-        }
-
-        .store-phone-detail a:hover {
-          text-decoration: underline;
-        }
-
-        .store-delivery-detail {
-          font-size: 13px;
-          color: #28a745;
-          font-weight: 600;
-          margin: 0 0 12px 0;
-        }
-
-        .store-directions-btn {
-          width: 100%;
-          padding: 12px 16px;
-          background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 13px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-        }
-
-        .store-directions-btn:hover {
-          background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
-          box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-          transform: translateY(-1px);
-        }
-
-        .store-directions-btn:active {
-          transform: translateY(0);
-        }
-
-        .no-stores {
-          background: #ffffff;
-          padding: 30px 20px;
-          border-radius: 8px;
-          text-align: center;
-        }
-
-        .no-stores p {
-          color: #666;
-          font-size: 14px;
-          margin: 0 0 12px 0;
-          line-height: 1.6;
-        }
-
-        .store-locator-link {
-          display: inline-block;
-          color: #007bff;
-          font-weight: 600;
-          text-decoration: none;
-          font-size: 14px;
-          transition: color 0.2s;
-        }
-
-        .store-locator-link:hover {
-          color: #0056b3;
+          text-decoration: line-through;
         }
       `}</style>
     </Link>
