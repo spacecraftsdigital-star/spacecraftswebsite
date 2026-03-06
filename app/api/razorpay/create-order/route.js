@@ -25,7 +25,16 @@ export async function POST(request) {
     }
 
     const body = await request.json()
-    const { items = [], address_id, paymentType = 'cart', productId, quantity = 1 } = body
+    const { 
+      items = [], 
+      address_id, 
+      paymentType, payment_type,
+      productId, product_id,
+      quantity = 1 
+    } = body
+
+    const resolvedPaymentType = paymentType || payment_type || 'cart'
+    const resolvedProductId = productId || product_id
 
     // Get user profile
     const { data: profile } = await supabase
@@ -46,11 +55,11 @@ export async function POST(request) {
     let totalAmount = 0
 
     // If direct payment (from product page)
-    if (paymentType === 'direct' && productId) {
+    if (resolvedPaymentType === 'direct' && resolvedProductId) {
       const { data: product } = await supabase
         .from('products')
         .select('id, name, price, discount_price, stock')
-        .eq('id', productId)
+        .eq('id', resolvedProductId)
         .eq('is_active', true)
         .single()
 
@@ -68,11 +77,11 @@ export async function POST(request) {
         )
       }
 
-      orderItems = [{ product_id: productId, quantity }]
+      orderItems = [{ product_id: resolvedProductId, quantity }]
       totalAmount = (product.discount_price || product.price) * quantity
     } 
     // Cart checkout
-    else if (paymentType === 'cart' && items.length > 0) {
+    else if (resolvedPaymentType === 'cart' && items.length > 0) {
       for (const item of items) {
         const { data: product } = await supabase
           .from('products')
@@ -163,7 +172,7 @@ export async function POST(request) {
             order_id: String(order.id),
             user_email: profile.email,
             user_name: profile.full_name,
-            payment_type: paymentType
+            payment_type: resolvedPaymentType
           }
         }
       )

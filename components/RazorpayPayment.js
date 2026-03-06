@@ -4,27 +4,13 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { authenticatedFetch } from '../lib/authenticatedFetch'
 
-/**
- * RazorpayPayment Component
- * Handles Razorpay payment flow with modal/overlay
- * 
- * Props:
- * - items: Array of {product_id, quantity}
- * - paymentType: 'cart' | 'direct'
- * - productId: (for direct payment)
- * - quantity: (for direct payment)
- * - addressId: Selected address ID (optional)
- * - onSuccess: Callback on successful payment
- * - onFailure: Callback on failed payment
- * - onClose: Callback to close payment modal
- * - isOpen: Whether payment modal is open
- */
 export default function RazorpayPayment({
   items = [],
   paymentType = 'cart',
   productId = null,
   quantity = 1,
   addressId = null,
+  amount = 0,
   onSuccess = () => {},
   onFailure = () => {},
   onClose = () => {},
@@ -33,26 +19,20 @@ export default function RazorpayPayment({
   const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState(null)
-  const [orderId, setOrderId] = useState(null)
-  const [razorpayOrderId, setRazorpayOrderId] = useState(null)
 
-  // Load Razorpay script
   useEffect(() => {
-    const script = document.createElement('script')
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-    script.async = true
-    document.body.appendChild(script)
-    return () => {
-      document.body.removeChild(script)
+    if (typeof window !== 'undefined' && !document.querySelector('script[src*="checkout.razorpay.com"]')) {
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.async = true
+      document.body.appendChild(script)
     }
   }, [])
 
   const handlePaymentClick = async () => {
     setError(null)
     setIsProcessing(true)
-
     try {
-      // Step 1: Create order and Razorpay order
       const orderPayload = {
         items: paymentType === 'cart' ? items : [],
         address_id: addressId,
@@ -60,15 +40,11 @@ export default function RazorpayPayment({
         ...(paymentType === 'direct' && { product_id: productId, quantity })
       }
 
-      console.log('Creating order with payload:', orderPayload)
-
       const orderResponse = await authenticatedFetch('/api/razorpay/create-order', {
         method: 'POST',
         body: JSON.stringify(orderPayload)
       })
-
       const orderData = await orderResponse.json()
-      console.log('Order created:', orderData)
 
       if (!orderResponse.ok) {
         setError(orderData.error || 'Failed to create order')
@@ -76,335 +52,230 @@ export default function RazorpayPayment({
         return
       }
 
-      setOrderId(orderData.order_id)
-      setRazorpayOrderId(orderData.razorpay_order_id)
-
-      // Step 2: Open Razorpay payment modal
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_SNZPmHU5RD7fq8',
         order_id: orderData.razorpay_order_id,
         amount: orderData.amount_paise,
         currency: 'INR',
         name: 'Spacecrafts Furniture',
         description: paymentType === 'direct' ? 'Product Purchase' : 'Cart Checkout',
-        customer: {
-          name: orderData.customer_name,
-          email: orderData.customer_email
-        },
         handler: async (response) => {
-          // Step 3: Verify payment signature
-          await verifyAndCompletePayment(
-            response.razorpay_payment_id,
-            orderData.order_id,
-            orderData.razorpay_order_id,
-            response.razorpay_signature
-          )
+          try {
+            const verifyRes = await authenticatedFetch('/api/razorpay/verify-payment', {
+              method: 'POST',
+              body: JSON.stringify({
+                razorpay_order_id: orderData.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                order_id: orderData.order_id
+              })
+            })
+            const verifyData = await verifyRes.json()
+            if (!verifyRes.ok) {
+              setError(verifyData.error || 'Payment verification failed')
+              onFailure(verifyData.error)
+              setIsProcessing(false)
+              return
+            }
+            setIsProcessing(false)
+            onSuccess({ order_id: orderData.order_id, razorpay_payment_id: response.razorpay_payment_id, status: 'completed' })
+            router.push(`/orders/success?order_id=${orderData.order_id}`)
+          } catch (err) {
+            setError('Failed to verify payment')
+            onFailure(err.message)
+            setIsProcessing(false)
+          }
         },
         modal: {
           ondismiss: () => {
-            console.log('Payment modal closed')
             setIsProcessing(false)
-            onFailure('Payment cancelled by user')
+            onFailure('Payment cancelled')
           }
         },
-        prefill: {
-          name: orderData.customer_name,
-          email: orderData.customer_email
-        },
-        theme: {
-          color: '#2563eb'
-        }
+        prefill: { name: orderData.customer_name, email: orderData.customer_email },
+        theme: { color: '#222' }
       }
 
-      // Create Razorpay instance and open
       if (window.Razorpay) {
-        const razorpayInstance = new window.Razorpay(options)
-        razorpayInstance.open()
+        new window.Razorpay(options).open()
       } else {
-        setError('Razorpay not loaded. Please refresh and try again.')
+        setError('Payment gateway not loaded. Please refresh.')
         setIsProcessing(false)
       }
-
     } catch (err) {
-      console.error('Payment error:', err)
-      setError(err.message || 'An error occurred. Please try again.')
-      setIsProcessing(false)
-    }
-  }
-
-  const verifyAndCompletePayment = async (paymentId, orderId, razorpayOrderId, signature) => {
-    try {
-      console.log('Verifying payment:', { paymentId, orderId, razorpayOrderId })
-
-      const verifyResponse = await authenticatedFetch('/api/razorpay/verify-payment', {
-        method: 'POST',
-        body: JSON.stringify({
-          razorpay_order_id: razorpayOrderId,
-          razorpay_payment_id: paymentId,
-          razorpay_signature: signature,
-          order_id: orderId
-        })
-      })
-
-      const verifyData = await verifyResponse.json()
-      console.log('Verification response:', verifyData)
-
-      if (!verifyResponse.ok) {
-        setError(verifyData.error || 'Payment verification failed')
-        onFailure(verifyData.error || 'Payment verification failed')
-        setIsProcessing(false)
-        return
-      }
-
-      // Payment successful!
-      setIsProcessing(false)
-      onSuccess({
-        order_id: orderId,
-        razorpay_payment_id: paymentId,
-        status: 'completed'
-      })
-
-      // Redirect to success page after 2 seconds
-      setTimeout(() => {
-        router.push(`/orders/success?order_id=${orderId}`)
-      }, 2000)
-
-    } catch (err) {
-      console.error('Payment verification error:', err)
-      setError(err.message || 'Failed to verify payment')
-      onFailure(err.message || 'Failed to verify payment')
+      setError(err.message || 'An error occurred')
       setIsProcessing(false)
     }
   }
 
   if (!isOpen) return null
 
+  const itemCount = items.length || (paymentType === 'direct' ? 1 : 0)
+
   return (
-    <div className="payment-modal-overlay">
-      <div className="payment-modal">
-        <div className="payment-modal-header">
-          <h2>Complete Payment</h2>
-          <button 
-            className="payment-modal-close" 
-            onClick={onClose}
-            disabled={isProcessing}
-          >
-            ✕
-          </button>
+    <div className="rp-overlay" onClick={(e) => { if (e.target === e.currentTarget && !isProcessing) onClose() }}>
+      <div className="rp-modal">
+        {/* Header */}
+        <div className="rp-header">
+          <div className="rp-header-left">
+            <div className="rp-logo">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div>
+              <h2>Secure Checkout</h2>
+              <span>Spacecrafts Furniture</span>
+            </div>
+          </div>
+          <button className="rp-close" onClick={onClose} disabled={isProcessing}>✕</button>
         </div>
 
-        <div className="payment-modal-content">
+        {/* Body */}
+        <div className="rp-body">
           {error && (
-            <div className="payment-error">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-              </svg>
+            <div className="rp-error">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
               {error}
             </div>
           )}
 
-          <div className="payment-info">
-            <p><strong>Payment Method:</strong> Razorpay (Credit/Debit Card, UPI, Net Banking)</p>
-            <p><strong>Amount:</strong> Click "Pay Now" to proceed with payment</p>
+          {/* Order info */}
+          <div className="rp-order-info">
+            <div className="rp-info-row">
+              <span>Items</span>
+              <span>{itemCount} {itemCount === 1 ? 'product' : 'products'}</span>
+            </div>
+            <div className="rp-info-row">
+              <span>Payment via</span>
+              <span>Razorpay</span>
+            </div>
+            <div className="rp-info-row">
+              <span>Methods accepted</span>
+              <span>UPI · Cards · Net Banking · Wallets</span>
+            </div>
           </div>
 
-          <div className="payment-modal-actions">
-            <button 
-              className="btn-secondary" 
-              onClick={onClose}
-              disabled={isProcessing}
-            >
-              Cancel
-            </button>
-            <button 
-              className="btn-primary" 
-              onClick={handlePaymentClick}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <span className="spinner-small"></span>
-                  Processing...
-                </>
-              ) : (
-                'Pay Now'
-              )}
-            </button>
+          {amount > 0 && (
+            <div className="rp-amount-box">
+              <span>Amount to pay</span>
+              <span className="rp-amount">₹{Number(amount).toLocaleString('en-IN')}</span>
+            </div>
+          )}
+
+          {/* Trust badges */}
+          <div className="rp-trust">
+            <div className="rp-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              SSL Encrypted
+            </div>
+            <div className="rp-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Verified Merchant
+            </div>
+            <div className="rp-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              Secure Payment
+            </div>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="rp-footer">
+          <button className="rp-cancel" onClick={onClose} disabled={isProcessing}>Cancel</button>
+          <button className="rp-pay" onClick={handlePaymentClick} disabled={isProcessing}>
+            {isProcessing ? (
+              <><span className="rp-spinner"></span> Processing...</>
+            ) : (
+              <>Pay Now{amount > 0 ? ` · ₹${Number(amount).toLocaleString('en-IN')}` : ''}</>
+            )}
+          </button>
         </div>
       </div>
 
       <style jsx>{`
-        .payment-modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
+        .rp-overlay {
+          position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center;
+          justify-content: center; z-index: 9999; backdrop-filter: blur(2px);
         }
-
-        .payment-modal {
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-          max-width: 500px;
-          width: 90%;
-          animation: slideUp 0.3s ease-out;
+        .rp-modal {
+          background: #fff; border-radius: 12px; width: 420px; max-width: 92vw;
+          box-shadow: 0 20px 60px rgba(0,0,0,.25); animation: rpSlide .25s ease-out;
+          overflow: hidden;
         }
+        @keyframes rpSlide { from { transform: translateY(16px) scale(.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
 
-        @keyframes slideUp {
-          from {
-            transform: translateY(20px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-
-        .payment-modal-header {
-          display: flex;
+        /* Header */
+        .rp-header {
+          background: #222; color: #fff; padding: 16px 20px; display: flex; align-items: center;
           justify-content: space-between;
-          align-items: center;
-          padding: 20px;
-          border-bottom: 1px solid #e5e7eb;
+        }
+        .rp-header-left { display: flex; align-items: center; gap: 12px; }
+        .rp-logo {
+          width: 36px; height: 36px; background: rgba(255,255,255,.12); border-radius: 8px;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .rp-header h2 { margin: 0; font-size: 15px; font-weight: 700; }
+        .rp-header span { font-size: 11px; color: rgba(255,255,255,.6); }
+        .rp-close {
+          background: rgba(255,255,255,.1); border: none; color: #fff; width: 30px; height: 30px;
+          border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; align-items: center;
+          justify-content: center; transition: background .15s;
+        }
+        .rp-close:hover:not(:disabled) { background: rgba(255,255,255,.2); }
+        .rp-close:disabled { opacity: .4; cursor: not-allowed; }
+
+        /* Body */
+        .rp-body { padding: 20px; }
+        .rp-error {
+          background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px 12px;
+          border-radius: 6px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+          font-size: 13px; font-weight: 500;
+        }
+        .rp-order-info { margin-bottom: 16px; }
+        .rp-info-row {
+          display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px;
+          border-bottom: 1px solid #f5f5f5; color: #555;
+        }
+        .rp-info-row:last-child { border-bottom: none; }
+        .rp-info-row span:first-child { color: #999; }
+        .rp-info-row span:last-child { font-weight: 600; color: #333; }
+
+        .rp-amount-box {
+          background: #f9fafb; border: 1px solid #eee; border-radius: 8px; padding: 14px 16px;
+          display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+        }
+        .rp-amount-box span:first-child { font-size: 13px; color: #888; }
+        .rp-amount { font-size: 22px; font-weight: 800; color: #222; }
+
+        .rp-trust { display: flex; gap: 8px; flex-wrap: wrap; }
+        .rp-badge {
+          display: flex; align-items: center; gap: 4px; padding: 5px 10px;
+          background: #f9fafb; border: 1px solid #eee; border-radius: 20px;
+          font-size: 11px; color: #666; font-weight: 500;
         }
 
-        .payment-modal-header h2 {
-          margin: 0;
-          font-size: 20px;
-          font-weight: 600;
+        /* Footer */
+        .rp-footer {
+          padding: 16px 20px; border-top: 1px solid #eee; display: flex; gap: 10px;
+          justify-content: flex-end; background: #fafafa;
         }
-
-        .payment-modal-close {
-          background: none;
-          border: none;
-          font-size: 24px;
-          cursor: pointer;
-          color: #6b7280;
-          padding: 0;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 6px;
-          transition: all 0.2s;
+        .rp-cancel {
+          padding: 10px 20px; background: #fff; border: 1px solid #ddd; border-radius: 6px;
+          font-size: 13px; font-weight: 600; color: #555; cursor: pointer; transition: all .15s;
         }
-
-        .payment-modal-close:hover:not(:disabled) {
-          background: #f3f4f6;
-          color: #000;
+        .rp-cancel:hover:not(:disabled) { border-color: #bbb; color: #333; }
+        .rp-cancel:disabled { opacity: .5; cursor: not-allowed; }
+        .rp-pay {
+          padding: 10px 28px; background: #222; color: #fff; border: none; border-radius: 6px;
+          font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center;
+          gap: 8px; transition: background .15s;
         }
-
-        .payment-modal-close:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
+        .rp-pay:hover:not(:disabled) { background: #000; }
+        .rp-pay:disabled { background: #999; cursor: not-allowed; }
+        .rp-spinner {
+          width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.3);
+          border-top-color: #fff; border-radius: 50%; animation: rpSpin .6s linear infinite;
         }
-
-        .payment-modal-content {
-          padding: 20px;
-        }
-
-        .payment-error {
-          background: #fee2e2;
-          border: 1px solid #fca5a5;
-          color: #dc2626;
-          padding: 12px 16px;
-          border-radius: 8px;
-          margin-bottom: 16px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          font-size: 14px;
-        }
-
-        .payment-info {
-          background: #f0f9ff;
-          border: 1px solid #bfdbfe;
-          padding: 16px;
-          border-radius: 8px;
-          margin-bottom: 20px;
-          font-size: 14px;
-        }
-
-        .payment-info p {
-          margin: 8px 0;
-        }
-
-        .payment-info strong {
-          color: #1e40af;
-        }
-
-        .payment-modal-actions {
-          display: flex;
-          gap: 12px;
-          justify-content: flex-end;
-        }
-
-        .btn-primary, .btn-secondary {
-          padding: 10px 24px;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .btn-primary {
-          background: #2563eb;
-          color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-          background: #1d4ed8;
-        }
-
-        .btn-primary:disabled {
-          background: #9ca3af;
-          cursor: not-allowed;
-          opacity: 0.7;
-        }
-
-        .btn-secondary {
-          background: #f3f4f6;
-          color: #374151;
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-          background: #e5e7eb;
-        }
-
-        .btn-secondary:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .spinner-small {
-          display: inline-block;
-          width: 14px;
-          height: 14px;
-          border: 2px solid #ffffff;
-          border-top-color: transparent;
-          border-radius: 50%;
-          animation: spin 0.6s linear infinite;
-        }
-
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
+        @keyframes rpSpin { to { transform: rotate(360deg); } }
       `}</style>
     </div>
   )

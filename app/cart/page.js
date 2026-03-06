@@ -2,11 +2,11 @@ import dynamic from 'next/dynamic'
 
 const CartClient = dynamic(() => import('../../components/CartClient'), { ssr: false })
 
+export const metadata = {
+  title: 'Shopping Cart | Spacecrafts Furniture',
+  description: 'Review your cart items and proceed to checkout.',
+}
+
 export default function CartPage() {
-  return (
-    <div className="container">
-      <h1>Your Cart</h1>
-      <CartClient />
-    </div>
-  )
+  return <CartClient />
 }
