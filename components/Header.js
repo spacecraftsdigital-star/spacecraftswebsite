@@ -342,9 +342,14 @@ export default function Header() {
   }
 
   const handleSignOut = async () => {
-    await signOut()
+    try {
+      await signOut()
+    } catch (e) {
+      console.error('Sign out error:', e)
+    }
     setShowUserMenu(false)
-    router.push('/')
+    // Full page reload to clear all client state and cookies
+    window.location.href = '/'
   }
 
   return (

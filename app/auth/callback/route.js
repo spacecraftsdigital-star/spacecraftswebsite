@@ -32,7 +32,10 @@ export async function GET(request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      const response = NextResponse.redirect(new URL(next, origin))
+      // Redirect through confirm page which does a client-side reload
+      // to ensure cookies are fully synced with the browser
+      const confirmUrl = new URL(`/auth/confirm?next=${encodeURIComponent(next)}`, origin)
+      const response = NextResponse.redirect(confirmUrl)
       // Explicitly set auth cookies on the redirect response
       cookiesToSet.forEach(({ name, value, options }) => {
         response.cookies.set(name, value, options)
