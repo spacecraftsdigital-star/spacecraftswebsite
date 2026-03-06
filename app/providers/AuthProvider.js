@@ -1,5 +1,5 @@
 'use client'
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
 const AuthContext = createContext(null)
@@ -8,31 +8,11 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const authResolved = useRef(false)
 
   useEffect(() => {
-    // Check active session on mount
-    const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user) {
-          console.log('Session found, user:', session.user.email)
-          setUser(session.user)
-          await fetchProfile(session.user.id)
-        } else {
-          console.log('No session found')
-          setUser(null)
-          setProfile(null)
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    checkAuth()
-
-    // Listen for auth state changes
+    // Listen for auth state changes — primary auth detection mechanism.
+    // onAuthStateChange fires INITIAL_SESSION on setup, then SIGNED_IN / SIGNED_OUT etc.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email)
@@ -43,10 +23,33 @@ export function AuthProvider({ children }) {
           setUser(null)
           setProfile(null)
         }
+        authResolved.current = true
+        setLoading(false)
       }
     )
 
-    return () => subscription?.unsubscribe()
+    // Fallback: if onAuthStateChange hasn't resolved within 4s, check manually
+    const fallbackTimer = setTimeout(async () => {
+      if (!authResolved.current) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session?.user) {
+            setUser(session.user)
+            await fetchProfile(session.user.id)
+          }
+        } catch (e) {
+          console.error('Auth fallback check failed:', e)
+        } finally {
+          authResolved.current = true
+          setLoading(false)
+        }
+      }
+    }, 4000)
+
+    return () => {
+      clearTimeout(fallbackTimer)
+      subscription?.unsubscribe()
+    }
   }, [])
 
   const fetchProfile = async (userId) => {
