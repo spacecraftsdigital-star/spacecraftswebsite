@@ -260,6 +260,7 @@ export default function CheckoutPage() {
         }))}
         paymentType="cart"
         addressId={selectedAddress}
+        amount={orderSummary?.total || 0}
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
         onSuccess={(data) => {

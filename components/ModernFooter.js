@@ -265,9 +265,9 @@ export default function ModernFooter() {
           <p style={{ margin: 0 }}>
             © {currentYear} Spacecrafts Furniture. All rights reserved.
           </p>
-          <p style={{ margin: 0 }}>
+          {/* <p style={{ margin: 0 }}>
             Designed & Developed with ❤️ by Spacecrafts Digital
-          </p>
+          </p> */}
         </div>
       </div>
 

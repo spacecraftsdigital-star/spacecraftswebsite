@@ -30,6 +30,8 @@ export default function CartClient() {
   // Payment states
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentError, setPaymentError] = useState(null)
+  const [paymentState, setPaymentState] = useState(null) // null | 'verifying' | 'success'
+  const [completedOrderId, setCompletedOrderId] = useState(null)
   const [step, setStep] = useState(1) // 1=cart, 2=review+pay
 
   const fetchCart = async () => {
@@ -202,6 +204,8 @@ export default function CartClient() {
       const orderData = await orderResponse.json()
       if (!orderResponse.ok) { setPaymentError(orderData.error || 'Failed to create order'); setIsProcessing(false); return }
 
+      let paymentHandled = false
+
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_SNZPmHU5RD7fq8',
         order_id: orderData.razorpay_order_id,
@@ -210,17 +214,23 @@ export default function CartClient() {
         name: 'Spacecrafts Furniture',
         description: 'Cart Checkout',
         handler: async (response) => {
+          paymentHandled = true
           try {
+            setPaymentState('verifying')
             const verifyRes = await authenticatedFetch('/api/razorpay/verify-payment', {
               method: 'POST',
               body: JSON.stringify({ razorpay_order_id: orderData.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id, razorpay_signature: response.razorpay_signature, order_id: orderData.order_id })
             })
             const verifyData = await verifyRes.json()
-            if (!verifyRes.ok) { setPaymentError(verifyData.error || 'Payment verification failed'); setIsProcessing(false); return }
-            router.push(`/orders/success?order_id=${orderData.order_id}`)
-          } catch (err) { setPaymentError('Failed to verify payment'); setIsProcessing(false) }
+            if (!verifyRes.ok) { setPaymentState(null); setPaymentError(verifyData.error || 'Payment verification failed'); setIsProcessing(false); return }
+            setPaymentState('success')
+            setCompletedOrderId(orderData.order_id)
+            setTimeout(() => {
+              window.location.href = `/orders/success?order_id=${orderData.order_id}`
+            }, 2000)
+          } catch (err) { setPaymentState(null); setPaymentError('Failed to verify payment. Check your orders page.'); setIsProcessing(false) }
         },
-        modal: { ondismiss: () => { setIsProcessing(false) } },
+        modal: { ondismiss: () => { if (!paymentHandled) setIsProcessing(false) } },
         prefill: { name: orderData.customer_name, email: orderData.customer_email },
         theme: { color: '#222' }
       }
@@ -237,7 +247,7 @@ export default function CartClient() {
     <div className="cart-empty-state">
       <div className="spinner"></div>
       <p>Loading your cart...</p>
-      <style jsx>{`
+      <style>{`
         .cart-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; color: #888; }
         .spinner { width: 32px; height: 32px; border: 3px solid #eee; border-top-color: #222; border-radius: 50%; animation: spin .6s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -251,12 +261,63 @@ export default function CartClient() {
       <h2 style={{margin: 0, color: '#333', fontSize: 20}}>Your cart is empty</h2>
       <p style={{margin: 0, color: '#888', fontSize: 14}}>Looks like you haven't added anything yet.</p>
       <Link href="/products" style={{marginTop: 8, padding: '10px 28px', background: '#222', color: '#fff', borderRadius: 6, textDecoration: 'none', fontSize: 13, fontWeight: 600}}>Browse Products</Link>
-      <style jsx>{`.cart-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 12px; }`}</style>
+      <style>{`.cart-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 12px; }`}</style>
     </div>
   )
 
   return (
     <div className="cart-page">
+      {/* Payment verifying/success overlay */}
+      {paymentState && (
+        <div className="pay-overlay">
+          <div className="pay-overlay-card">
+            {paymentState === 'verifying' ? (
+              <>
+                <div className="pay-overlay-icon">
+                  <svg className="pay-spinner-svg" width="56" height="56" viewBox="0 0 56 56">
+                    <circle cx="28" cy="28" r="24" fill="none" stroke="#e5e7eb" strokeWidth="4" />
+                    <circle cx="28" cy="28" r="24" fill="none" stroke="#1a1a1a" strokeWidth="4" strokeDasharray="100 60" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <h2 className="pay-overlay-title">Verifying Payment</h2>
+                <p className="pay-overlay-desc">Confirming your transaction. This will only take a moment.</p>
+              </>
+            ) : (
+              <>
+                <div className="pay-overlay-icon pay-success-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+                <h2 className="pay-overlay-title">Payment Successful</h2>
+                <p className="pay-overlay-desc">Your order has been confirmed. Redirecting to order details...</p>
+                <div className="pay-progress"><div className="pay-progress-bar"></div></div>
+              </>
+            )}
+          </div>
+          <style>{`
+            .pay-overlay {
+              position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 99999;
+              background: rgba(255,255,255,0.98);
+              display: flex; align-items: center; justify-content: center;
+              animation: payFadeIn 0.3s ease;
+            }
+            @keyframes payFadeIn { from { opacity: 0; } to { opacity: 1; } }
+            .pay-overlay-card { text-align: center; padding: 48px 40px; max-width: 400px; }
+            .pay-overlay-icon { width: 80px; height: 80px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; }
+            .pay-success-icon { background: #1a1a1a; border-radius: 50%; animation: payPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+            @keyframes payPop { from { transform: scale(0); } to { transform: scale(1); } }
+            .pay-spinner-svg { animation: paySpin 1s linear infinite; }
+            @keyframes paySpin { to { transform: rotate(360deg); } }
+            .pay-overlay-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin: 0 0 8px; letter-spacing: -0.5px; }
+            .pay-overlay-desc { font-size: 14px; color: #888; margin: 0 0 24px; line-height: 1.5; }
+            .pay-progress { width: 180px; height: 3px; background: #e5e7eb; border-radius: 3px; margin: 0 auto; overflow: hidden; }
+            .pay-progress-bar { width: 100%; height: 100%; background: #1a1a1a; border-radius: 3px; animation: payBar 2s ease forwards; }
+            @keyframes payBar { from { width: 0; } to { width: 100%; } }
+          `}</style>
+        </div>
+      )}
+
       {/* Compact Breadcrumb */}
       <div className="cart-breadcrumb">
         <div className="container">
@@ -503,7 +564,7 @@ export default function CartClient() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .cart-page { background: #f5f5f7; min-height: 100vh; padding-bottom: 60px; }
         .container { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
 
@@ -579,7 +640,7 @@ export default function CartClient() {
 
         /* Payment method */
         .payment-method-row { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; }
-        .payment-method-row input { margin-top: 3px; accent-color: #222; }
+        .payment-method-row input { margin-top: 3px; }
         .payment-method-row label { display: flex; flex-direction: column; cursor: pointer; }
         .payment-method-row label strong { font-size: 14px; color: #222; }
         .payment-method-row label span { font-size: 12px; color: #888; margin-top: 2px; }
@@ -629,7 +690,7 @@ export default function CartClient() {
         .addr-radio { display: flex; align-items: center; }
         .dot { width: 14px; height: 14px; border: 2px solid #ccc; border-radius: 50%; position: relative; }
         .dot.active { border-color: #222; }
-        .dot.active::after { content: ''; position: absolute; inset: 2px; background: #222; border-radius: 50%; }
+        .dot.active::after { content: ''; position: absolute; top: 2px; right: 2px; bottom: 2px; left: 2px; background: #222; border-radius: 50%; }
         .add-addr-btn { display: block; padding: 8px 0; color: #e67e22; font-size: 12px; font-weight: 600; text-decoration: none; }
 
         .checkout-btn { width: 100%; padding: 12px; background: #222; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .2s; }

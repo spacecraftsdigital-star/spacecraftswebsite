@@ -19,6 +19,7 @@ export default function RazorpayPayment({
   const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState(null)
+  const [paymentState, setPaymentState] = useState(null) // null | 'verifying' | 'success'
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !document.querySelector('script[src*="checkout.razorpay.com"]')) {
@@ -52,6 +53,8 @@ export default function RazorpayPayment({
         return
       }
 
+      let paymentHandled = false
+
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_SNZPmHU5RD7fq8',
         order_id: orderData.razorpay_order_id,
@@ -59,8 +62,13 @@ export default function RazorpayPayment({
         currency: 'INR',
         name: 'Spacecrafts Furniture',
         description: paymentType === 'direct' ? 'Product Purchase' : 'Cart Checkout',
+        notes: {
+          address: 'Spacecrafts Furniture, India'
+        },
         handler: async (response) => {
+          paymentHandled = true
           try {
+            setPaymentState('verifying')
             const verifyRes = await authenticatedFetch('/api/razorpay/verify-payment', {
               method: 'POST',
               body: JSON.stringify({
@@ -72,24 +80,26 @@ export default function RazorpayPayment({
             })
             const verifyData = await verifyRes.json()
             if (!verifyRes.ok) {
+              setPaymentState(null)
               setError(verifyData.error || 'Payment verification failed')
-              onFailure(verifyData.error)
               setIsProcessing(false)
               return
             }
-            setIsProcessing(false)
-            onSuccess({ order_id: orderData.order_id, razorpay_payment_id: response.razorpay_payment_id, status: 'completed' })
-            router.push(`/orders/success?order_id=${orderData.order_id}`)
+            setPaymentState('success')
+            setTimeout(() => {
+              window.location.href = `/orders/success?order_id=${orderData.order_id}`
+            }, 2200)
           } catch (err) {
-            setError('Failed to verify payment')
-            onFailure(err.message)
+            setPaymentState(null)
+            setError('Failed to verify payment. Please check your orders page.')
             setIsProcessing(false)
           }
         },
         modal: {
           ondismiss: () => {
-            setIsProcessing(false)
-            onFailure('Payment cancelled')
+            if (!paymentHandled) {
+              setIsProcessing(false)
+            }
           }
         },
         prefill: { name: orderData.customer_name, email: orderData.customer_email },
@@ -108,7 +118,118 @@ export default function RazorpayPayment({
     }
   }
 
-  if (!isOpen) return null
+  if (!isOpen && !paymentState) return null
+
+  // Show fullscreen success/verifying overlay
+  if (paymentState) {
+    return (
+      <div className="rp-result-overlay">
+        <div className="rp-result-card">
+          {paymentState === 'verifying' ? (
+            <>
+              <div className="rp-result-icon verifying">
+                <svg className="rp-result-spinner" width="56" height="56" viewBox="0 0 56 56">
+                  <circle cx="28" cy="28" r="24" fill="none" stroke="#e5e7eb" strokeWidth="4" />
+                  <circle cx="28" cy="28" r="24" fill="none" stroke="#1a1a1a" strokeWidth="4" strokeDasharray="100 60" strokeLinecap="round" />
+                </svg>
+              </div>
+              <h2 className="rp-result-title">Verifying Payment</h2>
+              <p className="rp-result-desc">Confirming your transaction with Razorpay. This will only take a moment.</p>
+              <div className="rp-result-dots">
+                <span className="rp-dot" /><span className="rp-dot" /><span className="rp-dot" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="rp-result-icon success">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" className="rp-check-path" />
+                </svg>
+              </div>
+              <h2 className="rp-result-title">Payment Successful</h2>
+              <p className="rp-result-desc">Your order has been confirmed. Redirecting you to your order details.</p>
+              <div className="rp-result-amount">₹{Number(amount).toLocaleString('en-IN')}</div>
+              <div className="rp-result-progress">
+                <div className="rp-result-bar" />
+              </div>
+            </>
+          )}
+        </div>
+
+        <style jsx>{`
+          .rp-result-overlay {
+            position: fixed; inset: 0; z-index: 99999;
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(20px);
+            display: flex; align-items: center; justify-content: center;
+            animation: rp-fadeIn 0.3s ease;
+          }
+          @keyframes rp-fadeIn { from { opacity: 0; } to { opacity: 1; } }
+          .rp-result-card {
+            text-align: center; padding: 48px 40px; max-width: 420px; width: 90%;
+          }
+          .rp-result-icon {
+            width: 88px; height: 88px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 28px;
+          }
+          .rp-result-icon.verifying {
+            background: transparent;
+          }
+          .rp-result-icon.success {
+            background: #1a1a1a;
+            animation: rp-popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          }
+          @keyframes rp-popIn { from { transform: scale(0); } to { transform: scale(1); } }
+          .rp-result-spinner {
+            animation: rp-spin 1s linear infinite;
+          }
+          @keyframes rp-spin { to { transform: rotate(360deg); } }
+          .rp-check-path {
+            stroke-dasharray: 30;
+            stroke-dashoffset: 30;
+            animation: rp-drawCheck 0.5s ease forwards 0.3s;
+          }
+          @keyframes rp-drawCheck { to { stroke-dashoffset: 0; } }
+          .rp-result-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 24px; font-weight: 700; color: #1a1a1a;
+            margin: 0 0 10px; letter-spacing: -0.5px;
+          }
+          .rp-result-desc {
+            font-size: 14px; color: #888; line-height: 1.6; margin: 0 0 24px;
+          }
+          .rp-result-amount {
+            font-size: 32px; font-weight: 800; color: #1a1a1a;
+            margin-bottom: 28px; letter-spacing: -1px;
+          }
+          .rp-result-dots {
+            display: flex; gap: 6px; justify-content: center;
+          }
+          .rp-dot {
+            width: 6px; height: 6px; border-radius: 50%; background: #1a1a1a;
+            animation: rp-bounce 1.4s infinite both;
+          }
+          .rp-dot:nth-child(2) { animation-delay: 0.16s; }
+          .rp-dot:nth-child(3) { animation-delay: 0.32s; }
+          @keyframes rp-bounce {
+            0%, 80%, 100% { transform: scale(0.4); opacity: 0.3; }
+            40% { transform: scale(1); opacity: 1; }
+          }
+          .rp-result-progress {
+            width: 200px; height: 3px; background: #e5e7eb;
+            border-radius: 3px; margin: 0 auto; overflow: hidden;
+          }
+          .rp-result-bar {
+            width: 100%; height: 100%; background: #1a1a1a;
+            border-radius: 3px;
+            animation: rp-progress 2s ease forwards;
+          }
+          @keyframes rp-progress { from { width: 0; } to { width: 100%; } }
+        `}</style>
+      </div>
+    )
+  }
 
   const itemCount = items.length || (paymentType === 'direct' ? 1 : 0)
 

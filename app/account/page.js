@@ -10,6 +10,8 @@ export default function AccountPage() {
   
   const [activeTab, setActiveTab] = useState('profile')
   const [addresses, setAddresses] = useState([])
+  const [orders, setOrders] = useState([])
+  const [ordersLoading, setOrdersLoading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showAddressForm, setShowAddressForm] = useState(false)
   const [editingAddress, setEditingAddress] = useState(null)
@@ -39,7 +41,25 @@ export default function AccountPage() {
     if (isAuthenticated && activeTab === 'addresses') {
       fetchAddresses()
     }
+    if (isAuthenticated && activeTab === 'orders') {
+      fetchOrders()
+    }
   }, [isAuthenticated, activeTab])
+
+  const fetchOrders = async () => {
+    setOrdersLoading(true)
+    try {
+      const res = await authenticatedFetch('/api/orders')
+      if (res.ok) {
+        const data = await res.json()
+        setOrders(data.orders || [])
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error)
+    } finally {
+      setOrdersLoading(false)
+    }
+  }
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
@@ -482,16 +502,62 @@ export default function AccountPage() {
           {/* Orders Tab */}
           {activeTab === 'orders' && (
             <div className="orders-section">
-              <div className="empty-state">
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                </svg>
-                <h3>No orders yet</h3>
-                <p>Start shopping to see your order history here</p>
-                <button className="btn-primary" onClick={() => router.push('/products')}>
-                  Browse Furniture
-                </button>
-              </div>
+              {ordersLoading ? (
+                <div className="empty-state">
+                  <div style={{ width: 40, height: 40, border: '3px solid #e5e7eb', borderTopColor: '#1a1a1a', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+                  <p>Loading your orders...</p>
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="empty-state">
+                  <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                  </svg>
+                  <h3>No orders yet</h3>
+                  <p>Start shopping to see your order history here</p>
+                  <button className="btn-primary" onClick={() => router.push('/products')}>
+                    Browse Furniture
+                  </button>
+                </div>
+              ) : (
+                <div className="orders-list">
+                  {orders.map((order) => {
+                    const statusColors = {
+                      pending: { bg: '#fef9c3', color: '#854d0e' },
+                      confirmed: { bg: '#dbeafe', color: '#1e40af' },
+                      processing: { bg: '#f3e8ff', color: '#6b21a8' },
+                      shipped: { bg: '#cffafe', color: '#0e7490' },
+                      delivered: { bg: '#dcfce7', color: '#166534' },
+                      cancelled: { bg: '#fee2e2', color: '#991b1b' },
+                    }
+                    const sc = statusColors[order.status] || statusColors.pending
+                    return (
+                      <div key={order.id} className="order-card" onClick={() => router.push(`/orders/${order.id}`)} style={{ cursor: 'pointer' }}>
+                        <div className="order-card-header">
+                          <div>
+                            <span className="order-id">Order #{order.id}</span>
+                            <span className="order-date">{new Date(order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                          </div>
+                          <span className="order-status-badge" style={{ background: sc.bg, color: sc.color }}>
+                            {(order.status || 'pending').toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="order-card-body">
+                          <div className="order-items-preview">
+                            {(order.items || []).slice(0, 3).map((item, i) => (
+                              <span key={i} className="order-item-name">{item.name}{item.quantity > 1 ? ` ×${item.quantity}` : ''}</span>
+                            ))}
+                            {(order.items || []).length > 3 && <span className="order-item-name">+{order.items.length - 3} more</span>}
+                          </div>
+                          <div className="order-card-footer">
+                            <span className="order-total">₹{Number(order.total).toLocaleString('en-IN')}</span>
+                            <span className="order-view-link">View Details →</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -925,6 +991,85 @@ export default function AccountPage() {
             right: 1rem;
             left: 1rem;
           }
+          .order-card-header {
+            flex-direction: column;
+            gap: 8px;
+          }
+        }
+
+        /* Orders list styles */
+        .orders-list {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .order-card {
+          background: #fff;
+          border: 1px solid #f0f0f0;
+          border-radius: 14px;
+          padding: 20px;
+          transition: all 0.2s ease;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .order-card:hover {
+          border-color: #d0d0d0;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+          transform: translateY(-2px);
+        }
+        .order-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+        }
+        .order-id {
+          font-weight: 700;
+          font-size: 15px;
+          color: #1a1a1a;
+          margin-right: 12px;
+        }
+        .order-date {
+          font-size: 12px;
+          color: #9ca3af;
+        }
+        .order-status-badge {
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+        }
+        .order-card-body {
+          border-top: 1px solid #f5f5f5;
+          padding-top: 12px;
+        }
+        .order-items-preview {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-bottom: 12px;
+        }
+        .order-item-name {
+          background: #f3f4f6;
+          padding: 4px 10px;
+          border-radius: 6px;
+          font-size: 12px;
+          color: #4b5563;
+        }
+        .order-card-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .order-total {
+          font-size: 18px;
+          font-weight: 800;
+          color: #1a1a1a;
+        }
+        .order-view-link {
+          font-size: 13px;
+          font-weight: 600;
+          color: #2563eb;
         }
       `}</style>
     </div>

@@ -66,8 +66,15 @@ export default function ProductDetailClient({
   const [cartLoading, setCartLoading] = useState(false)
   const [cartError, setCartError] = useState(null)
   const [cartSuccess, setCartSuccess] = useState(null)
+  const [wishlistLoading, setWishlistLoading] = useState(false)
+  const [wishlistSuccess, setWishlistSuccess] = useState(null)
+  const [wishlistError, setWishlistError] = useState(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [expandedAccordion, setExpandedAccordion] = useState('description')
+  const [showBuyNowConfirm, setShowBuyNowConfirm] = useState(false)
+  const [buyNowAddresses, setBuyNowAddresses] = useState([])
+  const [selectedAddressId, setSelectedAddressId] = useState(null)
+  const [buyNowLoading, setBuyNowLoading] = useState(false)
 
   console.log('ProductDetailClient Debug:', { product: product.name, productId: product.id, imagesCount: images?.length, images })
 
@@ -162,16 +169,16 @@ export default function ProductDetailClient({
   }
 
   const handleAddToWishlist = async () => {
+    setWishlistError(null)
+    setWishlistSuccess(null)
+    setWishlistLoading(true)
+
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       
-      if (sessionError) {
-        alert('Session error. Please try logging in again.')
-        return
-      }
-
-      if (!session?.access_token) {
-        alert('Please login to add items to wishlist')
+      if (sessionError || !session?.access_token) {
+        setWishlistError('Please login to add items to wishlist')
+        setWishlistLoading(false)
         return
       }
 
@@ -183,27 +190,52 @@ export default function ProductDetailClient({
       const data = await response.json()
       
       if (response.ok) {
-        alert(data.message || 'Added to wishlist!')
+        setWishlistSuccess(data.alreadyExists ? 'Already in wishlist' : 'Added to wishlist!')
+        setTimeout(() => setWishlistSuccess(null), 3000)
       } else {
-        alert(data.error || 'Failed to add to wishlist')
+        setWishlistError(data.error || 'Failed to add to wishlist')
       }
     } catch (error) {
       console.error('Error adding to wishlist:', error)
-      alert('An error occurred. Please try again.')
+      setWishlistError('An error occurred. Please try again.')
+    } finally {
+      setWishlistLoading(false)
     }
   }
 
   const handleBuyNow = async () => {
-    // Check authentication
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     
     if (sessionError || !session?.access_token) {
-      alert('Please login to proceed with payment')
+      setCartError('Please login to proceed with payment')
       router.push('/login')
       return
     }
 
-    // Open Razorpay payment modal for direct purchase
+    setBuyNowLoading(true)
+    setShowBuyNowConfirm(true)
+    try {
+      const res = await authenticatedFetch('/api/addresses')
+      if (res.ok) {
+        const data = await res.json()
+        const addrs = data.addresses || []
+        setBuyNowAddresses(addrs)
+        const def = addrs.find(a => a.is_default)
+        setSelectedAddressId(def ? def.id : (addrs[0]?.id || null))
+      }
+    } catch (e) {
+      console.error('Failed to fetch addresses:', e)
+    } finally {
+      setBuyNowLoading(false)
+    }
+  }
+
+  const handleProceedToPayment = () => {
+    if (!selectedAddressId) {
+      setCartError('Please select a delivery address')
+      return
+    }
+    setShowBuyNowConfirm(false)
     setIsPaymentModalOpen(true)
   }
 
@@ -257,9 +289,14 @@ export default function ProductDetailClient({
     setLightboxIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
   }
 
-  // Accordion toggle
+  // Accordion toggle - prevent scroll jump
   const toggleAccordion = (section) => {
+    const scrollY = window.scrollY
     setExpandedAccordion(expandedAccordion === section ? null : section)
+    // Restore scroll position after state change to prevent jump
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollY)
+    })
   }
 
   // Scroll to product details accordion smoothly
@@ -974,20 +1011,20 @@ export default function ProductDetailClient({
             </div>
 
             {/* Status Messages */}
-            {cartError && (
+            {(cartError || wishlistError) && (
               <div className="cart-message error-message">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
-                {cartError}
+                {cartError || wishlistError}
               </div>
             )}
-            {cartSuccess && (
+            {(cartSuccess || wishlistSuccess) && (
               <div className="cart-message success-message">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                 </svg>
-                {cartSuccess}
+                {cartSuccess || wishlistSuccess}
               </div>
             )}
 
@@ -1000,8 +1037,10 @@ export default function ProductDetailClient({
                     onClick={handleBuyNow}
                     disabled={cartLoading}
                   >
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M3 1h14l2 13H1L3 1zm0 0l1 6m11-6l-1 6"/>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                      <line x1="3" y1="6" x2="21" y2="6"/>
+                      <path d="M16 10a4 4 0 01-8 0"/>
                     </svg>
                     Buy Now
                   </button>
@@ -1012,7 +1051,7 @@ export default function ProductDetailClient({
                   >
                     {cartLoading ? (
                       <>
-                        <svg className="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <svg className="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <circle cx="12" cy="12" r="10" opacity="0.3"/>
                           <path d="M12 2C6.48 2 2 6.48 2 12" strokeLinecap="round"/>
                         </svg>
@@ -1020,8 +1059,9 @@ export default function ProductDetailClient({
                       </>
                     ) : (
                       <>
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M3 1h14l2 13H1L3 1z"/>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                          <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
                         </svg>
                         Add to Cart
                       </>
@@ -1033,10 +1073,21 @@ export default function ProductDetailClient({
                   Out of Stock
                 </button>
               )}
-              <button className="btn-outline btn-icon" onClick={handleAddToWishlist}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M10 18l-1.5-1.5C4 12 1 9 1 5.5 1 3.5 2.5 2 4.5 2c1.5 0 3 1 3.5 2.5C8.5 3 10 2 11.5 2c2 0 3.5 1.5 3.5 3.5 0 3.5-3 6.5-7.5 11L10 18z"/>
-                </svg>
+              <button 
+                className={`btn-wishlist btn-icon ${wishlistSuccess ? 'wishlisted' : ''}`} 
+                onClick={handleAddToWishlist}
+                disabled={wishlistLoading}
+              >
+                {wishlistLoading ? (
+                  <svg className="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" opacity="0.3"/>
+                    <path d="M12 2C6.48 2 2 6.48 2 12" strokeLinecap="round"/>
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill={wishlistSuccess ? '#e74c3c' : 'none'} stroke={wishlistSuccess ? '#e74c3c' : 'currentColor'} strokeWidth="2">
+                    <path d="M10 18l-1.5-1.5C4 12 1 9 1 5.5 1 3.5 2.5 2 4.5 2c1.5 0 3 1 3.5 2.5C8.5 3 10 2 11.5 2c2 0 3.5 1.5 3.5 3.5 0 3.5-3 6.5-7.5 11L10 18z"/>
+                  </svg>
+                )}
               </button>
             </div>
 
@@ -1802,48 +1853,53 @@ export default function ProductDetailClient({
         .action-buttons {
           display: flex;
           gap: 8px;
-          flex-wrap: wrap;
           margin-top: 4px;
-          padding-top: 8px;
+          padding-top: 12px;
           border-top: 1px solid #eee;
+          align-items: stretch;
         }
 
         .btn-large {
-          padding: 10px 18px;
-          font-size: 13px;
-          font-weight: 700;
-          border-radius: 4px;
+          padding: 0 20px !important;
+          height: 42px !important;
+          min-height: 42px !important;
+          max-height: 42px !important;
+          font-size: 12px !important;
+          font-weight: 700 !important;
+          border-radius: 4px !important;
           cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 6px !important;
           transition: all 0.2s ease;
-          flex: 1;
-          min-width: 120px;
           text-transform: uppercase;
           letter-spacing: 0.5px;
+          white-space: nowrap;
+          flex: 1;
+          box-sizing: border-box;
+          line-height: 1 !important;
         }
 
         .btn-primary {
-          background: #e67e22;
-          color: white;
-          border: none;
+          background: #1a1a1a !important;
+          color: #fff !important;
+          border: none !important;
         }
 
         .btn-primary:hover {
-          background: #d35400;
+          background: #333 !important;
         }
 
         .btn-secondary {
-          background: #ffffff;
-          color: #333;
-          border: 2px solid #333;
+          background: #fff !important;
+          color: #1a1a1a !important;
+          border: 2px solid #1a1a1a !important;
         }
 
         .btn-secondary:hover {
-          background: #333;
-          color: #fff;
+          background: #1a1a1a !important;
+          color: #fff !important;
         }
 
         .btn-secondary:disabled,
@@ -1861,21 +1917,40 @@ export default function ProductDetailClient({
           to { transform: rotate(360deg); }
         }
 
-        .btn-outline {
-          background: white;
-          color: #333;
-          border: 1px solid #ddd;
+        .btn-wishlist {
+          background: #fff !important;
+          color: #333 !important;
+          border: 2px solid #e5e5e5 !important;
+          border-radius: 4px !important;
+          transition: all 0.2s ease;
+          flex: 0 0 auto;
         }
 
-        .btn-outline:hover {
-          border-color: #e74c3c;
-          color: #e74c3c;
+        .btn-wishlist:hover {
+          border-color: #e74c3c !important;
+          color: #e74c3c !important;
+        }
+
+        .btn-wishlist.wishlisted {
+          border-color: #e74c3c !important;
+          background: #fef2f2 !important;
+        }
+
+        .btn-wishlist:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
 
         .btn-icon {
-          padding: 14px;
-          min-width: auto;
-          flex: 0;
+          padding: 0 10px !important;
+          width: 42px !important;
+          height: 42px !important;
+          min-height: 42px !important;
+          max-height: 42px !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          box-sizing: border-box;
         }
 
         .btn-disabled {
@@ -1931,14 +2006,14 @@ export default function ProductDetailClient({
         .accordion-body-wrapper {
           max-height: 0;
           overflow: hidden;
-          transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+          transition: max-height 0.35s ease-out, opacity 0.25s ease;
           opacity: 0;
         }
 
         .accordion-body-wrapper.expanded {
-          max-height: 2000px;
+          max-height: 800px;
           opacity: 1;
-          transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease 0.05s;
+          transition: max-height 0.4s ease-in, opacity 0.25s ease 0.05s;
         }
 
         .accordion-body {
@@ -2980,11 +3055,16 @@ export default function ProductDetailClient({
           }
 
           .action-buttons {
-            flex-direction: column;
+            flex-wrap: wrap;
           }
 
           .btn-large {
-            width: 100%;
+            flex: 1 1 40%;
+            min-width: 0;
+          }
+
+          .btn-icon {
+            flex: 0 0 42px;
           }
 
           .key-features {
@@ -3017,20 +3097,152 @@ export default function ProductDetailClient({
         }
       `}</style>
 
+      {/* Buy Now Confirmation Overlay */}
+      {showBuyNowConfirm && (
+        <div className="bnc-overlay" onClick={() => setShowBuyNowConfirm(false)}>
+          <div className="bnc-panel" onClick={e => e.stopPropagation()}>
+            <div className="bnc-header">
+              <h2>Order Summary</h2>
+              <button className="bnc-close" onClick={() => setShowBuyNowConfirm(false)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            {buyNowLoading ? (
+              <div className="bnc-loading"><div className="bnc-spin" /><p>Loading...</p></div>
+            ) : (
+              <>
+                {/* Product */}
+                <div className="bnc-section">
+                  <div className="bnc-product">
+                    <div className="bnc-prod-img">
+                      <img src={mainImage} alt={product.name} onError={e => { e.target.src = '/placeholder-product.svg' }} />
+                    </div>
+                    <div className="bnc-prod-info">
+                      <span className="bnc-prod-name">{product.name}</span>
+                      <span className="bnc-prod-qty">Qty: {quantity}</span>
+                    </div>
+                    <span className="bnc-prod-price">₹{Number(displayPrice * quantity).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
+                {/* Delivery Address */}
+                <div className="bnc-section">
+                  <h3 className="bnc-sec-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" style={{marginRight: '6px', verticalAlign: '-2px'}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Delivery Address
+                  </h3>
+                  {buyNowAddresses.length === 0 ? (
+                    <div className="bnc-no-addr">
+                      <p>No saved addresses found.</p>
+                      <a href="/account" className="bnc-add-addr">Add Address</a>
+                    </div>
+                  ) : (
+                    <div className="bnc-addr-list">
+                      {buyNowAddresses.map(addr => (
+                        <label key={addr.id} className={`bnc-addr-card ${selectedAddressId === addr.id ? 'selected' : ''}`}>
+                          <div className="bnc-addr-radio">
+                            <input type="radio" name="bnc-addr" checked={selectedAddressId === addr.id} onChange={() => setSelectedAddressId(addr.id)} />
+                          </div>
+                          <div className="bnc-addr-body">
+                            <div className="bnc-addr-top">
+                              <span className="bnc-addr-name">{addr.full_name}</span>
+                              {addr.is_default && <span className="bnc-default-tag">Default</span>}
+                            </div>
+                            <span className="bnc-addr-line">{addr.line1 || addr.address_line1}{addr.line2 || addr.address_line2 ? `, ${addr.line2 || addr.address_line2}` : ''}</span>
+                            <span className="bnc-addr-city">{addr.city}, {addr.state} – {addr.postal_code || addr.pincode}</span>
+                            {addr.phone && (
+                              <span className="bnc-addr-phone">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                                {addr.phone}
+                              </span>
+                            )}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Price Breakdown */}
+                <div className="bnc-section bnc-pricing">
+                  <h3 className="bnc-sec-title">Price Details</h3>
+                  <div className="bnc-price-row"><span>Subtotal</span><span>₹{Number(displayPrice * quantity).toLocaleString('en-IN')}</span></div>
+                  <div className="bnc-price-row"><span>GST (18%)</span><span>₹{Number(Math.round(displayPrice * quantity * 0.18)).toLocaleString('en-IN')}</span></div>
+                  <div className="bnc-price-row bnc-free"><span>Shipping</span><span>Free</span></div>
+                  <div className="bnc-price-total">
+                    <span>Total</span>
+                    <span>₹{Number(Math.round(displayPrice * quantity * 1.18)).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
+                <button className="bnc-pay-btn" onClick={handleProceedToPayment} disabled={!selectedAddressId || buyNowAddresses.length === 0}>
+                  Proceed to Payment — ₹{Number(Math.round(displayPrice * quantity * 1.18)).toLocaleString('en-IN')}
+                </button>
+              </>
+            )}
+          </div>
+
+          <style>{`
+            .bnc-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.55); z-index: 9999; display: flex; align-items: flex-end; justify-content: center; font-family: 'Inter', system-ui, sans-serif; }
+            @media (min-width: 640px) { .bnc-overlay { align-items: center; } }
+            .bnc-panel { background: #fff; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 0; animation: bncSlide 0.3s ease; }
+            @media (min-width: 640px) { .bnc-panel { border-radius: 16px; } }
+            @keyframes bncSlide { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+            .bnc-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid #f0f0f0; }
+            .bnc-header h2 { font-size: 18px; font-weight: 800; color: #1a1a1a; margin: 0; }
+            .bnc-close { background: #f5f5f5; border: none; padding: 6px; cursor: pointer; color: #666; border-radius: 50%; transition: background 0.15s; display: flex; align-items: center; justify-content: center; }
+            .bnc-close:hover { background: #e8e8e8; }
+            .bnc-loading { text-align: center; padding: 40px 24px; }
+            .bnc-spin { width: 28px; height: 28px; border: 2.5px solid #e5e5e5; border-top-color: #1a1a1a; border-radius: 50%; margin: 0 auto 12px; animation: bncSpinAnim 0.7s linear infinite; }
+            @keyframes bncSpinAnim { to { transform: rotate(360deg); } }
+            .bnc-loading p { color: #999; font-size: 13px; margin: 0; }
+            .bnc-section { padding: 18px 24px; border-bottom: 1px solid #f0f0f0; }
+            .bnc-section:last-of-type { border-bottom: none; }
+            .bnc-sec-title { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.8px; margin: 0 0 14px; display: flex; align-items: center; }
+            .bnc-product { display: flex; align-items: center; gap: 14px; }
+            .bnc-prod-img { width: 64px; height: 64px; border-radius: 12px; overflow: hidden; background: #f5f5f5; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; }
+            .bnc-prod-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+            .bnc-prod-info { flex: 1; min-width: 0; }
+            .bnc-prod-name { display: block; font-size: 14px; font-weight: 600; color: #1a1a1a; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; }
+            .bnc-prod-qty { display: block; font-size: 12px; color: #999; margin-top: 4px; }
+            .bnc-prod-price { font-size: 15px; font-weight: 700; color: #1a1a1a; white-space: nowrap; }
+            .bnc-no-addr { text-align: center; padding: 20px 0; }
+            .bnc-no-addr p { color: #888; font-size: 13px; margin: 0 0 12px; }
+            .bnc-add-addr { display: inline-block; padding: 8px 20px; background: #1a1a1a; color: #fff; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; }
+            .bnc-addr-list { display: flex; flex-direction: column; gap: 10px; }
+            .bnc-addr-card { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border: 1.5px solid #e8e8e8; border-radius: 12px; cursor: pointer; transition: all 0.15s; background: #fff; }
+            .bnc-addr-card.selected { border-color: #1a1a1a; background: #fafafa; box-shadow: 0 0 0 1px #1a1a1a; }
+            .bnc-addr-radio { padding-top: 1px; flex-shrink: 0; }
+            .bnc-addr-radio input[type="radio"] { width: 16px; height: 16px; cursor: pointer; }
+            .bnc-addr-body { flex: 1; min-width: 0; }
+            .bnc-addr-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+            .bnc-addr-name { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+            .bnc-default-tag { display: inline-flex; align-items: center; font-size: 9px; font-weight: 700; color: #16a34a; background: #f0fdf4; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+            .bnc-addr-line { display: block; font-size: 13px; color: #555; line-height: 1.5; }
+            .bnc-addr-city { display: block; font-size: 13px; color: #555; line-height: 1.5; }
+            .bnc-addr-phone { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #888; margin-top: 6px; }
+            .bnc-pricing { border-bottom: none; padding-bottom: 0; }
+            .bnc-price-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 13px; color: #666; }
+            .bnc-free span:last-child { color: #16a34a; font-weight: 600; }
+            .bnc-price-total { display: flex; justify-content: space-between; padding: 14px 0 0; margin-top: 8px; border-top: 2px solid #e5e5e5; font-size: 16px; font-weight: 800; color: #1a1a1a; }
+            .bnc-pay-btn { width: calc(100% - 48px); padding: 14px; background: #1a1a1a; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin: 16px 24px 24px; transition: background 0.15s; font-family: inherit; display: block; }
+            .bnc-pay-btn:hover { background: #333; }
+            .bnc-pay-btn:disabled { background: #ccc; cursor: not-allowed; }
+          `}</style>
+        </div>
+      )}
+
       {/* Razorpay Payment Modal */}
       <RazorpayPayment
         paymentType="direct"
         productId={product.id}
         quantity={quantity}
+        addressId={selectedAddressId}
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
-        onSuccess={(data) => {
-          setIsPaymentModalOpen(false)
-          alert('Payment successful! Redirecting to order confirmation...')
-        }}
-        onFailure={(error) => {
-          alert(`Payment failed: ${error}`)
-        }}
+        onSuccess={() => {}}
+        onFailure={() => {}}
       />
     </div>
   )
