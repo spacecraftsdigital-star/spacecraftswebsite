@@ -4,11 +4,17 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { authenticatedFetch } from '../lib/authenticatedFetch'
 
 export default function ProductCard({ product }) {
   const [isHovered, setIsHovered] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [cartLoading, setCartLoading] = useState(false)
+  const [wishLoading, setWishLoading] = useState(false)
+  const [feedbackMsg, setFeedbackMsg] = useState(null)
+  const router = useRouter()
   
   const discountPercentage = product.discount_price 
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
@@ -156,7 +162,19 @@ export default function ProductCard({ product }) {
               }}
               onClick={(e) => {
                 e.preventDefault()
-                console.log('Add to wishlist:', product.id)
+                e.stopPropagation()
+                if (wishLoading) return
+                setWishLoading(true)
+                authenticatedFetch('/api/wishlist/add', {
+                  method: 'POST',
+                  body: JSON.stringify({ product_id: product.id })
+                }).then(res => res.json()).then(data => {
+                  setFeedbackMsg(data.alreadyExists ? 'Already in wishlist' : 'Added to wishlist!')
+                  setTimeout(() => setFeedbackMsg(null), 2000)
+                }).catch(() => {
+                  setFeedbackMsg('Login to add to wishlist')
+                  setTimeout(() => setFeedbackMsg(null), 2000)
+                }).finally(() => setWishLoading(false))
               }}
               aria-label="Add to wishlist"
             >
@@ -181,7 +199,8 @@ export default function ProductCard({ product }) {
               }}
               onClick={(e) => {
                 e.preventDefault()
-                console.log('Quick view:', product.id)
+                e.stopPropagation()
+                router.push(`/products/${product.slug}`)
               }}
               aria-label="Quick view"
             >
@@ -341,14 +360,57 @@ export default function ProductCard({ product }) {
             }}
             onClick={(e) => {
               e.preventDefault()
-              console.log('Add to cart:', product.id)
+              e.stopPropagation()
+              if (cartLoading) return
+              setCartLoading(true)
+              authenticatedFetch('/api/cart/add', {
+                method: 'POST',
+                body: JSON.stringify({ product_id: product.id, quantity: 1 })
+              }).then(res => res.json()).then(data => {
+                if (data.cartItem) {
+                  setFeedbackMsg('Added to cart!')
+                } else {
+                  setFeedbackMsg(data.error || 'Failed to add')
+                }
+                setTimeout(() => setFeedbackMsg(null), 2000)
+              }).catch(() => {
+                setFeedbackMsg('Login to add to cart')
+                setTimeout(() => setFeedbackMsg(null), 2000)
+              }).finally(() => setCartLoading(false))
             }}
             disabled={product.stock === 0}
           >
-            {product.stock === 0 ? 'Sold Out' : 'Add to Cart'}
+            {cartLoading ? 'Adding...' : product.stock === 0 ? 'Sold Out' : 'Add to Cart'}
           </button>
         </div>
       </Link>
+
+      {/* Feedback toast */}
+      {feedbackMsg && (
+        <div style={{
+          position: 'absolute',
+          bottom: '76px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#1a1a1a',
+          color: '#fff',
+          padding: '7px 16px',
+          borderRadius: '20px',
+          fontSize: '11px',
+          fontWeight: '600',
+          fontFamily: 'Inter, sans-serif',
+          whiteSpace: 'nowrap',
+          zIndex: 10,
+          boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+          animation: 'pcFadeIn 0.2s ease',
+        }}>
+          {feedbackMsg}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes pcFadeIn { from { opacity: 0; transform: translateX(-50%) translateY(4px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+      `}</style>
     </motion.article>
   )
 }

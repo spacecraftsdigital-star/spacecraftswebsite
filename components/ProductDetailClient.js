@@ -4,6 +4,7 @@ import { useState, useEffect, Fragment } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import ReviewForm from './ReviewForm'
 import ReviewsList from './ReviewsList'
 import ProductQA from './ProductQA'
@@ -3249,108 +3250,86 @@ export default function ProductDetailClient({
 }
 
 function RelatedProductCard({ product }) {
+  const [isHovered, setIsHovered] = useState(false)
+  const [imgErr, setImgErr] = useState(false)
   const displayPrice = product.discount_price || product.price
-  const mainImage = product.images?.[0]?.url || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80'
+  const imgUrl = product.images?.[0]?.url || product.images?.[0] || product.coverImage || '/placeholder-product.jpg'
+  const discPct = product.discount_price
+    ? Math.round(((product.price - product.discount_price) / product.price) * 100)
+    : 0
 
   return (
-    <Link href={`/products/${product.slug}`} className="related-product-card">
-      <div className="product-image">
-        <Image 
-          src={mainImage}
-          alt={product.name}
-          width={300}
-          height={300}
-          style={{ objectFit: 'cover' }}
-        />
-      </div>
-      <div className="product-info">
-        <h4>{product.name}</h4>
-        <div className="rating">
-          <span className="stars">{'★'.repeat(Math.round(product.rating))}</span>
-          <span className="count">({product.review_count})</span>
+    <motion.article
+      className="rpc-card"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <Link href={`/products/${product.slug}`} className="rpc-link">
+        <div className="rpc-img-wrap">
+          <Image
+            src={imgErr ? '/placeholder-product.jpg' : imgUrl}
+            alt={product.name}
+            fill
+            sizes="(max-width: 768px) 50vw, 25vw"
+            style={{
+              objectFit: 'contain',
+              padding: '12px',
+              transform: isHovered ? 'scale(1.04)' : 'scale(1)',
+              transition: 'transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)',
+            }}
+            onError={() => setImgErr(true)}
+          />
+          {discPct > 0 && <span className="rpc-badge">-{discPct}%</span>}
+          <div className={`rpc-actions ${isHovered ? 'rpc-actions-visible' : ''}`}>
+            <button className="rpc-action-btn" onClick={e => { e.preventDefault(); window.location.href = `/products/${product.slug}` }} aria-label="View product">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
-        <div className="price">
-          <span className="current">₹{displayPrice.toLocaleString('en-IN')}</span>
-          {product.discount_price && (
-            <span className="original">₹{product.price.toLocaleString('en-IN')}</span>
+        <div className="rpc-info">
+          <h4 className="rpc-name">{product.name}</h4>
+          {product.rating > 0 && (
+            <div className="rpc-rating">
+              <div className="rpc-stars">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} style={{ color: i < Math.round(product.rating) ? '#c9a84c' : '#e0ddd5' }}>★</span>
+                ))}
+              </div>
+              <span className="rpc-rev-count">({product.review_count || 0})</span>
+            </div>
           )}
+          <div className="rpc-price-row">
+            <span className="rpc-price">₹{displayPrice.toLocaleString('en-IN')}</span>
+            {product.discount_price && (
+              <span className="rpc-orig">₹{product.price.toLocaleString('en-IN')}</span>
+            )}
+            {discPct > 0 && <span className="rpc-save">Save {discPct}%</span>}
+          </div>
         </div>
-      </div>
-
-      <style jsx>{`
-        /* ========== RELATED PRODUCT CARD ========== */
-        .related-product-card {
-          background: white;
-          border: 1px solid #eee;
-          border-radius: 4px;
-          overflow: hidden;
-          text-decoration: none;
-          color: inherit;
-          transition: all 0.2s;
-        }
-
-        .related-product-card:hover {
-          border-color: #e67e22;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-        }
-
-        .product-image {
-          width: 100%;
-          height: 240px;
-          overflow: hidden;
-          background: #f9f9f9;
-        }
-
-        .product-info {
-          padding: 12px;
-        }
-
-        .product-info h4 {
-          font-size: 14px;
-          font-weight: 600;
-          margin: 0 0 6px 0;
-          color: #1a1a1a;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .rating {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          margin-bottom: 6px;
-        }
-
-        .stars {
-          color: #f39c12;
-          font-size: 13px;
-        }
-
-        .count {
-          font-size: 11px;
-          color: #1a1a1a;
-        }
-
-        .price {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .current {
-          font-size: 16px;
-          font-weight: 700;
-          color: #1a1a1a;
-        }
-
-        .original {
-          font-size: 12px;
-          color: #666;
-          text-decoration: line-through;
-        }
+      </Link>
+      <style>{`
+        .rpc-card { position: relative; border-radius: 16px; overflow: hidden; background: #fff; border: 1px solid rgba(0,0,0,0.06); transition: box-shadow 0.4s ease, transform 0.4s ease, border-color 0.4s ease; }
+        .rpc-card:hover { box-shadow: 0 16px 36px rgba(0,0,0,0.08), 0 6px 14px rgba(0,0,0,0.04); transform: translateY(-5px); border-color: rgba(0,0,0,0.10); }
+        .rpc-link { text-decoration: none; color: inherit; display: block; }
+        .rpc-img-wrap { position: relative; width: 100%; aspect-ratio: 4/5; overflow: hidden; background: #fff; }
+        .rpc-badge { position: absolute; top: 12px; left: 12px; padding: 4px 10px; background: rgba(200,50,50,0.85); color: #fff; font-size: 11px; font-weight: 700; border-radius: 20px; letter-spacing: 0.4px; z-index: 2; }
+        .rpc-actions { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 8px; opacity: 0; transform: translateX(8px); transition: opacity 0.3s ease, transform 0.3s ease; z-index: 2; }
+        .rpc-actions-visible { opacity: 1; transform: translateX(0); }
+        .rpc-action-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.92); border: 1px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.10); transition: transform 0.2s ease; }
+        .rpc-action-btn:hover { transform: scale(1.1); }
+        .rpc-info { padding: 14px 16px 16px; }
+        .rpc-name { font-size: 14px; font-weight: 600; color: #1a1a1a; line-height: 1.35; margin: 0 0 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; }
+        .rpc-rating { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+        .rpc-stars { display: flex; gap: 1px; font-size: 13px; }
+        .rpc-rev-count { font-size: 12px; color: #999; font-weight: 500; }
+        .rpc-price-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+        .rpc-price { font-size: 18px; font-weight: 700; color: #1a1a1a; letter-spacing: -0.02em; font-family: 'Inter', sans-serif; }
+        .rpc-orig { font-size: 13px; color: #b0aaa0; text-decoration: line-through; }
+        .rpc-save { font-size: 12px; color: #c0392b; font-weight: 600; }
       `}</style>
-    </Link>
+    </motion.article>
   )
 }
