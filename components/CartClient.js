@@ -417,7 +417,7 @@ export default function CartClient() {
                       const image = item.image_url || item.products?.image_url || item.products?.images?.[0]?.url || '/placeholder-product.svg'
                       return (
                         <div key={item.id || item.product_id} className="review-item">
-                          <div className="review-thumb"><Image src={image} alt="" width={50} height={50} style={{ objectFit: 'contain' }} /></div>
+                          <div className="review-thumb"><Image src={image} alt={item.name || item.products?.name || 'Product'} width={50} height={50} style={{ objectFit: 'contain' }} /></div>
                           <div className="review-info">
                             <span className="review-name">{item.name || item.products?.name}</span>
                             <span className="review-qty">Qty: {qty}</span>

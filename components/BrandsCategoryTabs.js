@@ -15,7 +15,7 @@ export default function BrandsCategoryTabs({ categories = [], active = '', onCha
             aria-pressed={isActive}
           >
             <div className={styles.catIcon} aria-hidden>
-              <img src={c.icon} alt="" />
+              <img src={c.icon} alt={c.label} />
             </div>
             <div className={styles.catLabel}>{c.label}</div>
             {isActive && <div className={styles.catUnderline} />}

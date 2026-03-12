@@ -103,7 +103,7 @@ function GTMNoScript(){
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en-IN">
       <head>
         <GTMSnippet />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

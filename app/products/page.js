@@ -126,11 +126,31 @@ export default async function ProductsPage({ searchParams }) {
   }
   
   return (
-    <ProductsClient 
-      initialProducts={products} 
-      categories={categories}
-      brands={brands}
-      searchParams={searchParams}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            name: 'All Products - Spacecrafts Furniture',
+            description: 'Browse our complete collection of premium furniture.',
+            url: 'https://spacecraftsfurniture.in/products',
+            isPartOf: {
+              '@type': 'WebSite',
+              name: 'Spacecrafts Furniture',
+              url: 'https://spacecraftsfurniture.in'
+            },
+            numberOfItems: products.length
+          })
+        }}
+      />
+      <ProductsClient 
+        initialProducts={products} 
+        categories={categories}
+        brands={brands}
+        searchParams={searchParams}
+      />
+    </>
   )
 }
