@@ -26,9 +26,13 @@ export async function generateMetadata({ params }) {
     return {
       title: `${data.name} - Spacecrafts Furniture`,
       description: data.description || `Buy ${data.name} online. Premium quality furniture at best prices.`,
+      alternates: {
+        canonical: `https://spacecraftsfurniture.in/products/${slug}`
+      },
       openGraph: {
         title: data.name,
         description: data.description,
+        url: `https://spacecraftsfurniture.in/products/${slug}`,
         images: images?.length ? [images[0].url] : []
       }
     }
@@ -237,7 +241,7 @@ export default async function ProductPage({ params }) {
       priceCurrency: 'INR',
       price: product.discount_price || product.price,
       availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      url: `https://yourdomain.com/products/${product.slug}`
+      url: `https://spacecraftsfurniture.in/products/${product.slug}`
     }
   }
 

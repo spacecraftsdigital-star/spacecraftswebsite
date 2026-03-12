@@ -171,7 +171,7 @@ export async function generateMetadata({ params }) {
   const meta = categoryMeta[slug]
   
   const siteName = 'Spacecrafts Furniture'
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://spacecraftsfurniture.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://spacecraftsfurniture.in'
   
   if (meta) {
     return {

@@ -1,4 +1,5 @@
 import './globals.css'
+import MaintenanceBanner from '../components/MaintenanceBanner'
 import AnnouncementBar from '../components/AnnouncementBar'
 import TopNavigationBar from '../components/TopNavigationBar'
 import Header from '../components/Header'
@@ -6,8 +7,14 @@ import ModernFooter from '../components/ModernFooter'
 import DelayedSignupModal from '../components/DelayedSignupModal'
 import { AuthProvider } from './providers/AuthProvider'
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+}
+
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://spacecraftsfurniture.in'),
   title: {
     default: 'Spacecrafts Furniture - Premium Furniture Store Online India',
     template: '%s | Spacecrafts Furniture'
@@ -105,6 +112,7 @@ export default function RootLayout({ children }) {
       <body>
         <AuthProvider>
           <GTMNoScript />
+          <MaintenanceBanner />
           <AnnouncementBar />
           <TopNavigationBar />
           <Header />

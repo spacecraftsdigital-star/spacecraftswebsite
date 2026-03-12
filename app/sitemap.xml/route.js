@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from '../../lib/supabaseClient'
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://spacecraftsfurniture.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://spacecraftsfurniture.in'
   
   try {
     const supabase = createSupabaseServerClient()

@@ -45,7 +45,7 @@ function FailureContent() {
         </div>
 
         <div className="support-info">
-          <p>Need help? Contact our support team at <strong>support@spacecraftsfurniture.com</strong></p>
+          <p>Need help? Contact our support team at <strong>support@spacecraftsfurniture.in</strong></p>
         </div>
       </div>
 

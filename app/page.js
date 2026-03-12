@@ -27,7 +27,7 @@ export const metadata = {
   openGraph: {
     title: 'Spacecrafts Furniture - Premium Furniture Store',
     description: 'Shop premium furniture online. Wide selection, best prices, free delivery across India.',
-    url: 'https://spacecraftsfurniture.com',
+    url: 'https://spacecraftsfurniture.in',
     siteName: 'Spacecrafts Furniture',
     images: [
       {
@@ -46,7 +46,7 @@ export const metadata = {
     images: ['/og-image.jpg']
   },
   alternates: {
-    canonical: 'https://spacecraftsfurniture.com'
+    canonical: 'https://spacecraftsfurniture.in'
   }
 }
 
@@ -140,20 +140,20 @@ export default async function Home() {
     '@type': 'FurnitureStore',
     name: 'Spacecrafts Furniture',
     description: 'Premium furniture store offering sofas, beds, dining sets, office furniture and home decor',
-    url: 'https://spacecraftsfurniture.com',
-    logo: 'https://spacecraftsfurniture.com/logo.png',
-    image: 'https://spacecraftsfurniture.com/og-image.jpg',
-    telephone: '+91-80-25123456',
+    url: 'https://spacecraftsfurniture.in',
+    logo: 'https://spacecraftsfurniture.in/logo.png',
+    image: 'https://spacecraftsfurniture.in/og-image.jpg',
+    telephone: '+919003003733',
     address: {
       '@type': 'PostalAddress',
-      streetAddress: '45 MG Road, Ashok Nagar',
-      addressLocality: 'Bengaluru',
-      addressRegion: 'Karnataka',
-      postalCode: '560001',
+      streetAddress: '94A/1, 3rd Main Rd, Old Ambattur, Attipattu',
+      addressLocality: 'Chennai',
+      addressRegion: 'Tamil Nadu',
+      postalCode: '600058',
       addressCountry: 'IN'
     },
     priceRange: '₹₹₹',
-    openingHours: 'Mo-Su 10:00-21:00',
+    openingHours: 'Mo-Sa 10:00-20:00',
     sameAs: [
       'https://www.facebook.com/spacecraftsfurniture',
       'https://www.instagram.com/spacecraftsfurniture',

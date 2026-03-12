@@ -4,9 +4,13 @@ import ProductsClient from '../../components/ProductsClient'
 export const metadata = {
   title: 'All Products - Spacecrafts Furniture',
   description: 'Browse our complete collection of premium furniture. Shop sofas, beds, dining sets, office furniture, and more. Quality furniture for every room.',
+  alternates: {
+    canonical: 'https://spacecraftsfurniture.in/products'
+  },
   openGraph: {
     title: 'All Products - Spacecrafts Furniture',
     description: 'Browse our complete collection of premium furniture',
+    url: 'https://spacecraftsfurniture.in/products',
   }
 }
 

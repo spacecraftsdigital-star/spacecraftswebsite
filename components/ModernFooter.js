@@ -69,7 +69,7 @@ export default function ModernFooter() {
               >
                 📸
               </a>
-              <a href="mailto:info@spacecraftsfurniture.com" target="_blank" rel="noopener noreferrer"
+              <a href="mailto:info@spacecraftsfurniture.in" target="_blank" rel="noopener noreferrer"
                 style={{ 
                   width: '40px', 
                   height: '40px', 
@@ -206,13 +206,13 @@ export default function ModernFooter() {
             {/* Contact Info */}
             <div style={{ marginTop: '20px' }}>
               <p style={{ fontSize: '13px', color: '#ccc', marginBottom: '8px' }}>
-                📧 <a href="mailto:info@spacecraftsfurniture.com" style={{ color: '#ccc', textDecoration: 'none' }}>
-                  info@spacecraftsfurniture.com
+                📧 <a href="mailto:info@spacecraftsfurniture.in" style={{ color: '#ccc', textDecoration: 'none' }}>
+                  info@spacecraftsfurniture.in
                 </a>
               </p>
               <p style={{ fontSize: '13px', color: '#ccc' }}>
-                📞 <a href="tel:+918025123456" style={{ color: '#ccc', textDecoration: 'none' }}>
-                  +91-80-2512-3456
+                📞 <a href="tel:+919003003733" style={{ color: '#ccc', textDecoration: 'none' }}>
+                  090030 03733
                 </a>
               </p>
             </div>

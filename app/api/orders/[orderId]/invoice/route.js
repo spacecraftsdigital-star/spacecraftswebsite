@@ -204,7 +204,7 @@ export async function GET(request, { params }) {
       <p>
         Thank you for your purchase!<br>
         This is a computer-generated invoice and does not require a signature.<br>
-        For queries, contact us at support@spacecraftsfurniture.com or call 090030 03733
+        For queries, contact us at support@spacecraftsfurniture.in or call 090030 03733
       </p>
     </div>
   </div>

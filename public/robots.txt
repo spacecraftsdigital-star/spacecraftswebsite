@@ -1,5 +1,5 @@
 # Spacecrafts Furniture - Robots.txt
-# https://spacecraftsfurniture.com/robots.txt
+# https://spacecraftsfurniture.in/robots.txt
 
 # Allow all bots to crawl the site
 User-agent: *
@@ -18,4 +18,4 @@ Disallow: /wishlist/
 Allow: /products/
 
 # Sitemap location
-Sitemap: https://spacecraftsfurniture.com/sitemap.xml
+Sitemap: https://spacecraftsfurniture.in/sitemap.xml
