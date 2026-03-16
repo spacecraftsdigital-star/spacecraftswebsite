@@ -16,6 +16,14 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
+  // Redirect old WordPress URLs to homepage
+  if (
+    pathname.startsWith('/product-category') ||
+    pathname === '/shop'
+  ) {
+    return NextResponse.redirect(new URL('/', request.url), 301)
+  }
+
   // If user is logged in (has auth token) and tries to access login page, redirect to account
   if (
     hasAuthToken &&

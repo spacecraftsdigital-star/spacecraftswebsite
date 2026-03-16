@@ -1217,11 +1217,29 @@
 
 @media (max-width: 768px) {
   .category-nav {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
+    gap: 0;
+    padding: 0 0.5rem;
+    border-top: none;
+  }
+
+  .category-nav::-webkit-scrollbar {
     display: none;
   }
 
+  .category-nav-link {
+    padding: 0.65rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
   .category-dropdown {
-    padding: 0.5rem;
+    display: none;
   }
 
   .dropdown-inner {

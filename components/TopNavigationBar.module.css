@@ -163,6 +163,10 @@
 
 /* Responsive - Mobile */
 @media (max-width: 768px) {
+  .top_nav_bar {
+    display: none;
+  }
+
   .mobile_menu_toggle {
     display: flex;
   }
