@@ -2,6 +2,44 @@ import { createSupabaseServerClient } from '../../../../lib/supabaseClient'
 import ProductsClient from '../../../../components/ProductsClient'
 import { notFound } from 'next/navigation'
 
+// Sub-categories stored as tags on products — grouped by main category
+const SUB_CATEGORIES = [
+  { slug: '2-seater', name: '2 Seater', parent: 'Sofa Sets' },
+  { slug: '3-1-1-sofas', name: '3+1+1 Sofas', parent: 'Sofa Sets' },
+  { slug: 'book-racks', name: 'Book Racks', parent: 'Wardrobe & Racks' },
+  { slug: 'book-shelves', name: 'Book Shelves', parent: 'Wardrobe & Racks' },
+  { slug: 'bunk-beds', name: 'Bunk Beds', parent: 'Beds' },
+  { slug: 'coffee-tables', name: 'Coffee Tables', parent: 'Tables' },
+  { slug: 'corner-sofas', name: 'Corner Sofas', parent: 'Sofa Sets' },
+  { slug: 'cushion-sofas', name: 'Cushion Sofas', parent: 'Sofa Sets' },
+  { slug: 'diwans', name: 'Diwans', parent: 'Sofa Sets' },
+  { slug: 'diwan-cum-beds', name: 'Diwan Cum Beds', parent: 'Beds' },
+  { slug: 'dining-sets', name: 'Dining Sets', parent: 'Dining Sets' },
+  { slug: 'dressing-tables', name: 'Dressing Tables', parent: 'Tables' },
+  { slug: 'foldable-chairs', name: 'Foldable Chairs', parent: 'Chairs' },
+  { slug: 'foldable-tables', name: 'Foldable Tables', parent: 'Tables' },
+  { slug: 'folding-beds', name: 'Folding Beds', parent: 'Beds' },
+  { slug: 'folding-dinings', name: 'Folding Dinings', parent: 'Dining Sets' },
+  { slug: 'futon-beds', name: 'Futon Beds', parent: 'Beds' },
+  { slug: 'lazy-chairs', name: 'Lazy Chairs', parent: 'Chairs' },
+  { slug: 'metal-cots', name: 'Metal Cots', parent: 'Beds' },
+  { slug: 'office-chairs', name: 'Office Chairs', parent: 'Chairs' },
+  { slug: 'recliner-folding-beds', name: 'Recliner Folding Beds', parent: 'Beds' },
+  { slug: 'recliner-sofas', name: 'Recliner Sofas', parent: 'Sofa Sets' },
+  { slug: 'rocking-chairs', name: 'Rocking Chairs', parent: 'Chairs' },
+  { slug: 'shoe-racks', name: 'Shoe Racks', parent: 'Wardrobe & Racks' },
+  { slug: 'sofa-beds', name: 'Sofa Beds', parent: 'Beds' },
+  { slug: 'sofa-cum-beds', name: 'Sofa Cum Beds', parent: 'Beds' },
+  { slug: 'space-saving-furniture', name: 'Space Saving Furniture', parent: 'Space Saving Furniture' },
+  { slug: 'study-chairs', name: 'Study Chairs', parent: 'Chairs' },
+  { slug: 'study-tables', name: 'Study Tables', parent: 'Tables' },
+  { slug: 'study-&-office-tables', name: 'Study & Office Tables', parent: 'Tables' },
+  { slug: 'tv-racks', name: 'TV Racks', parent: 'Wardrobe & Racks' },
+  { slug: 'wardrobes', name: 'Wardrobes', parent: 'Wardrobe & Racks' },
+  { slug: 'wooden-beds', name: 'Wooden Beds', parent: 'Beds' },
+  { slug: 'wooden-dinings', name: 'Wooden Dinings', parent: 'Dining Sets' },
+]
+
 // SEO-friendly category descriptions
 const categoryMeta = {
   'bunk-beds': {
@@ -368,6 +406,12 @@ export default async function CategoryPage({ params, searchParams }) {
         query = query.in('brand_id', brandIds)
       }
     }
+
+    // Filter by sub-category tags (product type)
+    if (searchParams?.subcategories) {
+      const subCatArray = searchParams.subcategories.split(',')
+      query = query.overlaps('tags', subCatArray)
+    }
     
     // Price filters
     if (searchParams?.minPrice) {
@@ -431,11 +475,17 @@ export default async function CategoryPage({ params, searchParams }) {
   const currentPage = parseInt(searchParams?.page || '1', 10)
   const totalPages = Math.ceil(totalCount / PRODUCTS_PER_PAGE)
 
+  // Filter sub-categories to show only relevant ones for the current category
+  const relevantSubCategories = isSubCategory
+    ? [] // don't show sub-category filter when already on a sub-category page
+    : SUB_CATEGORIES.filter(s => s.parent === currentCategory.name)
+
   return (
     <ProductsClient 
       initialProducts={products}
       categories={categories}
       brands={brands}
+      subCategories={relevantSubCategories}
       searchParams={{
         ...searchParams,
         categories: slug

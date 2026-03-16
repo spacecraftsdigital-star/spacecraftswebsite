@@ -65,6 +65,19 @@ export default async function Home() {
     const { data: cats } = await supabase
       .from('categories')
       .select('*')
+
+    // Fetch product counts per category
+    const { data: countData } = await supabase
+      .from('products')
+      .select('category_id')
+      .eq('is_active', true)
+    
+    const countMap = {}
+    if (countData) {
+      countData.forEach(p => {
+        if (p.category_id) countMap[p.category_id] = (countMap[p.category_id] || 0) + 1
+      })
+    }
     
     // Fetch latest products
     const { data: prods } = await supabase
@@ -111,9 +124,9 @@ export default async function Home() {
       `)
       .eq('is_active', true)
       .order('rating', { ascending: false })
-      .limit(80)
+      .limit(200)
     
-    categories = cats || []
+    categories = (cats || []).map(c => ({ ...c, productCount: countMap[c.id] || 0 }))
     products = (prods || []).map(p => ({
       ...p,
       images: p.product_images?.sort((a, b) => a.position - b.position).map(img => img.url) || []

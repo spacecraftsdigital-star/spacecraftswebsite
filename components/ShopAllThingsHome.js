@@ -25,11 +25,20 @@ function getFilter(tabId) {
   switch (tabId) {
     case 'solid-wood':
       return function (p) {
-        return p.material && /solid\s*wood/i.test(p.material)
+        var name = (p.name || '').toLowerCase()
+        var tags = Array.isArray(p.tags) ? p.tags : []
+        return (p.material && /solid\s*wood|sheesham|teak/i.test(p.material))
+          || name.includes('wooden')
+          || tags.indexOf('wooden-beds') !== -1
+          || tags.indexOf('wooden-dinings') !== -1
       }
     case 'engineered-wood':
       return function (p) {
-        return p.material && /engineered|mdf|particle\s*board|plywood/i.test(p.material)
+        var name = (p.name || '').toLowerCase()
+        var tags = Array.isArray(p.tags) ? p.tags : []
+        return (p.material && /engineered|mdf|particle\s*board|plywood|metal|steel|iron/i.test(p.material))
+          || name.includes('metal') || name.includes('steel')
+          || tags.indexOf('metal-cots') !== -1
       }
     case 'luxury-furniture':
       return function (p) {

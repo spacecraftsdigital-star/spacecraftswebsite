@@ -10,6 +10,7 @@ export default function ProductsClient({
   initialProducts, 
   categories, 
   brands, 
+  subCategories = [],
   searchParams, 
   categoryPage,
   currentPage = 1,
@@ -21,6 +22,7 @@ export default function ProductsClient({
   const [filters, setFilters] = useState({
     categories: searchParams?.categories ? searchParams.categories.split(',') : [],
     brands: searchParams?.brands ? searchParams.brands.split(',') : [],
+    subcategories: searchParams?.subcategories ? searchParams.subcategories.split(',') : [],
     minPrice: searchParams?.minPrice || '',
     maxPrice: searchParams?.maxPrice || '',
     sort: searchParams?.sort || 'rating-desc',
@@ -31,15 +33,33 @@ export default function ProductsClient({
   const [view, setView] = useState('grid')
   const [isLoading, setIsLoading] = useState(false)
 
+  // Sync products when server data changes
   useEffect(() => {
     setProducts(initialProducts)
     setIsLoading(false)
   }, [initialProducts])
 
+  // Also sync when searchParams change (handles Router Cache scenarios)
+  const searchParamsKey = JSON.stringify(searchParams || {})
+  useEffect(() => {
+    setFilters({
+      categories: searchParams?.categories ? searchParams.categories.split(',') : [],
+      brands: searchParams?.brands ? searchParams.brands.split(',') : [],
+      subcategories: searchParams?.subcategories ? searchParams.subcategories.split(',') : [],
+      minPrice: searchParams?.minPrice || '',
+      maxPrice: searchParams?.maxPrice || '',
+      sort: searchParams?.sort || 'rating-desc',
+      q: searchParams?.q || ''
+    })
+    setProducts(initialProducts)
+    setIsLoading(false)
+  }, [searchParamsKey])
+
   const buildUrl = useCallback((newFilters, page) => {
     const params = new URLSearchParams()
     if (newFilters.sort && newFilters.sort !== 'rating-desc') params.set('sort', newFilters.sort)
     if (newFilters.brands?.length > 0) params.set('brands', newFilters.brands.join(','))
+    if (newFilters.subcategories?.length > 0) params.set('subcategories', newFilters.subcategories.join(','))
     if (newFilters.minPrice) params.set('minPrice', newFilters.minPrice)
     if (newFilters.maxPrice) params.set('maxPrice', newFilters.maxPrice)
     if (newFilters.q) params.set('q', newFilters.q)
@@ -89,6 +109,7 @@ export default function ProductsClient({
     const cleared = {
       categories: categoryPage ? [categoryPage.slug] : [],
       brands: [],
+      subcategories: [],
       minPrice: '',
       maxPrice: '',
       sort: 'rating-desc',
@@ -96,7 +117,8 @@ export default function ProductsClient({
     }
     setFilters(cleared)
     setIsLoading(true)
-    router.push(categoryPage ? `/products/category/${categoryPage.slug}` : '/products')
+    router.push(buildUrl(cleared, 1))
+    router.refresh()
   }
 
   const goToPage = (page) => {
@@ -106,7 +128,16 @@ export default function ProductsClient({
     router.push(buildUrl(filters, page))
   }
 
-  const activeFilterCount = filters.categories.length + filters.brands.length + (filters.minPrice ? 1 : 0) + (filters.maxPrice ? 1 : 0)
+  const activeFilterCount = (() => {
+    let count = filters.brands.length + (filters.subcategories?.length || 0) + (filters.minPrice ? 1 : 0) + (filters.maxPrice ? 1 : 0)
+    // On a category page, don't count the current category as an active filter
+    if (categoryPage) {
+      count += filters.categories.filter(c => c !== categoryPage.slug).length
+    } else {
+      count += filters.categories.length
+    }
+    return count
+  })()
 
   const getPageNumbers = () => {
     const pages = []
@@ -270,14 +301,16 @@ export default function ProductsClient({
                     type="text"
                     placeholder="Search products..."
                     value={filters.q}
-                    onChange={(e) => handleFilterChange('q', e.target.value)}
+                    onChange={(e) => setFilters(f => ({ ...f, q: e.target.value }))}
+                    onBlur={() => updateFilters(filters)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') updateFilters(filters) }}
                     className="filter-search-input"
                   />
                 </div>
               </div>
 
               {/* Categories */}
-              {categories.length > 0 && (
+              {categories.length > 0 && !categoryPage && (
                 <div className="filter-group">
                   <div className="filter-group-title">Category</div>
                   <div className="filter-chips">
@@ -293,6 +326,29 @@ export default function ProductsClient({
                           </svg>
                         )}
                         {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Product Type (Sub-categories) */}
+              {subCategories.length > 0 && (
+                <div className="filter-group">
+                  <div className="filter-group-title">Product Type</div>
+                  <div className="filter-chips filter-chips-scroll">
+                    {subCategories.map(sub => (
+                      <button
+                        key={sub.slug}
+                        className={`chip ${filters.subcategories?.includes(sub.slug) ? 'active' : ''}`}
+                        onClick={() => handleMultiSelect('subcategories', sub.slug)}
+                      >
+                        {filters.subcategories?.includes(sub.slug) && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        )}
+                        {sub.name}
                       </button>
                     ))}
                   </div>
@@ -332,7 +388,9 @@ export default function ProductsClient({
                       type="number"
                       placeholder="Min"
                       value={filters.minPrice}
-                      onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                      onChange={(e) => setFilters(f => ({ ...f, minPrice: e.target.value }))}
+                      onBlur={() => updateFilters(filters)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') updateFilters(filters) }}
                       className="price-input"
                     />
                   </div>
@@ -343,7 +401,9 @@ export default function ProductsClient({
                       type="number"
                       placeholder="Max"
                       value={filters.maxPrice}
-                      onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                      onChange={(e) => setFilters(f => ({ ...f, maxPrice: e.target.value }))}
+                      onBlur={() => updateFilters(filters)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') updateFilters(filters) }}
                       className="price-input"
                     />
                   </div>
@@ -800,6 +860,13 @@ export default function ProductsClient({
           display: flex;
           flex-wrap: wrap;
           gap: 6px;
+        }
+
+        .filter-chips-scroll {
+          max-height: 200px;
+          overflow-y: auto;
+          scrollbar-width: thin;
+          scrollbar-color: #ddd transparent;
         }
 
         .chip {

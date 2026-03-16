@@ -150,7 +150,7 @@ export default function ModernCategoryGrid({ serverCategories = [] }) {
           return {
             ...cat,
             image: categoryImageMap[cat.slug] || '/category/sofas.webp',
-            productCount: 0,
+            productCount: cat.productCount || 0,
           }
         })
       : categories
