@@ -21,13 +21,13 @@ export const dynamic = 'force-dynamic'
 
 // SEO Metadata
 export const metadata = {
-  title: 'Spacecrafts Furniture - Premium Furniture Store | Sofas, Beds, Dining Sets & More',
-  description: 'Shop premium furniture online at Spacecrafts Furniture. Wide selection of sofas, beds, dining sets, office furniture, and home decor. Free delivery across India. Best prices guaranteed.',
+  title: 'Spacecrafts Furniture | Buy Premium Furniture Online India',
+  description: 'Shop sofas, beds, dining sets & office furniture online. Free delivery across India. Best prices with 30-day returns.',
   keywords: 'furniture store, online furniture shopping, sofas, beds, dining sets, office furniture, home decor, furniture India, premium furniture',
   openGraph: {
-    title: 'Spacecrafts Furniture - Premium Furniture Store',
-    description: 'Shop premium furniture online. Wide selection, best prices, free delivery across India.',
-    url: 'https://spacecraftsfurniture.in',
+    title: 'Spacecrafts Furniture | Buy Premium Furniture Online',
+    description: 'Shop sofas, beds, dining sets & office furniture online. Free delivery, best prices.',
+    url: 'https://www.spacecraftsfurniture.in',
     siteName: 'Spacecrafts Furniture',
     images: [
       {
@@ -41,12 +41,12 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Spacecrafts Furniture - Premium Furniture Store',
-    description: 'Shop premium furniture online. Wide selection, best prices, free delivery.',
+    title: 'Spacecrafts Furniture | Buy Premium Furniture Online',
+    description: 'Shop sofas, beds, dining sets & office furniture online. Free delivery, best prices.',
     images: ['/og-image.jpg']
   },
   alternates: {
-    canonical: 'https://spacecraftsfurniture.in'
+    canonical: 'https://www.spacecraftsfurniture.in'
   }
 }
 

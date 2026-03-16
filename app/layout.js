@@ -14,12 +14,12 @@ export const viewport = {
 }
 
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://spacecraftsfurniture.in'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.spacecraftsfurniture.in'),
   title: {
-    default: 'Spacecrafts Furniture - Premium Furniture Store Online India',
+    default: 'Spacecrafts Furniture | Buy Premium Furniture Online India',
     template: '%s | Spacecrafts Furniture'
   },
-  description: 'Shop premium furniture online at Spacecrafts Furniture. Wide selection of sofas, beds, dining sets, office furniture. Free delivery, best prices, 30-day returns. Premium quality guaranteed.',
+  description: 'Shop sofas, beds, dining sets & office furniture online. Free delivery across India. Best prices with 30-day returns.',
   keywords: ['furniture online', 'buy furniture online', 'furniture store India', 'sofas online', 'beds online', 'office furniture', 'home furniture', 'premium furniture', 'furniture shopping'],
   authors: [{ name: 'Spacecrafts Furniture' }],
   creator: 'Spacecrafts Digital',
@@ -32,10 +32,10 @@ export const metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    url: process.env.NEXT_PUBLIC_SITE_URL,
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.spacecraftsfurniture.in',
     siteName: 'Spacecrafts Furniture',
-    title: 'Spacecrafts Furniture - Premium Furniture Store Online India',
-    description: 'Shop premium furniture online. Wide selection, best prices, free delivery across India.',
+    title: 'Spacecrafts Furniture | Buy Premium Furniture Online India',
+    description: 'Shop sofas, beds, dining sets & office furniture online. Free delivery, best prices.',
     images: [
       {
         url: '/og-image.jpg',
@@ -47,8 +47,8 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Spacecrafts Furniture - Premium Furniture Store',
-    description: 'Shop premium furniture online. Wide selection, best prices, free delivery.',
+    title: 'Spacecrafts Furniture | Buy Premium Furniture Online',
+    description: 'Shop sofas, beds, dining sets & office furniture online. Free delivery, best prices.',
     images: ['/og-image.jpg'],
     creator: '@spacecraftsfurn',
   },

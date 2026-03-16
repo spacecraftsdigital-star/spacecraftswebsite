@@ -124,7 +124,7 @@ function BadgeCard({ badge, index, isVisible }) {
 
       {/* Text */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <h3
+        <span
           style={{
             fontSize: '15px',
             fontWeight: 700,
@@ -133,10 +133,11 @@ function BadgeCard({ badge, index, isVisible }) {
             letterSpacing: '-0.2px',
             fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             lineHeight: 1.3,
+            display: 'block',
           }}
         >
           {badge.title}
-        </h3>
+        </span>
         <p
           style={{
             fontSize: '13px',

@@ -11,7 +11,7 @@ const SLIDE_DURATION = 6000
 const heroSlides = [
   {
     id: 1,
-    title: 'Transform Your Space',
+    title: 'Transform Your Living Space',
     subtitle: 'Premium Furniture for Modern Living',
     description: 'Discover our curated collection of designer furniture that blends elegance with everyday comfort.',
     image: '/hero/6.webp',

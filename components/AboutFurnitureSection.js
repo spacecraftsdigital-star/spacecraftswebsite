@@ -29,37 +29,37 @@ export default function AboutFurnitureSection() {
           At Space Craft Furniture, every room deserves attention to detail and design excellence. Our curated collections bring together comfort, functionality, and aesthetics.
         </p>
 
-        <h3 className={styles.subHeading}>Living Room Furniture</h3>
+        <p className={styles.subHeading}>Living Room Furniture</p>
         <p className={styles.bodyText}>
           Your living room is the heart of your home. Our collection includes comfortable sofas, sectionals, coffee tables, TV units, bookshelves, and storage solutions designed to create inviting and practical spaces. Whether you prefer contemporary minimalism or timeless elegance, we have designs that suit every interior style.
         </p>
 
-        <h3 className={styles.subHeading}>Bedroom Furniture</h3>
+        <p className={styles.subHeading}>Bedroom Furniture</p>
         <p className={styles.bodyText}>
           Create a restful retreat with our thoughtfully designed bedroom collection. Choose from king, queen, and single beds, along with wardrobes, bedside tables, and dressers that combine beauty with functionality. Crafted in premium materials, our bedroom furniture balances comfort with sophisticated design.
         </p>
 
-        <h3 className={styles.subHeading}>Dining Furniture</h3>
+        <p className={styles.subHeading}>Dining Furniture</p>
         <p className={styles.bodyText}>
           Dining spaces are where conversations and memories are made. Our dining tables, chairs, and storage units are crafted to elevate everyday meals and special gatherings. From compact sets for smaller homes to spacious dining ensembles for family spaces, we offer options for every need.
         </p>
 
-        <h3 className={styles.subHeading}>Study &amp; Home Office Furniture</h3>
+        <p className={styles.subHeading}>Study &amp; Home Office Furniture</p>
         <p className={styles.bodyText}>
           Designed for productivity and comfort, our study and office furniture includes ergonomic chairs, functional desks, bookshelves, and storage cabinets. Whether you&rsquo;re working from home or setting up a dedicated workspace, our designs promote focus and organisation.
         </p>
 
-        <h3 className={styles.subHeading}>Kids&rsquo; Furniture</h3>
+        <p className={styles.subHeading}>Kids&rsquo; Furniture</p>
         <p className={styles.bodyText}>
           Our kids&rsquo; furniture collection blends safety, durability, and playful design. From beds and study tables to storage solutions, every piece is crafted to support growing needs while adding charm to your child&rsquo;s room.
         </p>
 
-        <h3 className={styles.subHeading}>Outdoor Furniture</h3>
+        <p className={styles.subHeading}>Outdoor Furniture</p>
         <p className={styles.bodyText}>
           Enhance your balcony, patio, or garden with weather-resistant outdoor furniture. Our range includes lounge sets, chairs, and tables built to withstand the elements while maintaining style and comfort.
         </p>
 
-        <h3 className={styles.subHeading}>Bar Furniture</h3>
+        <p className={styles.subHeading}>Bar Furniture</p>
         <p className={styles.bodyText}>
           For those who love entertaining, our bar cabinets, stools, and storage units help you create a refined and welcoming space for hosting guests.
         </p>
@@ -72,22 +72,22 @@ export default function AboutFurnitureSection() {
           At Space Craft Furniture, we use carefully selected materials to ensure durability and elegance.
         </p>
 
-        <h3 className={styles.subHeading}>Solid Wood (Sheesham, Mango, Teak)</h3>
+        <p className={styles.subHeading}>Solid Wood (Sheesham, Mango, Teak)</p>
         <p className={styles.bodyText}>
           Known for strength and rich natural grain patterns, solid wood furniture offers timeless beauty and long-lasting performance.
         </p>
 
-        <h3 className={styles.subHeading}>Engineered Wood</h3>
+        <p className={styles.subHeading}>Engineered Wood</p>
         <p className={styles.bodyText}>
           An affordable and durable alternative, engineered wood provides modern finishes and versatile designs.
         </p>
 
-        <h3 className={styles.subHeading}>Metal</h3>
+        <p className={styles.subHeading}>Metal</p>
         <p className={styles.bodyText}>
           Perfect for contemporary and industrial interiors, metal furniture is sturdy, low-maintenance, and stylish.
         </p>
 
-        <h3 className={styles.subHeading}>Upholstered &amp; Leather Finishes</h3>
+        <p className={styles.subHeading}>Upholstered &amp; Leather Finishes</p>
         <p className={styles.bodyText}>
           Soft fabrics and premium leather add comfort and sophistication to sofas, recliners, and accent chairs.
         </p>
@@ -153,25 +153,25 @@ export default function AboutFurnitureSection() {
         <h2 className={styles.sectionHeading}>Why Choose Space Craft Furniture?</h2>
         <div className={styles.highlightGrid}>
           <div className={styles.highlightCard}>
-            <h4 className={styles.highlightTitle}>Premium Craftsmanship</h4>
+            <p className={styles.highlightTitle}>Premium Craftsmanship</p>
             <p className={styles.highlightDesc}>
               Every piece is designed with attention to detail and built using high-quality materials.
             </p>
           </div>
           <div className={styles.highlightCard}>
-            <h4 className={styles.highlightTitle}>Modern &amp; Timeless Designs</h4>
+            <p className={styles.highlightTitle}>Modern &amp; Timeless Designs</p>
             <p className={styles.highlightDesc}>
               From minimalist styles to classic wooden pieces, we offer designs that suit every home.
             </p>
           </div>
           <div className={styles.highlightCard}>
-            <h4 className={styles.highlightTitle}>Affordable Luxury</h4>
+            <p className={styles.highlightTitle}>Affordable Luxury</p>
             <p className={styles.highlightDesc}>
               We combine quality, durability, and competitive pricing to offer exceptional value.
             </p>
           </div>
           <div className={styles.highlightCard}>
-            <h4 className={styles.highlightTitle}>Seamless Shopping Experience</h4>
+            <p className={styles.highlightTitle}>Seamless Shopping Experience</p>
             <p className={styles.highlightDesc}>
               User-friendly browsing, secure payments, reliable delivery, and responsive support.
             </p>
