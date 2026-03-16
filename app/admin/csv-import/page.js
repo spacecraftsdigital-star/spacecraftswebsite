@@ -58,6 +58,7 @@ export default function CSVImport() {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
+      let lastProgress = null
 
       while (true) {
         const { done, value } = await reader.read()
@@ -71,7 +72,9 @@ export default function CSVImport() {
           if (!line.trim()) continue
           try {
             const msg = JSON.parse(line)
+            if (msg.type === 'heartbeat') continue // keepalive, ignore
             if (msg.type === 'progress' || msg.type === 'done' || msg.type === 'error' || msg.type === 'skip') {
+              lastProgress = msg
               setProgress(msg)
             }
             if (msg.type === 'complete') {
@@ -81,7 +84,11 @@ export default function CSVImport() {
         }
       }
     } catch (err) {
-      setResult({ error: err.message })
+      if (err.message?.includes('network') || err.name === 'TypeError') {
+        setResult({ error: 'Network connection was interrupted. The import may still be running on the server. Please wait a moment and check the products page before retrying.' })
+      } else {
+        setResult({ error: err.message })
+      }
     }
 
     setUploading(false)

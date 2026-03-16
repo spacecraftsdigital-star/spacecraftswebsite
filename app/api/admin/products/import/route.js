@@ -441,6 +441,12 @@ export async function POST(req) {
         controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'))
       }
 
+      // Heartbeat: send a keepalive ping every 10s to prevent browser
+      // from suspending the connection (ERR_NETWORK_IO_SUSPENDED)
+      const heartbeat = setInterval(() => {
+        try { send({ type: 'heartbeat' }) } catch {}
+      }, 10000)
+
       const supa = createSupabaseServerClient()
       const results = { success: [], errors: [] }
 
@@ -591,6 +597,8 @@ export async function POST(req) {
           send({ type: 'error', index: rowIdx + 1, name: row.name || '(unknown)', error: rowErr.message })
         }
       }
+
+      clearInterval(heartbeat)
 
       send({
         type: 'complete',
