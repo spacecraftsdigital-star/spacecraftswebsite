@@ -259,7 +259,7 @@ export default function ContactClient() {
             '@type': 'ContactPage',
             'name': 'Contact Spacecrafts Furniture',
             'description': 'Get in touch with Spacecrafts Furniture for inquiries, custom furniture solutions, and store information.',
-            'url': 'https://spacecraftsfurniture.in/contact',
+            'url': 'https://www.spacecraftsfurniture.in/contact',
             'mainEntity': {
               '@type': 'LocalBusiness',
               'name': 'Spacecrafts Furniture',

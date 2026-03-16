@@ -222,15 +222,106 @@ function isValidName(str) {
   return true
 }
 
+// Map sub-category names to main navigation categories
+// Main categories: Beds, Chairs, Dining Sets, Sofa Sets, Tables, Wardrobe & Racks, Space Saving Furniture
+const MAIN_CATEGORY_MAP = {
+  // Beds
+  'bunk beds': 'Beds',
+  'futon beds': 'Beds',
+  'diwan cum beds': 'Beds',
+  'folding beds': 'Beds',
+  'metal cots': 'Beds',
+  'recliner folding beds': 'Beds',
+  'sofa cum beds': 'Beds',
+  'sofa beds': 'Beds',
+  'wooden beds': 'Beds',
+  'beds': 'Beds',
+
+  // Chairs
+  'foldable chairs': 'Chairs',
+  'lazy chairs': 'Chairs',
+  'office chairs': 'Chairs',
+  'relax chair': 'Chairs',
+  'rocking chairs': 'Chairs',
+  'study chair': 'Chairs',
+  'study chairs': 'Chairs',
+  'chairs': 'Chairs',
+
+  // Dining Sets
+  'dining sets': 'Dining Sets',
+  'dining tables': 'Dining Sets',
+  'dining chairs': 'Dining Sets',
+  'folding dinings': 'Dining Sets',
+  'wooden dinings': 'Dining Sets',
+
+  // Sofa Sets
+  '2 seater': 'Sofa Sets',
+  '3 1 1 sofas': 'Sofa Sets',
+  '3+1+1 sofas': 'Sofa Sets',
+  'corner sofas': 'Sofa Sets',
+  'cushion sofas': 'Sofa Sets',
+  'diwans': 'Sofa Sets',
+  'recliner sofas': 'Sofa Sets',
+  'sofa': 'Sofa Sets',
+  'sofa sets': 'Sofa Sets',
+
+  // Tables
+  'coffee tables': 'Tables',
+  'dressing tables': 'Tables',
+  'foldable tables': 'Tables',
+  'study & office tables': 'Tables',
+  'study tables': 'Tables',
+  'tables': 'Tables',
+
+  // Wardrobe & Racks
+  'wardrobes': 'Wardrobe & Racks',
+  'book shelves': 'Wardrobe & Racks',
+  'book racks': 'Wardrobe & Racks',
+  'shoe racks': 'Wardrobe & Racks',
+  'tv racks': 'Wardrobe & Racks',
+
+  // Space Saving
+  'space saving furniture': 'Space Saving Furniture',
+}
+
+// Resolve a CSV category string to a main category name
+// e.g. "Diwans, Sofa, space saving furniture" → "Sofa Sets"
+function resolveMainCategory(csvCategory) {
+  if (!csvCategory) return null
+  const parts = csvCategory.split(',').map(p => p.trim().toLowerCase())
+  // Try each part (first non-"space saving" match wins)
+  for (const part of parts) {
+    if (part === 'space saving furniture') continue
+    const mapped = MAIN_CATEGORY_MAP[part]
+    if (mapped) return mapped
+  }
+  // Fallback: if only "space saving furniture"
+  for (const part of parts) {
+    const mapped = MAIN_CATEGORY_MAP[part]
+    if (mapped) return mapped
+  }
+  // Last resort: use first part as-is if valid
+  const first = csvCategory.split(',')[0].trim()
+  return isValidName(first) ? first : null
+}
+
+// Extract sub-category tags from the CSV category string
+function extractSubCategoryTags(csvCategory) {
+  if (!csvCategory) return []
+  return csvCategory.split(',').map(p => {
+    const tag = p.trim().toLowerCase().replace(/\s+/g, '-')
+    return tag
+  }).filter(Boolean)
+}
+
 async function getOrCreateCategory(supa, name) {
   if (!name) return null
-  // Take the first category if comma-separated
-  const primaryName = name.split(',')[0].trim()
-  if (!isValidName(primaryName)) return null
-  const slug = primaryName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  const mainName = resolveMainCategory(name)
+  if (!mainName) return null
+  const slug = mainName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
   const { data: existing } = await supa.from('categories').select('id').eq('slug', slug).single()
   if (existing) return existing.id
-  const { data: created } = await supa.from('categories').insert({ name: primaryName, slug }).select('id').single()
+  const { data: created } = await supa.from('categories').insert({ name: mainName, slug }).select('id').single()
   return created?.id || null
 }
 
@@ -372,12 +463,11 @@ export async function POST(req) {
           const brandId = await getOrCreateBrand(supa, row.brand || row.brand_name)
 
           const tags = row.tags ? row.tags.split(',').map(t => t.trim()).filter(Boolean) : []
-          if (row.category && row.category.includes(',')) {
-            row.category.split(',').slice(1).forEach(cat => {
-              const catTag = cat.trim().toLowerCase().replace(/\s+/g, '-')
-              if (catTag && !tags.includes(catTag)) tags.push(catTag)
-            })
-          }
+          // Add all sub-category names as tags for filtering
+          const subCatTags = extractSubCategoryTags(row.category || row.category_name)
+          subCatTags.forEach(tag => {
+            if (tag && !tags.includes(tag)) tags.push(tag)
+          })
 
           let existing = null
           if (row.sku && row.sku.trim()) {

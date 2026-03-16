@@ -6,8 +6,23 @@ export default function CSVImport() {
   const { user } = useAuth()
   const [file, setFile] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const [result, setResult] = useState(null)
   const [progress, setProgress] = useState(null) // live progress
+
+  const handleReset = async () => {
+    if (!confirm('⚠️ This will DELETE all products, images, variants, specs, categories & brands, then re-seed the 7 main categories and Spacecrafts brand.\n\nAre you sure?')) return
+    setResetting(true)
+    setResult(null)
+    try {
+      const res = await fetch('/api/admin/products/reset', { method: 'DELETE' })
+      const data = await res.json()
+      setResult(data)
+    } catch (err) {
+      setResult({ error: err.message })
+    }
+    setResetting(false)
+  }
 
   const handleImport = async () => {
     if (!file) {
@@ -86,6 +101,30 @@ export default function CSVImport() {
           <li>Existing products (matched by SKU or slug) are <strong>updated</strong>, new ones are <strong>created</strong></li>
           <li>Safe to re-run — no duplicates</li>
         </ul>
+      </div>
+
+      {/* Reset Section */}
+      <div style={{ background: '#fff3cd', padding: '16px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffc107' }}>
+        <strong>🔄 Reset &amp; Re-Import:</strong>
+        <p style={{ margin: '8px 0', fontSize: '14px', color: '#664d03' }}>
+          If categories/brands are messed up, click Reset first to clean everything, then re-import your CSV.
+          This deletes all products, re-seeds 7 main categories (Beds, Chairs, Dining Sets, Sofa Sets, Tables, Wardrobe &amp; Racks, Space Saving Furniture) and the Spacecrafts brand.
+        </p>
+        <button
+          onClick={handleReset}
+          disabled={resetting || uploading}
+          style={{
+            padding: '8px 20px',
+            background: resetting ? '#ccc' : '#dc3545',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: resetting ? 'not-allowed' : 'pointer',
+            fontSize: '14px',
+          }}
+        >
+          {resetting ? 'Resetting...' : '⚠️ Reset All Products & Categories'}
+        </button>
       </div>
 
       <div style={{ background: '#ffffff', padding: '20px', borderRadius: '8px', border: '1px solid #dee2e6', marginBottom: '20px' }}>

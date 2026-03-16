@@ -6,12 +6,12 @@ export const metadata = {
   description: 'Learn about Spacecrafts Furniture - A leading furniture manufacturer in Chennai since 1997. Over 25 years of expertise in space-saving, innovative furniture design and manufacturing.',
   keywords: 'about furniture company, furniture manufacturer Chennai, Spacecrafts Furniture history, furniture design expertise, Indian furniture brand',
   alternates: {
-    canonical: 'https://spacecraftsfurniture.in/about'
+    canonical: 'https://www.spacecraftsfurniture.in/about'
   },
   openGraph: {
     title: 'About Spacecrafts Furniture - Premium Furniture Solutions',
     description: 'Over 25 years of expertise in designing and manufacturing premium quality furniture.',
-    url: 'https://spacecraftsfurniture.in/about',
+    url: 'https://www.spacecraftsfurniture.in/about',
     type: 'website'
   }
 }
@@ -237,7 +237,7 @@ export default function About() {
             '@type': 'Organization',
             'name': 'Spacecrafts Furniture',
             'url': 'https://spacecraftsfurniture.in',
-            'logo': 'https://spacecraftsfurniture.in/logo.png',
+            'logo': 'https://www.spacecraftsfurniture.in/logo.png',
             'description': 'Premium furniture manufacturer and dealer in Chennai with 25+ years of expertise.',
             'founder': 'Spacecrafts Furniture',
             'foundingDate': '1997',

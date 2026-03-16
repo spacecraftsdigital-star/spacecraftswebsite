@@ -6,12 +6,12 @@ export const metadata = {
   description: 'Browse our complete collection of premium furniture. Shop sofas, beds, dining sets, office furniture, sofa cum beds, space-saving furniture and more. Free delivery across India.',
   keywords: 'furniture online, buy furniture, sofas, beds, dining sets, sofa cum beds, space saving furniture, office chairs, study tables, premium furniture India',
   alternates: {
-    canonical: 'https://spacecraftsfurniture.in/products'
+    canonical: 'https://www.spacecraftsfurniture.in/products'
   },
   openGraph: {
     title: 'All Products - Spacecrafts Furniture',
     description: 'Browse our complete collection of premium furniture. Best prices guaranteed.',
-    url: 'https://spacecraftsfurniture.in/products',
+    url: 'https://www.spacecraftsfurniture.in/products',
     type: 'website',
   }
 }
@@ -31,7 +31,6 @@ export default async function ProductsPage({ searchParams }) {
     const { data: categoriesData } = await supabase
       .from('categories')
       .select('id, name, slug')
-      .eq('is_active', true)
       .order('name')
     categories = categoriesData || []
     
@@ -153,7 +152,7 @@ export default async function ProductsPage({ searchParams }) {
             '@type': 'CollectionPage',
             name: 'All Products - Spacecrafts Furniture',
             description: 'Browse our complete collection of premium furniture.',
-            url: 'https://spacecraftsfurniture.in/products',
+            url: 'https://www.spacecraftsfurniture.in/products',
             isPartOf: {
               '@type': 'WebSite',
               name: 'Spacecrafts Furniture',

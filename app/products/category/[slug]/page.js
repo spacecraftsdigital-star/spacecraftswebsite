@@ -163,7 +163,63 @@ const categoryMeta = {
     title: 'TV Racks',
     description: 'Buy TV racks & entertainment units online — TV stands with storage for modern living rooms. Wall-mounted & floor options.',
     h1: 'TV Racks'
-  }
+  },
+  'study-chairs': {
+    title: 'Study Chairs',
+    description: 'Buy study chairs online — comfortable seating for students & study rooms. Ergonomic designs with back support.',
+    h1: 'Study Chairs'
+  },
+  'study-tables': {
+    title: 'Study Tables',
+    description: 'Shop study tables online — sturdy study desks for students & home offices. Compact, foldable & modern designs.',
+    h1: 'Study Tables'
+  },
+  'sofa-beds': {
+    title: 'Sofa Beds',
+    description: 'Buy sofa beds online — convertible sofa-to-bed furniture. Space saving & multipurpose designs for small apartments.',
+    h1: 'Sofa Beds'
+  },
+  'wooden-dinings': {
+    title: 'Wooden Dining Sets',
+    description: 'Shop wooden dining sets — solid wood dining tables & chairs. Classic & contemporary dining furniture at best prices.',
+    h1: 'Wooden Dining Sets'
+  },
+  // Main category slugs
+  'beds': {
+    title: 'Beds',
+    description: 'Shop all beds online — bunk beds, wooden beds, metal cots, folding beds, sofa cum beds & more. Premium quality at best prices.',
+    h1: 'All Beds'
+  },
+  'chairs': {
+    title: 'Chairs',
+    description: 'Shop all chairs online — office chairs, study chairs, rocking chairs, lazy chairs & foldable chairs. Ergonomic & stylish designs.',
+    h1: 'All Chairs'
+  },
+  'dining-sets': {
+    title: 'Dining Sets',
+    description: 'Shop dining sets online — dining tables, dining chairs & folding dining sets. 2, 4, 6 & 8 seater options at best prices.',
+    h1: 'All Dining Sets'
+  },
+  'sofa-sets': {
+    title: 'Sofa Sets',
+    description: 'Shop sofa sets online — corner sofas, recliner sofas, cushion sofas, diwans & 2-seater sofas. Premium comfort & style.',
+    h1: 'All Sofa Sets'
+  },
+  'tables': {
+    title: 'Tables',
+    description: 'Shop tables online — study tables, coffee tables, dressing tables & foldable tables. Modern designs for every room.',
+    h1: 'All Tables'
+  },
+  'wardrobe-racks': {
+    title: 'Wardrobe & Racks',
+    description: 'Shop wardrobes, book racks, shoe racks & TV racks online. Smart storage solutions for organized living.',
+    h1: 'Wardrobe & Racks'
+  },
+  'space-saving-furniture': {
+    title: 'Space Saving Furniture',
+    description: 'Shop space saving furniture — folding beds, foldable tables, sofa cum beds & compact furniture for small spaces.',
+    h1: 'Space Saving Furniture'
+  },
 }
 
 export async function generateMetadata({ params }) {
@@ -202,7 +258,6 @@ export async function generateMetadata({ params }) {
       .from('categories')
       .select('name, slug')
       .eq('slug', slug)
-      .eq('is_active', true)
       .single()
     
     if (cat) {
@@ -239,6 +294,7 @@ export default async function CategoryPage({ params, searchParams }) {
   let categories = []
   let brands = []
   let currentCategory = null
+  let isSubCategory = false
   let totalCount = 0
   const PRODUCTS_PER_PAGE = 16
   
@@ -250,19 +306,26 @@ export default async function CategoryPage({ params, searchParams }) {
       .from('categories')
       .select('id, name, slug')
       .eq('slug', slug)
-      .eq('is_active', true)
       .single()
     
+    // If no DB category found, treat as sub-category tag filter
     if (!catData) {
-      notFound()
+      // Check if we have SEO metadata for this sub-category slug
+      const meta = categoryMeta[slug]
+      if (meta) {
+        currentCategory = { id: null, name: meta.h1 || meta.title, slug }
+        isSubCategory = true
+      } else {
+        notFound()
+      }
+    } else {
+      currentCategory = catData
     }
-    currentCategory = catData
     
     // Fetch all categories for sidebar filter
     const { data: categoriesData } = await supabase
       .from('categories')
       .select('id, name, slug')
-      .eq('is_active', true)
       .order('name')
     categories = categoriesData || []
     
@@ -278,7 +341,7 @@ export default async function CategoryPage({ params, searchParams }) {
     const from = (page - 1) * PRODUCTS_PER_PAGE
     const to = from + PRODUCTS_PER_PAGE - 1
 
-    // Build query — filter by this category
+    // Build query — filter by this category or sub-category tag
     let query = supabase
       .from('products')
       .select(`
@@ -287,7 +350,13 @@ export default async function CategoryPage({ params, searchParams }) {
         brands (id, name, slug)
       `, { count: 'exact' })
       .eq('is_active', true)
-      .eq('category_id', currentCategory.id)
+
+    if (isSubCategory) {
+      // Filter by sub-category tag (e.g. "bunk-beds", "corner-sofas")
+      query = query.contains('tags', [slug])
+    } else {
+      query = query.eq('category_id', currentCategory.id)
+    }
     
     // Additional brand filter from query params
     if (searchParams?.brands) {

@@ -141,8 +141,8 @@ export default async function Home() {
     name: 'Spacecrafts Furniture',
     description: 'Premium furniture store offering sofas, beds, dining sets, office furniture and home decor',
     url: 'https://spacecraftsfurniture.in',
-    logo: 'https://spacecraftsfurniture.in/logo.png',
-    image: 'https://spacecraftsfurniture.in/og-image.jpg',
+    logo: 'https://www.spacecraftsfurniture.in/logo.png',
+    image: 'https://www.spacecraftsfurniture.in/og-image.jpg',
     telephone: '+919003003733',
     address: {
       '@type': 'PostalAddress',
