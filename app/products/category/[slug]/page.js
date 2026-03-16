@@ -476,8 +476,9 @@ export default async function CategoryPage({ params, searchParams }) {
   const totalPages = Math.ceil(totalCount / PRODUCTS_PER_PAGE)
 
   // Filter sub-categories to show only relevant ones for the current category
+  const currentSubCat = isSubCategory ? SUB_CATEGORIES.find(sc => sc.slug === slug) : null
   const relevantSubCategories = isSubCategory
-    ? [] // don't show sub-category filter when already on a sub-category page
+    ? (currentSubCat ? SUB_CATEGORIES.filter(s => s.parent === currentSubCat.parent) : [])
     : SUB_CATEGORIES.filter(s => s.parent === currentCategory.name)
 
   return (
@@ -493,7 +494,8 @@ export default async function CategoryPage({ params, searchParams }) {
       categoryPage={{
         slug: currentCategory.slug,
         name: categoryTitle,
-        description: meta?.description || `Browse our collection of ${currentCategory.name}`
+        description: meta?.description || `Browse our collection of ${currentCategory.name}`,
+        isSubCategory: isSubCategory
       }}
       currentPage={currentPage}
       totalPages={totalPages}

@@ -7,8 +7,22 @@ export default function CSVImport() {
   const [file, setFile] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [tagging, setTagging] = useState(false)
   const [result, setResult] = useState(null)
   const [progress, setProgress] = useState(null) // live progress
+
+  const handleTagRooms = async () => {
+    setTagging(true)
+    setResult(null)
+    try {
+      const res = await fetch('/api/admin/products/tag-rooms', { method: 'POST' })
+      const data = await res.json()
+      setResult(data)
+    } catch (err) {
+      setResult({ error: err.message })
+    }
+    setTagging(false)
+  }
 
   const handleReset = async () => {
     if (!confirm('⚠️ This will DELETE all products, images, variants, specs, categories & brands, then re-seed the 7 main categories and Spacecrafts brand.\n\nAre you sure?')) return
@@ -131,6 +145,30 @@ export default function CSVImport() {
           }}
         >
           {resetting ? 'Resetting...' : '⚠️ Reset All Products & Categories'}
+        </button>
+      </div>
+
+      {/* Tag Rooms Section */}
+      <div style={{ background: '#d1ecf1', padding: '16px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #bee5eb' }}>
+        <strong>🏷️ Tag Products for Homepage Tabs:</strong>
+        <p style={{ margin: '8px 0', fontSize: '14px', color: '#0c5460' }}>
+          After importing products, run this to auto-assign room tags (Living Room, Bed Room, Dining Room, Study Room, Best Offers).
+          This makes products appear in the &quot;Shop All Things Home&quot; section on the homepage.
+        </p>
+        <button
+          onClick={handleTagRooms}
+          disabled={tagging || uploading}
+          style={{
+            padding: '8px 20px',
+            background: tagging ? '#ccc' : '#17a2b8',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: tagging ? 'not-allowed' : 'pointer',
+            fontSize: '14px',
+          }}
+        >
+          {tagging ? 'Tagging...' : '🏷️ Tag Products for Homepage'}
         </button>
       </div>
 

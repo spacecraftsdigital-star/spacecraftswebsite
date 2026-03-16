@@ -310,7 +310,7 @@ export default function ProductsClient({
               </div>
 
               {/* Categories */}
-              {categories.length > 0 && !categoryPage && (
+              {categories.length > 0 && (!categoryPage || categoryPage.isSubCategory) && (
                 <div className="filter-group">
                   <div className="filter-group-title">Category</div>
                   <div className="filter-chips">
@@ -318,7 +318,13 @@ export default function ProductsClient({
                       <button
                         key={cat.id}
                         className={`chip ${filters.categories.includes(cat.slug) ? 'active' : ''}`}
-                        onClick={() => handleMultiSelect('categories', cat.slug)}
+                        onClick={() => {
+                          if (categoryPage?.isSubCategory) {
+                            router.push(`/products/category/${cat.slug}`)
+                          } else {
+                            handleMultiSelect('categories', cat.slug)
+                          }
+                        }}
                       >
                         {filters.categories.includes(cat.slug) && (
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
@@ -337,20 +343,31 @@ export default function ProductsClient({
                 <div className="filter-group">
                   <div className="filter-group-title">Product Type</div>
                   <div className="filter-chips filter-chips-scroll">
-                    {subCategories.map(sub => (
-                      <button
-                        key={sub.slug}
-                        className={`chip ${filters.subcategories?.includes(sub.slug) ? 'active' : ''}`}
-                        onClick={() => handleMultiSelect('subcategories', sub.slug)}
-                      >
-                        {filters.subcategories?.includes(sub.slug) && (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                            <polyline points="20 6 9 17 4 12"/>
-                          </svg>
-                        )}
-                        {sub.name}
-                      </button>
-                    ))}
+                    {subCategories.map(sub => {
+                      const isActive = categoryPage?.isSubCategory
+                        ? categoryPage.slug === sub.slug
+                        : filters.subcategories?.includes(sub.slug)
+                      return (
+                        <button
+                          key={sub.slug}
+                          className={`chip ${isActive ? 'active' : ''}`}
+                          onClick={() => {
+                            if (categoryPage?.isSubCategory) {
+                              router.push(`/products/category/${sub.slug}`)
+                            } else {
+                              handleMultiSelect('subcategories', sub.slug)
+                            }
+                          }}
+                        >
+                          {isActive && (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                          )}
+                          {sub.name}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
