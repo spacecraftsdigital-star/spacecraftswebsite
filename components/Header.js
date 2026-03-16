@@ -18,6 +18,7 @@ export default function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState(null)
+  const [dbCategories, setDbCategories] = useState([])
   const [closeTimeout, setCloseTimeout] = useState(null)
   const [openTimeout, setOpenTimeout] = useState(null)
   
@@ -222,7 +223,10 @@ export default function Header() {
     }
   }
 
-  const categories = Object.keys(categoryData)
+  // Use DB categories for nav; fall back to hardcoded keys while loading
+  const navCategories = dbCategories.length > 0
+    ? ['All', ...dbCategories.map(c => c.name)]
+    : Object.keys(categoryData)
 
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Account'
 
@@ -234,6 +238,16 @@ export default function Header() {
       setCartCount(0)
     }
   }, [isAuthenticated])
+
+  // Fetch navigation categories from DB
+  useEffect(() => {
+    fetch('/api/categories')
+      .then(r => r.json())
+      .then(({ categories }) => {
+        if (Array.isArray(categories) && categories.length) setDbCategories(categories)
+      })
+      .catch(() => {})
+  }, [])
 
   // Fetch popular searches
   useEffect(() => {
@@ -589,7 +603,15 @@ export default function Header() {
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
           >
-            {isMobileMenuOpen ? '✕' : '☰'}
+            {isMobileMenuOpen ? (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            )}
           </button>
           </div>
         </div>
@@ -601,7 +623,10 @@ export default function Header() {
           onMouseEnter={handleNavMouseEnter}
           onMouseLeave={handleNavMouseLeave}
         >
-          {categories.map((category) => (
+          {navCategories.map((category) => {
+            const dbCat = dbCategories.find(c => c.name === category)
+            const catSlug = dbCat?.slug || category.toLowerCase().replace(/[&]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
+            return (
             <div
               key={category}
               className={styles['category-nav-item']}
@@ -671,7 +696,7 @@ export default function Header() {
                         </div>
                       </div>
                     </div>
-                  ) : (
+                  ) : categoryData[category] ? (
                     <div className={styles['dropdown-content']}>
                       <div className={styles['dropdown-accent-bar']}></div>
                       <div className={styles['dropdown-inner']}>
@@ -693,7 +718,7 @@ export default function Header() {
                               </ul>
                               <button
                                 className={styles['shop-all-link']}
-                                onClick={() => router.push(`/products/category/${category.toLowerCase().replace(/\s+/g, '-')}`)}
+                                onClick={() => router.push(`/products/category/${catSlug}`)}
                               >
                                 Shop All {category}
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -724,16 +749,50 @@ export default function Header() {
                         </div>
                       </div>
                     </div>
+                  ) : (
+                    // DB category with no hardcoded dropdown — show simple shop-all panel
+                    <div className={styles['dropdown-content']}>
+                      <div className={styles['dropdown-accent-bar']}></div>
+                      <div className={styles['dropdown-inner']}>
+                        <div className={styles['dropdown-left']}>
+                          <div className={styles['dropdown-section']}>
+                            <h4 className={styles['section-title']}>{category}</h4>
+                            <button
+                              className={styles['shop-all-link']}
+                              onClick={() => router.push(`/products/category/${catSlug}`)}
+                            >
+                              Shop All {category}
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M5 12h14"/>
+                                <path d="m12 5 7 7-7 7"/>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
             </div>
-          ))}
+            )
+          })}
         </nav>
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className={styles['mobile-menu']}>
+            {dbCategories.length > 0 && (
+              <>
+                <div className={styles['mobile-menu-section-title']}>Categories</div>
+                {dbCategories.map(cat => (
+                  <Link key={cat.id} href={`/products/category/${cat.slug}`} className={styles['mobile-menu-item']} onClick={() => setIsMobileMenuOpen(false)}>
+                    {cat.name}
+                  </Link>
+                ))}
+                <div className={styles['mobile-menu-divider']} />
+              </>
+            )}
             <Link href="/products" className={styles['mobile-menu-item']} onClick={() => setIsMobileMenuOpen(false)}>
               Furniture
             </Link>

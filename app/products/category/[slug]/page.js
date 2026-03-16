@@ -239,6 +239,8 @@ export default async function CategoryPage({ params, searchParams }) {
   let categories = []
   let brands = []
   let currentCategory = null
+  let totalCount = 0
+  const PRODUCTS_PER_PAGE = 16
   
   try {
     const supabase = createSupabaseServerClient()
@@ -264,14 +266,18 @@ export default async function CategoryPage({ params, searchParams }) {
       .order('name')
     categories = categoriesData || []
     
-    // Fetch brands for filter
+    // Fetch brands for filter (brands table has no is_active column)
     const { data: brandsData } = await supabase
       .from('brands')
       .select('id, name, slug')
-      .eq('is_active', true)
       .order('name')
     brands = brandsData || []
     
+    // Pagination
+    const page = parseInt(searchParams?.page || '1', 10)
+    const from = (page - 1) * PRODUCTS_PER_PAGE
+    const to = from + PRODUCTS_PER_PAGE - 1
+
     // Build query — filter by this category
     let query = supabase
       .from('products')
@@ -279,10 +285,9 @@ export default async function CategoryPage({ params, searchParams }) {
         *,
         categories (id, name, slug),
         brands (id, name, slug)
-      `)
+      `, { count: 'exact' })
       .eq('is_active', true)
       .eq('category_id', currentCategory.id)
-      .gte('stock', 1)
     
     // Additional brand filter from query params
     if (searchParams?.brands) {
@@ -315,13 +320,19 @@ export default async function CategoryPage({ params, searchParams }) {
       case 'name-asc':
         query = query.order('name', { ascending: true })
         break
+      case 'newest':
+        query = query.order('created_at', { ascending: false })
+        break
       case 'rating-desc':
       default:
         query = query.order('rating', { ascending: false })
     }
     
-    const { data } = await query
+    query = query.range(from, to)
+    
+    const { data, count } = await query
     products = data || []
+    totalCount = count || 0
     
     // Fetch product images
     if (products.length > 0) {
@@ -348,6 +359,8 @@ export default async function CategoryPage({ params, searchParams }) {
 
   const meta = categoryMeta[slug]
   const categoryTitle = meta?.h1 || currentCategory.name
+  const currentPage = parseInt(searchParams?.page || '1', 10)
+  const totalPages = Math.ceil(totalCount / PRODUCTS_PER_PAGE)
 
   return (
     <ProductsClient 
@@ -363,6 +376,9 @@ export default async function CategoryPage({ params, searchParams }) {
         name: categoryTitle,
         description: meta?.description || `Browse our collection of ${currentCategory.name}`
       }}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      totalCount={totalCount}
     />
   )
 }

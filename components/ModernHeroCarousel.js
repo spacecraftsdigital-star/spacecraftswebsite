@@ -77,7 +77,15 @@ export default function ModernHeroCarousel() {
   const [direction, setDirection] = useState(1)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const [progress, setProgress] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
   const progressRef = useRef(null)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 640)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   const startTimeRef = useRef(Date.now())
 
   useEffect(() => {
@@ -132,8 +140,8 @@ export default function ModernHeroCarousel() {
         position: 'relative',
         overflow: 'hidden',
         width: '100%',
-        height: '85vh',
-        minHeight: '480px',
+        height: isMobile ? '60vh' : '85vh',
+        minHeight: isMobile ? '360px' : '480px',
         maxHeight: '760px',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         background: '#111',
@@ -219,13 +227,13 @@ export default function ModernHeroCarousel() {
               zIndex: 3,
               maxWidth: '1280px',
               margin: '0 auto',
-              padding: '0 64px',
+              padding: isMobile ? '0 20px' : '0 64px',
               height: '100%',
               display: 'flex',
               alignItems: 'center',
             }}
           >
-            <div style={{ maxWidth: '620px' }}>
+            <div style={{ maxWidth: isMobile ? '100%' : '620px' }}>
 
               {/* Subtitle with animated expanding dash */}
               <motion.p
@@ -309,7 +317,7 @@ export default function ModernHeroCarousel() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '12px',
-                    padding: '17px 42px',
+                    padding: isMobile ? '12px 28px' : '17px 42px',
                     fontSize: '14px',
                     fontWeight: 600,
                     textDecoration: 'none',
@@ -423,9 +431,9 @@ export default function ModernHeroCarousel() {
       <div
         style={{
           position: 'absolute',
-          bottom: '28px',
-          left: '64px',
-          right: '64px',
+          bottom: '20px',
+          left: isMobile ? '20px' : '64px',
+          right: isMobile ? '20px' : '64px',
           zIndex: 10,
           display: 'flex',
           alignItems: 'center',

@@ -2,22 +2,27 @@ import { createSupabaseServerClient } from '../../lib/supabaseClient'
 import ProductsClient from '../../components/ProductsClient'
 
 export const metadata = {
-  title: 'All Products - Spacecrafts Furniture',
-  description: 'Browse our complete collection of premium furniture. Shop sofas, beds, dining sets, office furniture, and more. Quality furniture for every room.',
+  title: 'All Products - Spacecrafts Furniture | Shop Premium Furniture Online',
+  description: 'Browse our complete collection of premium furniture. Shop sofas, beds, dining sets, office furniture, sofa cum beds, space-saving furniture and more. Free delivery across India.',
+  keywords: 'furniture online, buy furniture, sofas, beds, dining sets, sofa cum beds, space saving furniture, office chairs, study tables, premium furniture India',
   alternates: {
     canonical: 'https://spacecraftsfurniture.in/products'
   },
   openGraph: {
     title: 'All Products - Spacecrafts Furniture',
-    description: 'Browse our complete collection of premium furniture',
+    description: 'Browse our complete collection of premium furniture. Best prices guaranteed.',
     url: 'https://spacecraftsfurniture.in/products',
+    type: 'website',
   }
 }
+
+const PRODUCTS_PER_PAGE = 16
 
 export default async function ProductsPage({ searchParams }) {
   let products = []
   let categories = []
   let brands = []
+  let totalCount = 0
   
   try {
     const supabase = createSupabaseServerClient()
@@ -30,14 +35,18 @@ export default async function ProductsPage({ searchParams }) {
       .order('name')
     categories = categoriesData || []
     
-    // Fetch brands for filter
+    // Fetch brands for filter (brands table has no is_active column)
     const { data: brandsData } = await supabase
       .from('brands')
       .select('id, name, slug')
-      .eq('is_active', true)
       .order('name')
     brands = brandsData || []
     
+    // Pagination
+    const page = parseInt(searchParams?.page || '1', 10)
+    const from = (page - 1) * PRODUCTS_PER_PAGE
+    const to = from + PRODUCTS_PER_PAGE - 1
+
     // Build query based on filters
     let query = supabase
       .from('products')
@@ -45,9 +54,8 @@ export default async function ProductsPage({ searchParams }) {
         *,
         categories (id, name, slug),
         brands (id, name, slug)
-      `)
+      `, { count: 'exact' })
       .eq('is_active', true)
-      .gte('stock', 1) // Only show in-stock products
     
     // Filter by multiple categories
     if (searchParams?.categories) {
@@ -97,13 +105,20 @@ export default async function ProductsPage({ searchParams }) {
       case 'name-asc':
         query = query.order('name', { ascending: true })
         break
+      case 'newest':
+        query = query.order('created_at', { ascending: false })
+        break
       case 'rating-desc':
       default:
         query = query.order('rating', { ascending: false })
     }
     
-    const { data } = await query
+    // Apply pagination
+    query = query.range(from, to)
+    
+    const { data, count } = await query
     products = data || []
+    totalCount = count || 0
     
     // Fetch product images for each product
     if (products.length > 0) {
@@ -124,6 +139,9 @@ export default async function ProductsPage({ searchParams }) {
   } catch (error) {
     console.error('Error fetching products:', error)
   }
+
+  const currentPage = parseInt(searchParams?.page || '1', 10)
+  const totalPages = Math.ceil(totalCount / PRODUCTS_PER_PAGE)
   
   return (
     <>
@@ -141,7 +159,7 @@ export default async function ProductsPage({ searchParams }) {
               name: 'Spacecrafts Furniture',
               url: 'https://spacecraftsfurniture.in'
             },
-            numberOfItems: products.length
+            numberOfItems: totalCount
           })
         }}
       />
@@ -150,6 +168,9 @@ export default async function ProductsPage({ searchParams }) {
         categories={categories}
         brands={brands}
         searchParams={searchParams}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalCount={totalCount}
       />
     </>
   )

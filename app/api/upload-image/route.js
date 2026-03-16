@@ -9,8 +9,8 @@ export async function POST(req) {
   if (!file) return NextResponse.json({ error: 'No file' }, { status: 400 })
 
   const supa = createSupabaseServerClient()
-  const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'product-images'
-  const filename = `${Date.now()}-${file.name}`
+  const bucket = 'spacecraftsdigital'
+  const filename = `products/${Date.now()}-${file.name}`
   const buffer = Buffer.from(await file.arrayBuffer())
 
   const { data, error } = await supa.storage.from(bucket).upload(filename, buffer, { contentType: file.type })
