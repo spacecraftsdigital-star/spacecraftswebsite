@@ -1,4 +1,5 @@
 import './globals.css'
+import NextTopLoader from 'nextjs-toploader'
 import MaintenanceBanner from '../components/MaintenanceBanner'
 import AnnouncementBar from '../components/AnnouncementBar'
 import TopNavigationBar from '../components/TopNavigationBar'
@@ -110,6 +111,12 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
+        <NextTopLoader 
+          color="#e67e22"
+          height={3}
+          showSpinner={false}
+          shadow="0 0 10px #e67e22, 0 0 5px #e67e22"
+        />
         <AuthProvider>
           <GTMNoScript />
           <MaintenanceBanner />

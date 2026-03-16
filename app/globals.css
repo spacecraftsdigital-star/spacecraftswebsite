@@ -190,8 +190,9 @@ a:hover {
   background: #ffffff;
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 1000;
   box-shadow: none;
+  will-change: transform;
 }
 
 .header-inner {
@@ -408,6 +409,15 @@ html:not([data-hide-header]) .site-header,
 html:not([data-hide-header]) #top-nav-bar,
 html:not([data-hide-header]) .announcement-bar {
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Disable header-hide on mobile — transform breaks sticky positioning */
+@media (max-width: 768px) {
+  html[data-hide-header] .site-header,
+  html[data-hide-header] #top-nav-bar,
+  html[data-hide-header] .announcement-bar {
+    transform: none;
+  }
 }
 
 /* Print Styles */

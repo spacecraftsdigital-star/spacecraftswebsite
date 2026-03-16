@@ -21,6 +21,7 @@ export default function Header() {
   const [dbCategories, setDbCategories] = useState([])
   const [closeTimeout, setCloseTimeout] = useState(null)
   const [openTimeout, setOpenTimeout] = useState(null)
+  const [scrolled, setScrolled] = useState(false)
   
   const { user, profile, isAuthenticated, signOut, loading } = useAuth()
   const router = useRouter()
@@ -239,6 +240,13 @@ export default function Header() {
     }
   }, [isAuthenticated])
 
+  // Add shadow on scroll
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   // Fetch navigation categories from DB
   useEffect(() => {
     fetch('/api/categories')
@@ -368,7 +376,7 @@ export default function Header() {
 
   return (
     <>
-      <header className={`site-header ${styles['site-header']}`}>
+      <header className={`site-header ${styles['site-header']} ${scrolled ? styles['header-scrolled'] : ''}`}>
         <div className={styles['header-container']}>
           {/* Logo */}
           <div className={styles['header-logo']}>
